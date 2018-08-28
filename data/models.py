@@ -1,5 +1,6 @@
-from django.contrib.auth import get_user_model
 from django.db import models
+from django.contrib.auth import get_user_model
+from django.utils.translation import ugettext_lazy as _
 
 from django_countries.fields import CountryField
 
@@ -26,6 +27,12 @@ class Location(models.Model):
 
 
 class Flight(models.Model):
+    TRACKTYPE_CHOICES = (
+        ('free_flight', _('Free Flight')),
+        ('flat_triangle', _('Flat Triangle')),
+        ('fai_triangle', _('FAI Triangle')),
+    )
+
     pilot = models.ForeignKey(get_user_model(), null=False, on_delete=models.CASCADE)
     aircraft = models.ForeignKey(Aircraft, null=True, blank=True, on_delete=models.SET_NULL)
     number = models.IntegerField(null=True, blank=True,
@@ -41,6 +48,11 @@ class Flight(models.Model):
             help_text='The max altitude reached during the flight')
     track_distance = models.IntegerField(null=True, blank=True,
             help_text='The track distance in kilometers')
+    xcontest_tracktype = models.CharField(max_length=64, null=True, blank=True,
+            choices=TRACKTYPE_CHOICES,
+            help_text='XContest track type')
+    xcontest_distance = models.FloatField(null=True, blank=True,
+            help_text='Flight distance in kilometers as calculated by XContest')
     comments = models.TextField(blank=True)
     video = models.URLField(null=True, blank=True,
             help_text='A link to a video of your flight')
