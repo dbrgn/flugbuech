@@ -53,6 +53,8 @@ class Flight(models.Model):
             help_text='XContest track type')
     xcontest_distance = models.FloatField(null=True, blank=True,
             help_text='Flight distance in kilometers as calculated by XContest')
+    xcontest_url = models.URLField(max_length=255, null=True, blank=True,
+            help_text='XContest flight URL')
     comments = models.TextField(blank=True)
     video = models.URLField(null=True, blank=True,
             help_text='A link to a video of your flight')
