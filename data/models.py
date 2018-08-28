@@ -39,8 +39,8 @@ class Flight(models.Model):
     landing_time = models.TimeField(null=True, blank=True)
     max_altitude = models.IntegerField(null=True, blank=True,
             help_text='The max altitude reached during the flight')
-    distance = models.IntegerField(null=True, blank=True,
-            help_text='The flight distance in kilometers')
+    track_distance = models.IntegerField(null=True, blank=True,
+            help_text='The track distance in kilometers')
     comments = models.TextField(blank=True)
     video = models.URLField(null=True, blank=True,
             help_text='A link to a video of your flight')
