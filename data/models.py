@@ -63,6 +63,7 @@ class Flight(models.Model):
         unique_together = [
             ('pilot', 'number'),
         ]
+        ordering = ('-launch_date', '-launch_time', '-pk')
 
     def __str__(self):
         return 'Flight {}'.format(self.pk)
