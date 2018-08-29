@@ -23,7 +23,7 @@ class Location(models.Model):
             help_text='Elevation above sea level (AMSL) in meters')
 
     def __str__(self):
-        return '{} ({})'.format(self.name, self.country)
+        return '{} ({}, {}m)'.format(self.name, self.country, self.altitude)
 
 
 class Flight(models.Model):
