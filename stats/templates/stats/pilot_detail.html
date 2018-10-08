@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Pilot: {{ object.username }}</h2>
+
+<h3>Total</h3>
+<ul>
+    <li>Flüge: {{ flight_count }}</li>
+    <li>Flugstunden: {{ flight_duration }}</li>
+    <li>Startplätze: {{ flight_launches }}</li>
+    <li>Landeplätze: {{ flight_landings }}</li>
+    <li>Länder: {{ flight_countries | join:", " }} ({{ flight_countries | length }})</li>
+</ul>
+
+<h3>Flüge pro Jahr</h3>
+<ul>
+{% for year, count in flight_count_per_year %}
+    <li>{{ year }}: {{ count }}</li>
+{% endfor %}
+</ul>
+
+<h3>Flugstunden pro Jahr</h3>
+<ul>
+{% for year, hours in flight_duration_per_year.items %}
+    <li>{{ year }}: {{ hours }}</li>
+{% endfor %}
+</ul>
+
+{% endblock content %}
