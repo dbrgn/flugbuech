@@ -39,8 +39,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'django_countries',
+    'rest_framework',
 
     'data',
+    'api',
     'stats',
 ]
 
@@ -123,3 +125,17 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/dev/howto/static-files/
 
 STATIC_URL = '/static/'
+
+
+# REST Framework
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.AllowAny',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 50,
+}
