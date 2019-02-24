@@ -1,3 +1,4 @@
-django>=2.1,<2.2
+django>=2.1.6,<2.2
 djangorestframework>=3.9,<3.10
 django-countries>=5.3,<5.4
+django-cors-headers>=2.4,<2.5
