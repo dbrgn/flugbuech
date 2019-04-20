@@ -2,10 +2,10 @@ use diesel::prelude::*;
 use diesel::PgConnection;
 
 use crate::models::*;
-use crate::schema::users::dsl::*;
+use crate::schema::users;
 
 pub(crate) fn get_users(conn: &PgConnection) -> Vec<User> {
-    users
+    users::table
         .load::<User>(conn)
         .expect("Error loading users")
 }
