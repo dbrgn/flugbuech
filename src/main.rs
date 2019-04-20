@@ -1,12 +1,34 @@
 #![feature(proc_macro_hygiene, decl_macro)]
 
-#[macro_use] extern crate rocket;
+#[macro_use]
+extern crate diesel;
+
+mod data;
+mod models;
+mod schema;
+
+use rocket::{get, routes, catchers, catch};
+use rocket::request::Request;
+use rocket_contrib::database;
+
+#[database("flugbuech")]
+struct Database(diesel::PgConnection);
 
 #[get("/")]
-fn index() -> &'static str {
-    "Hello, sky!"
+fn index(db: Database) -> String {
+    let users = data::get_users(&db);
+    format!("Hello, sky!\n\n{} user(s) registered so far.", users.len())
+}
+
+#[catch(503)]
+fn service_not_available(_req: &Request) -> &'static str {
+    "Service is not available. (Is the database up?)"
 }
 
 fn main() {
-    rocket::ignite().mount("/", routes![index]).launch();
+    rocket::ignite()
+        .attach(Database::fairing())
+        .register(catchers![service_not_available])
+        .mount("/", routes![index])
+        .launch();
 }

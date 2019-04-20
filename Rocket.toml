@@ -1,0 +1,2 @@
+[global.databases]
+flugbuech = { url = "postgres://localhost/flugbuech" }
