@@ -16,8 +16,13 @@ struct Database(diesel::PgConnection);
 
 #[get("/")]
 fn index(db: Database) -> String {
-    let users = data::get_users(&db);
-    format!("Hello, sky!\n\n{} user(s) registered so far.", users.len())
+    let user_count = data::get_users(&db).len();
+    let aircraft_count= data::get_aircraft(&db).len();
+    format!(
+        "Hello, sky!\n\nDatabase contains {} users with {} aircraft.",
+        user_count,
+        aircraft_count,
+    )
 }
 
 #[catch(503)]
