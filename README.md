@@ -2,6 +2,12 @@
 
 Flight log for paragliding pilots.
 
+Goals:
+
+- [ ] Allow users to add flights to the database
+- [ ] Show stats about the past flights
+- [ ] Simple submission of of flights by uploading IGC file
+
 ## Setup
 
 Use Rust nightly:
