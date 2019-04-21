@@ -3,7 +3,7 @@ use serde::Serialize;
 
 use crate::schema::{users, aircraft};
 
-#[derive(Identifiable, Queryable, Serialize, PartialEq, Debug)]
+#[derive(Identifiable, Queryable, Serialize, PartialEq, Debug, Clone)]
 #[table_name="users"]
 pub struct User {
     pub id: i32,
@@ -13,7 +13,7 @@ pub struct User {
     pub password: String,
 }
 
-#[derive(Identifiable, Queryable, Associations, Serialize, PartialEq, Debug)]
+#[derive(Identifiable, Queryable, Associations, Serialize, PartialEq, Debug, Clone)]
 #[belongs_to(User, foreign_key="user_id")]
 #[table_name="aircraft"]
 pub struct Aircraft {
