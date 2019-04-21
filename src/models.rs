@@ -7,6 +7,9 @@ use crate::schema::{users, aircraft};
 pub struct User {
     pub id: i32,
     pub username: String,
+    /// Password is automatically hashed on insert or update
+    /// by a PostgreSQL trigger.
+    pub password: String,
 }
 
 #[derive(Identifiable, Queryable, Associations, PartialEq, Debug)]
