@@ -6,6 +6,34 @@
     </head>
     <body>
         <h1>Flugbuech</h1>
-        <p>Database contains {{ user_count }} users with {{ aircraft_count }} aircraft.</p>
+        <p>Database contains {{ users | length }} users with {{ aircraft | length }} aircraft.</p>
+
+        <h2>Users</h2>
+        <table>
+            <tr>
+                <th>Username</th>
+            </tr>
+        {% for user in users %}
+            <tr>
+                <td>{{ user.username }}</td>
+            </tr>
+        {% endfor %}
+        </table>
+
+        <h2>Aircraft</h2>
+        <table>
+            <tr>
+                <th>Owner</th>
+                <th>Manufacturer</th>
+                <th>Model</th>
+            </tr>
+        {% for ac in aircraft %}
+            <tr>
+                <td>{{ ac.user_id }}</td>
+                <td>{{ ac.manufacturer }}</td>
+                <td>{{ ac.model }}</td>
+            </tr>
+        {% endfor %}
+        </table>
     </body>
 </html>

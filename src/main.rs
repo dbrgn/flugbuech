@@ -7,22 +7,28 @@ mod data;
 mod models;
 mod schema;
 
-use std::collections::HashMap;
-
 use rocket::{get, routes, catchers, catch};
 use rocket::request::Request;
 use rocket_contrib::database;
 use rocket_contrib::templates::Template;
+use serde::Serialize;
 
 #[database("flugbuech")]
 struct Database(diesel::PgConnection);
 
+#[derive(Serialize)]
+struct IndexData {
+    users: Vec<models::User>,
+    aircraft: Vec<models::Aircraft>,
+}
+
 #[get("/")]
 fn index(db: Database) -> Template {
-    let mut map = HashMap::new();
-    map.insert("user_count", data::get_users(&db).len());
-    map.insert("aircraft_count", data::get_aircraft(&db).len());
-    Template::render("index", &map)
+    let context = IndexData {
+        users: data::get_users(&db),
+        aircraft: data::get_aircraft(&db),
+    };
+    Template::render("index", &context)
 }
 
 #[catch(503)]
