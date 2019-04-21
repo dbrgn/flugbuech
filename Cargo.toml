@@ -8,6 +8,8 @@ edition = "2018"
 rocket = "0.4"
 diesel = { version = "1.4", features = ["postgres"] }
 dotenv = "0.9"
+igc = "0.2"
+log = "0.4"
 serde = { version = "1", features = ["derive"] }
 
 [dependencies.rocket_contrib]

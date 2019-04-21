@@ -1,24 +1,19 @@
-<!doctype html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <title>Flugbuech</title>
-    </head>
-    <body>
-        <h1>Flugbuech</h1>
+{% extends 'base' %}
 
-        <h2>Users</h2>
-        <table>
-            <tr>
-                <th>Username</th>
-                <th>Aircraft</th>
-            </tr>
-        {% for uwa in users_with_aircraft %}
-            <tr>
-                <td>{{ uwa.0.username }}</td>
-                <td>{% for a in uwa.1 %}{{ a.manufacturer }} {{ a.model }}<br>{% endfor %}</td>
-            </tr>
-        {% endfor %}
-        </table>
-    </body>
-</html>
+{% block content %}
+    <a href="/submit/">Submit new flight</a>
+
+    <h2>Users</h2>
+    <table>
+        <tr>
+            <th>Username</th>
+            <th>Aircraft</th>
+        </tr>
+    {% for uwa in users_with_aircraft %}
+        <tr>
+            <td>{{ uwa.0.username }}</td>
+            <td>{% for a in uwa.1 %}{{ a.manufacturer }} {{ a.model }}<br>{% endfor %}</td>
+        </tr>
+    {% endfor %}
+    </table>
+{% endblock %}

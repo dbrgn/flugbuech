@@ -1,0 +1,41 @@
+{% extends 'base' %}
+
+{% block content %}
+    <h2>Upload</h2>
+    <p>Create a new flight log by uploading an IGC file.</p>
+
+    <input type="file" id="igcFile">
+
+    <script>
+        function submitIgc(blob) {
+            console.log('Submitting data');
+            const request = new Request('/submit/process_igc/', {
+                method: 'POST',
+                mode: 'same-origin',
+                headers: new Headers({'content-type': 'application/octet-stream'}),
+                body: blob,
+            });
+            fetch(request)
+                .then((response) => {
+                    if (response.ok) {
+                        console.log('OK');
+                    } else {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                });
+        };
+
+        document.getElementById('igcFile').addEventListener('change', (e) => {
+            console.log('Change', e);
+            if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+                submitIgc(file);
+                //const reader = new FileReader();
+                //reader.addEventListener('load', (e) => {
+                //    submitIgc(e.target.result);
+                //});
+                //reader.readAsBinaryString(file);
+            }
+        });
+    </script>
+{% endblock %}
