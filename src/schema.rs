@@ -1,9 +1,9 @@
 table! {
     aircraft (id) {
         id -> Int4,
-        pilot_id -> Int4,
-        name -> Varchar,
-        brand -> Varchar,
+        user_id -> Int4,
+        model -> Varchar,
+        manufacturer -> Varchar,
     }
 }
 
@@ -15,7 +15,7 @@ table! {
     }
 }
 
-joinable!(aircraft -> users (pilot_id));
+joinable!(aircraft -> users (user_id));
 
 allow_tables_to_appear_in_same_query!(
     aircraft,

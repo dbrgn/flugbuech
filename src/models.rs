@@ -17,7 +17,7 @@ pub struct User {
 #[table_name="aircraft"]
 pub struct Aircraft {
     pub id: i32,
-    pub pilot_id: i32,
-    pub name: String,
-    pub brand: String,
+    pub user_id: i32,
+    pub model: String,
+    pub manufacturer: String,
 }
