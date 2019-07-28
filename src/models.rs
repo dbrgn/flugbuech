@@ -41,7 +41,7 @@ pub struct Flight {
     /// Primary key
     pub id: i32,
     /// The user-defined flight number
-    pub number: i32,
+    pub number: Option<i32>,
     /// The pilot
     pub user_id: i32,
     /// The aircraft
