@@ -27,6 +27,16 @@ Start server:
 
     cargo run
 
+## Testing
+
+First, set up a test database:
+
+    createdb flugbuech_test
+
+Run tests:
+
+    cargo test
+
 ## License
 
 Licensed under the AGPL version 3 or later. See `LICENSE.md` file.

@@ -6,6 +6,7 @@ extern crate diesel;
 mod data;
 mod models;
 mod schema;
+#[cfg(test)] mod test_utils;
 
 use std::collections::HashMap;
 use std::io::{self, Read, BufRead, BufReader};
