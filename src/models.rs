@@ -76,3 +76,34 @@ pub struct Flight {
     /// Link to a video of your flight
     pub video_url: Option<String>,
 }
+
+#[derive(Insertable, Default)]
+#[table_name="flights"]
+pub struct NewFlight {
+    /// The user-defined flight number
+    pub number: Option<i32>,
+    /// The pilot
+    pub user_id: i32,
+    /// The aircraft
+    pub aircraft_id: Option<i32>,
+    /// Launch location
+    pub launch_at: Option<i32>,
+    /// Landing location
+    pub landing_at: Option<i32>,
+    /// Time of launch
+    pub launch_time: Option<DateTime<Utc>>,
+    /// Time of landing
+    pub landing_time: Option<DateTime<Utc>>,
+    /// GPS track length
+    pub track_distance: Option<f32>,
+    /// XContest tracktype (free_flight, flat_triangle or fai_triangle)
+    pub xcontest_tracktype: Option<String>,
+    /// XContest distance
+    pub xcontest_distance: Option<f32>,
+    /// XContest URL
+    pub xcontest_url: Option<String>,
+    /// Comment your flight
+    pub comment: Option<String>,
+    /// Link to a video of your flight
+    pub video_url: Option<String>,
+}
