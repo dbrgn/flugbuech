@@ -1,2 +1,5 @@
+[development]
+secret_key = "eXqSA0wz+qLlg8umREPesnkBzNlhwaNcp34BttIWLes="
+
 [global.databases]
 flugbuech = { url = "postgres://localhost/flugbuech" }

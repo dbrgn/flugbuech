@@ -3,6 +3,7 @@
 #[macro_use]
 extern crate diesel;
 
+mod auth;
 mod data;
 mod models;
 mod schema;
@@ -16,7 +17,6 @@ use igc::util::{Time, RawPosition};
 use rocket::{get, post, routes, catchers, catch};
 use rocket::data::Data;
 use rocket::request::Request;
-use rocket_contrib::database;
 use rocket_contrib::templates::Template;
 use serde::Serialize;
 
@@ -24,16 +24,14 @@ use serde::Serialize;
 const MAX_UPLOAD_BYTES: u64 = 50 * 1024 * 1024;
 
 
-#[database("flugbuech")]
-struct Database(diesel::PgConnection);
-
 #[derive(Serialize)]
 struct IndexData {
+    user: Option<models::User>,
     users_with_aircraft: Vec<(models::User, Vec<models::Aircraft>)>,
 }
 
 #[get("/")]
-fn index(db: Database) -> Template {
+fn index(db: data::Database, user: Option<auth::AuthUser>) -> Template {
     let mut usermap: HashMap<i32, (models::User, Vec<models::Aircraft>)> = HashMap::new();
     for user in data::get_users(&db) {
         usermap.insert(user.id, (user, vec![]));
@@ -44,6 +42,7 @@ fn index(db: Database) -> Template {
     }
 
     let context = IndexData {
+        user: user.map(|u| u.into_inner()),
         users_with_aircraft: usermap.values().cloned().collect::<Vec<_>>()
     };
     Template::render("index", &context)
@@ -149,9 +148,12 @@ fn service_not_available(_req: &Request) -> &'static str {
 
 fn main() {
     rocket::ignite()
-        .attach(Database::fairing())
+        .attach(data::Database::fairing())
         .attach(Template::fairing())
         .register(catchers![service_not_available])
+        // Main routes
         .mount("/", routes![index, submit, process_igc])
+        // Auth routes
+        .mount("/", auth::get_routes())
         .launch();
 }

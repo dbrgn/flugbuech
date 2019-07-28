@@ -1,10 +1,23 @@
 {% extends 'base' %}
 
 {% block content %}
-    <h2>Upload</h2>
-    <p>Create a new flight log by uploading an IGC file.</p>
+    <h2>Submit Flight</h2>
 
+    <h3>IGC Upload</h3>
+    <p>Pre-fill the form below by uploading an IGC file.</p>
     <input type="file" id="igcFile">
+
+    <h3>Flight details</h3>
+    <ul>
+        <li>
+            <label for="number">Flight Number</label>
+            <input type="number" name="number">
+        </li>
+        <li>
+            <label for="glider">Glider</label>
+            <input type="text" name="glider">
+        </li>
+    </ul>
 
     <script>
         function submitIgc(blob) {

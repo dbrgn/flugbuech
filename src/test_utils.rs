@@ -6,21 +6,48 @@ use diesel::connection::SimpleConnection;
 use diesel::pg::PgConnection;
 use diesel_migrations;
 use dotenv;
+use lazy_static::lazy_static;
 use log::debug;
 
 use crate::models::{User, NewUser};
 use crate::schema::users;
 
-pub(crate) struct DbTestContext {
-    pub(crate) conn: Mutex<PgConnection>,
-    pub(crate) testuser1: User,
-    pub(crate) testuser2: User,
+lazy_static! {
+    static ref DB_MUTEX: Mutex<()> = Mutex::new(());
 }
 
-impl DbTestContext {
+pub struct TestUser {
+    pub user: User,
+    pub password: String,
+}
+
+pub(crate) struct DbTestContext<'a> {
+    /// The database connection.
+    pub(crate) conn: Mutex<PgConnection>,
+
+    /// A pre-created test user.
+    pub(crate) testuser1: TestUser,
+    /// A pre-created test user.
+    pub(crate) testuser2: TestUser,
+
+    /// Used to prevent concurrent database access.
+    #[allow(dead_code)]
+    db_mutex: MutexGuard<'a, ()>,
+}
+
+impl<'a> DbTestContext<'a> {
     pub fn new() -> Self {
         // Load env
         let _ = dotenv::dotenv();
+
+        // Lock mutex
+        //
+        // Because test failures result in a poisoned mutex, we ignore that and
+        // restore the regular mutex.
+        let db_mutex = match DB_MUTEX.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => poisoned.into_inner(),
+        };
 
         // Connect to test database
         debug!("Connecting to test database...");
@@ -53,7 +80,12 @@ impl DbTestContext {
             .get_result(&conn)
             .expect("Could not create test user");
 
-        DbTestContext { conn: Mutex::new(conn), testuser1, testuser2 }
+        DbTestContext {
+            conn: Mutex::new(conn),
+            testuser1: TestUser { user: testuser1, password: "testpass".into() },
+            testuser2: TestUser { user: testuser2, password: "testpass".into() },
+            db_mutex,
+        }
     }
 
     /// Return a connection even if the mutex is poisoned (after another test
