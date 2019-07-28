@@ -6,11 +6,12 @@ edition = "2018"
 license = "AGPL-3.0"
 
 [dependencies]
-rocket = "0.4"
-diesel = { version = "1.4", features = ["postgres"] }
+chrono = { version = "0.4", features = ["serde"] }
+diesel = { version = "1.4", features = ["postgres", "chrono"] }
 dotenv = "0.9"
 igc = "0.2"
 log = "0.4"
+rocket = "0.4"
 serde = { version = "1", features = ["derive"] }
 
 [dependencies.rocket_contrib]
