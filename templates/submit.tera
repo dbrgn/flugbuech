@@ -1,7 +1,8 @@
 {% extends 'base' %}
 
 {% block content %}
-    <h2>Upload</h2>
+    <h2>Submit Flight</h2>
+
     <p>Create a new flight log by uploading an IGC file.</p>
 
     <input type="file" id="igcFile">
