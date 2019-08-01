@@ -25,6 +25,8 @@ use serde::Serialize;
 const MAX_UPLOAD_BYTES: u64 = 50 * 1024 * 1024;
 
 
+// Index
+
 #[derive(Serialize)]
 struct IndexContext {
     user: Option<models::User>,
@@ -49,6 +51,30 @@ fn index(db: data::Database, user: Option<auth::AuthUser>) -> Template {
     Template::render("index", &context)
 }
 
+
+// Profile
+
+#[derive(Serialize)]
+struct ProfileContext {
+    user: models::User,
+    aircraft: Vec<models::Aircraft>,
+}
+
+#[get("/profile")]
+fn profile(user: auth::AuthUser, db: data::Database) -> Template {
+    let user = user.into_inner();
+    let aircraft = data::get_aircraft_for_user(&db, &user);
+    let context = ProfileContext { user, aircraft };
+    Template::render("profile", context)
+}
+
+#[get("/profile", rank = 2)]
+fn profile_nologin() -> Redirect {
+    Redirect::to("/auth/login")
+}
+
+// Submit
+
 #[derive(Serialize)]
 struct SubmitContext {
     user: models::User,
@@ -66,6 +92,9 @@ fn submit(user: auth::AuthUser) -> Template {
 fn submit_nologin() -> Redirect {
     Redirect::to("/auth/login")
 }
+
+
+// Process IGC
 
 #[derive(Debug, PartialEq)]
 struct LaunchLandingInfo {
@@ -154,10 +183,16 @@ fn process_igc(data: Data) -> io::Result<String> {
     Ok("OK".into())
 }
 
+
+// Handle missing DB
+
 #[catch(503)]
 fn service_not_available(_req: &Request) -> &'static str {
     "Service is not available. (Is the database up?)"
 }
+
+
+// Main
 
 fn main() {
     rocket::ignite()
@@ -166,6 +201,8 @@ fn main() {
         .register(catchers![service_not_available])
         // Main routes
         .mount("/", routes![index, submit, submit_nologin, process_igc])
+        // Profile
+        .mount("/", routes![profile, profile_nologin])
         // Auth routes
         .mount("/", auth::get_routes())
         .launch();

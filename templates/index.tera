@@ -1,7 +1,9 @@
 {% extends 'base' %}
 
 {% block content %}
+    {% if user %}
     <a href="/submit/">Submit new flight</a>
+    {% endif %}
 
     <h2>Users</h2>
     <table>

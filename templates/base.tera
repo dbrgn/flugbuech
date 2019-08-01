@@ -9,7 +9,7 @@
         <h1>Flugbuech</h1>
 
         {% if user %}
-        <p>Welcome, {{ user.username }}! <a href="/auth/logout/">Logout</a></p>
+        <p>Welcome, {{ user.username }}! <a href="/profile/">Profile</a> <a href="/auth/logout/">Logout</a></p>
         {% else %}
         <p><a href="/auth/login/">Login</a></p>
         {% endif %}
