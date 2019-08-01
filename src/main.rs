@@ -17,6 +17,7 @@ use igc::util::{Time, RawPosition};
 use rocket::{get, post, routes, catchers, catch};
 use rocket::data::Data;
 use rocket::request::Request;
+use rocket::response::Redirect;
 use rocket_contrib::templates::Template;
 use serde::Serialize;
 
@@ -25,7 +26,7 @@ const MAX_UPLOAD_BYTES: u64 = 50 * 1024 * 1024;
 
 
 #[derive(Serialize)]
-struct IndexData {
+struct IndexContext {
     user: Option<models::User>,
     users_with_aircraft: Vec<(models::User, Vec<models::Aircraft>)>,
 }
@@ -41,17 +42,29 @@ fn index(db: data::Database, user: Option<auth::AuthUser>) -> Template {
         usermap.get_mut(&aircraft.user_id).unwrap().1.push(aircraft)
     }
 
-    let context = IndexData {
+    let context = IndexContext {
         user: user.map(|u| u.into_inner()),
         users_with_aircraft: usermap.values().cloned().collect::<Vec<_>>()
     };
     Template::render("index", &context)
 }
 
+#[derive(Serialize)]
+struct SubmitContext {
+    user: models::User,
+}
+
 #[get("/submit")]
-fn submit() -> Template {
-    let context: HashMap<String, u8> = HashMap::new();
+fn submit(user: auth::AuthUser) -> Template {
+    let context = SubmitContext {
+        user: user.into_inner(),
+    };
     Template::render("submit", context)
+}
+
+#[get("/submit", rank = 2)]
+fn submit_nologin() -> Redirect {
+    Redirect::to("/auth/login")
 }
 
 #[derive(Debug, PartialEq)]
@@ -152,7 +165,7 @@ fn main() {
         .attach(Template::fairing())
         .register(catchers![service_not_available])
         // Main routes
-        .mount("/", routes![index, submit, process_igc])
+        .mount("/", routes![index, submit, submit_nologin, process_igc])
         // Auth routes
         .mount("/", auth::get_routes())
         .launch();
