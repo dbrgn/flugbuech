@@ -33,6 +33,14 @@ pub struct Aircraft {
     pub manufacturer: String,
 }
 
+#[derive(Insertable, Default)]
+#[table_name="aircraft"]
+pub struct NewAircraft {
+    pub user_id: i32,
+    pub model: String,
+    pub manufacturer: String,
+}
+
 #[derive(Identifiable, Queryable, Serialize, PartialEq, Debug, Clone)]
 #[table_name="locations"]
 pub struct Location {

@@ -47,6 +47,13 @@ pub fn get_aircraft(conn: &PgConnection) -> Vec<Aircraft> {
         .expect("Error loading aircraft")
 }
 
+pub fn get_aircraft_for_user(conn: &PgConnection, user: &User) -> Vec<Aircraft> {
+    aircraft::table
+        .filter(aircraft::user_id.eq(user.id))
+        .load::<Aircraft>(conn)
+        .expect("Error loading aircraft")
+}
+
 pub fn get_latest_flight_number(conn: &PgConnection, user: &User) -> Option<i32> {
     Flight::belonging_to(user)
         .select(max(flights::number))
@@ -65,6 +72,7 @@ pub fn create_flight(conn: &PgConnection, flight: NewFlight) -> Flight {
 #[cfg(test)]
 mod tests {
     use crate::test_utils;
+    use crate::models::NewAircraft;
 
     use super::*;
 
@@ -105,6 +113,48 @@ mod tests {
         // The user id is properly taken into account
         let n = get_latest_flight_number(&*ctx.force_get_conn(), &ctx.testuser2.user);
         assert_eq!(n, None);
+    }
+
+    #[test]
+    fn test_get_aircraft_for_user() {
+        let ctx = test_utils::DbTestContext::new();
+
+        // No aircraft
+        let a = get_aircraft_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        assert_eq!(a.len(), 0);
+
+        // Create some aircraft
+        diesel::insert_into(aircraft::table)
+            .values(vec![
+                NewAircraft {
+                    user_id: ctx.testuser1.user.id,
+                    model: "Epsilon 8 23".into(),
+                    manufacturer: "Advance".into(),
+                },
+                NewAircraft {
+                    user_id: ctx.testuser1.user.id,
+                    model: "Green S".into(),
+                    manufacturer: "Team5".into(),
+                },
+                NewAircraft {
+                    user_id: ctx.testuser2.user.id,
+                    model: "Pi 2".into(),
+                    manufacturer: "Advance".into(),
+                },
+            ])
+            .execute(&*ctx.force_get_conn())
+            .expect("Could not create aircraft");
+
+        let a1 = get_aircraft_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        let a2 = get_aircraft_for_user(&*ctx.force_get_conn(), &ctx.testuser2.user);
+        assert_eq!(
+            a1.iter().map(|a| a.model.clone()).collect::<Vec<_>>(),
+            vec!["Epsilon 8 23".to_string(), "Green S".to_string()],
+        );
+        assert_eq!(
+            a2.iter().map(|a| a.model.clone()).collect::<Vec<_>>(),
+            vec!["Pi 2".to_string()],
+        );
     }
 
     #[test]
