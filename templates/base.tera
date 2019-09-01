@@ -2,22 +2,36 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Flugbuech</title>
+        <link rel="stylesheet" href="/static/css/bulma.min.css">
+        <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
     </head>
     <body>
-        <h1>Flugbuech</h1>
+        <!-- Header -->
+        <header class="section">
+            <div class="container">
+                <h1 class="title"><span class="icon fas fa-parachute-box"></span> Flugbuech</h1>
 
-        {% if user %}
-        <p>Welcome, {{ user.username }}! <a href="/profile/">Profile</a> <a href="/auth/logout/">Logout</a></p>
-        {% else %}
-        <p><a href="/auth/login/">Login</a></p>
-        {% endif %}
+                {% if user %}
+                <p>Welcome, {{ user.username }}! <a href="/profile/">Profile</a> <a href="/auth/logout/">Logout</a></p>
+                {% else %}
+                <p><a href="/auth/login/">Login</a></p>
+                {% endif %}
+            </div>
 
-        {% if flash %}
-            <p class="flash">Error: {{ flash }}</p>
-        {% endif %}
+            {% if flash %}
+                <div class="section">
+                    <div class="container">
+                        <div class="notification is-danger">
+                            <p class="flash">Error: {{ flash }}</p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </header>
 
+        <!-- Content -->
         {% block content %}{% endblock %}
     </body>
 </html>

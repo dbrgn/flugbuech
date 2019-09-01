@@ -18,6 +18,7 @@ use rocket::{get, post, routes, catchers, catch};
 use rocket::data::Data;
 use rocket::request::Request;
 use rocket::response::Redirect;
+use rocket_contrib::serve::StaticFiles;
 use rocket_contrib::templates::Template;
 use serde::Serialize;
 
@@ -205,5 +206,7 @@ fn main() {
         .mount("/", routes![profile, profile_nologin])
         // Auth routes
         .mount("/", auth::get_routes())
+        // Static files
+        .mount("/static", StaticFiles::from(concat!(env!("CARGO_MANIFEST_DIR"), "/static")))
         .launch();
 }

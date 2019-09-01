@@ -1,21 +1,27 @@
 {% extends 'base' %}
 
 {% block content %}
-    {% if user %}
-    <a href="/submit/">Submit new flight</a>
-    {% endif %}
+<section class="section">
+    <div class="container">
+        {% if user %}
+        <a href="/submit/">Submit new flight</a>
+        {% endif %}
+    </div>
 
-    <h2>Users</h2>
-    <table>
-        <tr>
-            <th>Username</th>
-            <th>Aircraft</th>
-        </tr>
-    {% for uwa in users_with_aircraft %}
-        <tr>
-            <td>{{ uwa.0.username }}</td>
-            <td>{% for a in uwa.1 %}{{ a.manufacturer }} {{ a.model }}<br>{% endfor %}</td>
-        </tr>
-    {% endfor %}
-    </table>
+    <div class="container">
+        <h2>Users</h2>
+        <table>
+            <tr>
+                <th>Username</th>
+                <th>Aircraft</th>
+            </tr>
+        {% for uwa in users_with_aircraft %}
+            <tr>
+                <td>{{ uwa.0.username }}</td>
+                <td>{% for a in uwa.1 %}{{ a.manufacturer }} {{ a.model }}<br>{% endfor %}</td>
+            </tr>
+        {% endfor %}
+        </table>
+    </div>
+</section>
 {% endblock %}
