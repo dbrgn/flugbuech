@@ -3,7 +3,7 @@
 {% block content %}
 <section class="section">
     <div class="container">
-        <h2 class="title">Login</h2>
+        <h2 class="title is-2">Login</h2>
         <form action="/auth/login" method="post" accept-charset="utf-8">
             <div class="field">
                 <label class="label" for="username">Username</label>

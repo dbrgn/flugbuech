@@ -5,31 +5,65 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Flugbuech</title>
         <link rel="stylesheet" href="/static/css/bulma.min.css">
+        <link rel="stylesheet" href="/static/css/flugbuech.css">
         <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
     </head>
     <body>
-        <!-- Header -->
-        <header class="section">
-            <div class="container">
-                <h1 class="title"><span class="icon fas fa-parachute-box"></span> Flugbuech</h1>
+        <!-- Navbar -->
+        <nav class="navbar" role="navigation" aria-label="main navigation">
+            <div class="navbar-brand">
+                <div class="navbar-item">
+                    <span class="icon is-small fas fa-parachute-box"></span>
+                </div>
 
-                {% if user %}
-                <p>Welcome, {{ user.username }}! <a href="/profile/">Profile</a> <a href="/auth/logout/">Logout</a></p>
-                {% else %}
-                <p><a href="/auth/login/">Login</a></p>
-                {% endif %}
+                <a role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="navbarStuff">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
             </div>
-
-            {% if flash %}
-                <div class="section">
-                    <div class="container">
-                        <div class="notification is-danger">
-                            <p class="flash">Error: {{ flash }}</p>
+            <div id="navbarStuff" class="navbar-menu">
+                <div class="navbar-start">
+                    <a class="navbar-item" href="/">Home</a>
+                </div>
+                <div class="navbar-end">
+                    <div class="navbar-item">
+                        <div class="buttons">
+                            {% if user %}
+                            <a class="button" href="/profile/">Profile</a>
+                            <a class="button" href="/auth/logout/">Logout</a>
+                            {% else %}
+                            <a class="button is-light" href="/auth/login/">Login</a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
-            {% endif %}
-        </header>
+            </div>
+        </nav>
+
+        <!-- Header -->
+        <section class="hero is-medium main-header">
+            <header class="hero-body">
+                <div class="container">
+                    <h1 class="title">Flugbuech</h1>
+                    {% if user %}
+                    <p class="subtitle">Welcome, {{ user.username }}!</p>
+                    {% else %}
+                    <p class="subtitle">Welcome, Guest!</p>
+                    {% endif %}
+                </div>
+            </header>
+        </section>
+
+        {% if flash %}
+            <div class="section">
+                <div class="container">
+                    <div class="notification is-danger">
+                        <p class="flash">Error: {{ flash }}</p>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
 
         <!-- Content -->
         {% block content %}{% endblock %}

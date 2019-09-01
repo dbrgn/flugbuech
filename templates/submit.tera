@@ -1,54 +1,72 @@
 {% extends 'base' %}
 
 {% block content %}
-    <h2>Submit Flight</h2>
+<section class="section">
+    <div class="container">
+        <h2 class="title is-2">Submit Flight</h2>
 
-    <h3>IGC Upload</h3>
-    <p>Pre-fill the form below by uploading an IGC file.</p>
-    <input type="file" id="igcFile">
+        <h3 class="title is-4">IGC Upload</h3>
+        <p>Pre-fill the form below by uploading an IGC file.</p>
+        <div class="file">
+            <label class="file-label">
+                <input class="file-input" type="file" id="igcFile">
+                <span class="file-cta">
+                    <span class="file-icon">
+                        <i class="fas fa-upload"></i>
+                    </span>
+                    <span class="file-label">
+                        Choose a file…
+                    </span>
+                </span>
+            </label>
+        </div>
 
-    <h3>Flight details</h3>
-    <ul>
-        <li>
-            <label for="number">Flight Number</label>
-            <input type="number" name="number">
-        </li>
-        <li>
-            <label for="glider">Glider</label>
-            <input type="text" name="glider">
-        </li>
-    </ul>
+        <h3 class="title is-4">Flight details</h3>
+        <div class="field">
+            <label class="label" for="number">Flight Number</label>
+            <div class="control">
+                <input class="input" type="number" name="number">
+            </div>
+        </div>
+        <div class="field">
+            <label class="label" for="glider">Glider</label>
+            <div class="control">
+                <input class="input" type="text" name="glider">
+            </div>
+        </div>
+    </div>
+</section>
 
-    <script>
-        function submitIgc(blob) {
-            console.log('Submitting data');
-            const request = new Request('/submit/process_igc/', {
-                method: 'POST',
-                mode: 'same-origin',
-                headers: new Headers({'content-type': 'application/octet-stream'}),
-                body: blob,
-            });
-            fetch(request)
-                .then((response) => {
-                    if (response.ok) {
-                        console.log('OK');
-                    } else {
-                        throw new Error(`HTTP ${response.status}`);
-                    }
-                });
-        };
-
-        document.getElementById('igcFile').addEventListener('change', (e) => {
-            console.log('Change', e);
-            if (e.target.files && e.target.files[0]) {
-                const file = e.target.files[0];
-                submitIgc(file);
-                //const reader = new FileReader();
-                //reader.addEventListener('load', (e) => {
-                //    submitIgc(e.target.result);
-                //});
-                //reader.readAsBinaryString(file);
-            }
+<script>
+    function submitIgc(blob) {
+        console.log('Submitting data');
+        const request = new Request('/submit/process_igc/', {
+            method: 'POST',
+            mode: 'same-origin',
+            headers: new Headers({'content-type': 'application/octet-stream'}),
+            body: blob,
         });
-    </script>
+        fetch(request)
+            .then((response) => {
+                if (response.ok) {
+                    console.log('OK');
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            });
+    };
+
+    document.getElementById('igcFile').addEventListener('change', (e) => {
+        console.log('Change', e);
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            submitIgc(file);
+            //const reader = new FileReader();
+            //reader.addEventListener('load', (e) => {
+            //    submitIgc(e.target.result);
+            //});
+            //reader.readAsBinaryString(file);
+        }
+    });
+</script>
 {% endblock %}

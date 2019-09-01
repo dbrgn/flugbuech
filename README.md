@@ -55,3 +55,7 @@ Licensed under the AGPL version 3 or later. See `LICENSE.md` file.
 
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+## Credits
+
+- Background photo by [eberhard grossgasteiger on Unsplash](https://unsplash.com/photos/15KSFB1n0FU)
