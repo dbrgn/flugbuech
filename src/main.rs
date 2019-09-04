@@ -13,11 +13,12 @@ use std::collections::HashMap;
 use std::io::{self, Read, BufRead, BufReader};
 
 use igc::records::{Record, HRecord};
-use igc::util::{Time, RawPosition};
+use igc::util::RawPosition;
 use rocket::{get, post, routes, catchers, catch};
 use rocket::data::Data;
-use rocket::request::Request;
+use rocket::request::{Request, FromForm};
 use rocket::response::Redirect;
+use rocket_contrib::json::Json;
 use rocket_contrib::serve::StaticFiles;
 use rocket_contrib::templates::Template;
 use serde::Serialize;
@@ -76,6 +77,11 @@ fn profile_nologin() -> Redirect {
 
 // Submit
 
+#[derive(FromForm)]
+struct SubmitForm {
+    number: Option<i32>,
+}
+
 #[derive(Serialize)]
 struct SubmitContext {
     user: models::User,
@@ -97,22 +103,37 @@ fn submit_nologin() -> Redirect {
 
 // Process IGC
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize)]
+struct LatLon {
+    lat: f64,
+    lon: f64,
+}
+
+impl From<RawPosition> for LatLon {
+    fn from(pos: RawPosition) -> Self {
+        Self {
+            lat: pos.lat.into(),
+            lon: pos.lon.into(),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Serialize)]
 struct LaunchLandingInfo {
-    pos: RawPosition,
+    pos: LatLon,
     alt: i16,
-    time: Time,
+    time_hms: (u8, u8, u8),
 }
 
 impl LaunchLandingInfo {
     fn seconds_since_midnight(&self) -> u32 {
-        u32::from(self.time.hours) * 24 * 60 +
-        u32::from(self.time.minutes) * 60 +
-        u32::from(self.time.seconds)
+        u32::from(self.time_hms.0) * 24 * 60 +
+        u32::from(self.time_hms.1) * 60 +
+        u32::from(self.time_hms.2)
     }
 }
 
-#[derive(Default, Debug, PartialEq)]
+#[derive(Default, Debug, PartialEq, Serialize)]
 struct FlightInfo {
     /// Name of the pilot, as configured in the flight instrument.
     pilot: Option<String>,
@@ -142,11 +163,26 @@ impl FlightInfo {
     }
 }
 
+#[derive(Debug, Serialize)]
+#[serde(tag = "type")]
+#[serde(rename_all = "lowercase")]
+enum FlightInfoResult {
+    Success(FlightInfo),
+    Error(String),
+}
+
+/// Process IGC file, return parsed data.
+///
+/// This endpoint is meant to be called from a XmlHttpRequest.
 #[post("/submit/process_igc", format = "application/octet-stream", data = "<data>")]
-fn process_igc(data: Data) -> io::Result<String> {
+fn process_igc(data: Data, db: data::Database) -> Json<FlightInfoResult> {
+    // Read IGC file, create FlightInfo instance
     let reader = data.open().take(MAX_UPLOAD_BYTES);
     let buf_reader = BufReader::new(reader);
-    let lines = buf_reader.lines().collect::<Result<Vec<String>, io::Error>>()?;
+    let lines = match buf_reader.lines().collect::<Result<Vec<String>, io::Error>>() {
+        Ok(res) => res,
+        Err(e) => return Json(FlightInfoResult::Error(format!("I/O Error: {}", e))),
+    };
     let mut info = FlightInfo::default();
     for line in &lines {
         match Record::parse_line(&line) {
@@ -163,25 +199,33 @@ fn process_igc(data: Data) -> io::Result<String> {
                 println!("{}: {} (GPS) / {} (Baro)", b.timestamp, b.gps_alt, b.pressure_alt);
                 if info.launch.is_none() {
                     info.launch = Some(LaunchLandingInfo {
-                        pos: b.pos,
+                        pos: b.pos.into(),
                         alt: b.gps_alt,
-                        time: b.timestamp,
+                        time_hms: (b.timestamp.hours, b.timestamp.minutes, b.timestamp.seconds),
                     });
                 } else {
                     info.landing = Some(LaunchLandingInfo {
-                        pos: b.pos,
+                        pos: b.pos.into(),
                         alt: b.gps_alt,
-                        time: b.timestamp,
+                        time_hms: (b.timestamp.hours, b.timestamp.minutes, b.timestamp.seconds),
                     });
                 }
             }
             Ok(_rec) => {},
-            Err(e) => return Ok(format!("Error parsing lines: {:?}", e)),
+            Err(e) => return Json(FlightInfoResult::Error(format!("Error parsing lines: {:?}", e))),
         }
     }
     println!("Info: {:#?}", info);
     println!("Flight duration: {:?} seconds", info.duration());
-    Ok("OK".into())
+
+    // Create a flight
+    //let flight = data::create_flight(&db, models::NewFlight {
+    //    user_id: 0,
+    //    ..Default::default()
+    //});
+    //println!("{:?}", flight);
+
+    Json(FlightInfoResult::Success(info))
 }
 
 

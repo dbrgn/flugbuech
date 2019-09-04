@@ -25,6 +25,9 @@
             <div id="navbarStuff" class="navbar-menu">
                 <div class="navbar-start">
                     <a class="navbar-item" href="/">Home</a>
+                    {% if user %}
+                    <a class="navbar-item" href="/submit/">Submit flight</a>
+                    {% endif %}
                 </div>
                 <div class="navbar-end">
                     <div class="navbar-item">

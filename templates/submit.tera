@@ -46,10 +46,18 @@
             headers: new Headers({'content-type': 'application/octet-stream'}),
             body: blob,
         });
-        fetch(request)
+        return fetch(request)
             .then((response) => {
                 if (response.ok) {
-                    console.log('OK');
+                    response.json().then((data) => {
+                        if (data.type === 'success') {
+                            console.log('data: ', data);
+                        } else if (data.type === 'error') {
+                            throw new Error(data.error);
+                        } else {
+                            throw new Error('Malformed response');
+                        }
+                    });
                 } else {
                     throw new Error(`HTTP ${response.status}`);
                 }
@@ -60,12 +68,10 @@
         console.log('Change', e);
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            submitIgc(file);
-            //const reader = new FileReader();
-            //reader.addEventListener('load', (e) => {
-            //    submitIgc(e.target.result);
-            //});
-            //reader.readAsBinaryString(file);
+            submitIgc(file)
+                .catch((e) => {
+                    alert(`Could not process IGC file: ${e}`);
+                });
         }
     });
 </script>
