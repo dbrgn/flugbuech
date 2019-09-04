@@ -26,6 +26,7 @@
                 <div class="navbar-start">
                     <a class="navbar-item" href="/">Home</a>
                     {% if user %}
+                    <a class="navbar-item" href="/profile/">Profile</a>
                     <a class="navbar-item" href="/submit/">Submit flight</a>
                     {% endif %}
                 </div>
@@ -33,7 +34,6 @@
                     <div class="navbar-item">
                         <div class="buttons">
                             {% if user %}
-                            <a class="button" href="/profile/">Profile</a>
                             <a class="button" href="/auth/logout/">Logout</a>
                             {% else %}
                             <a class="button is-light" href="/auth/login/">Login</a>

@@ -1,26 +1,43 @@
 {% extends 'base' %}
 
 {% block content %}
-    <h2>Profile</h2>
+<section class="section">
+    <div class="container">
+        <h2 class="title is-2">Profile</h2>
 
-    <p>Welcome, {{ user.username }}! Here you can update your profile and gear.</p>
+        <p>Welcome, {{ user.username }}! Here you can update your profile and gear.</p>
+    </div>
+</section>
 
-    <h3>Gear</h3>
-    <p>Your gliders ({{ aircraft|length }}):</p>
-    <table>
-        <thead>
-            <tr>
-                <th>Manufacturer</th>
-                <th>Model</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for glider in aircraft %}
-            <tr>
-                <td>{{ glider.manufacturer }}</td>
-                <td>{{ glider.model }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<section class="section">
+    <div class="container">
+        <h3 class="title is-4">Gear</h3>
+        <h4 class="subtitle is-6">{{ aircraft|length }} gliders registered so far.</h4>
+        <table class="table is-hoverable">
+            <thead>
+                <tr>
+                    <th>Manufacturer</th>
+                    <th>Model</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for glider in aircraft %}
+                <tr>
+                    <td>{{ glider.manufacturer }}</td>
+                    <td>{{ glider.model }}</td>
+                    <td>
+                        <a href="#">
+                            <span class="icon"><i class="fas fa-pen-square"></i></span>
+                        </a>
+                        <a href="#">
+                            <span class="icon has-text-danger"><i class="fas fa-trash-alt"></i></span>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
 {% endblock %}
