@@ -6,25 +6,21 @@ extern crate diesel;
 mod auth;
 mod data;
 mod models;
+mod process_igc;
 mod schema;
 #[cfg(test)] mod test_utils;
 
 use std::collections::HashMap;
-use std::io::{self, Read, BufRead, BufReader};
 
-use igc::records::{Record, HRecord};
-use igc::util::RawPosition;
-use rocket::{get, post, routes, catchers, catch};
-use rocket::data::Data;
+use rocket::{get, routes, catchers, catch};
 use rocket::request::{Request, FromForm};
 use rocket::response::Redirect;
-use rocket_contrib::json::Json;
 use rocket_contrib::serve::StaticFiles;
 use rocket_contrib::templates::Template;
 use serde::Serialize;
 
 
-const MAX_UPLOAD_BYTES: u64 = 50 * 1024 * 1024;
+pub(crate) const MAX_UPLOAD_BYTES: u64 = 50 * 1024 * 1024;
 
 
 // Index
@@ -101,134 +97,6 @@ fn submit_nologin() -> Redirect {
 }
 
 
-// Process IGC
-
-#[derive(Debug, PartialEq, Serialize)]
-struct LatLon {
-    lat: f64,
-    lon: f64,
-}
-
-impl From<RawPosition> for LatLon {
-    fn from(pos: RawPosition) -> Self {
-        Self {
-            lat: pos.lat.into(),
-            lon: pos.lon.into(),
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Serialize)]
-struct LaunchLandingInfo {
-    pos: LatLon,
-    alt: i16,
-    time_hms: (u8, u8, u8),
-}
-
-impl LaunchLandingInfo {
-    fn seconds_since_midnight(&self) -> u32 {
-        u32::from(self.time_hms.0) * 24 * 60 +
-        u32::from(self.time_hms.1) * 60 +
-        u32::from(self.time_hms.2)
-    }
-}
-
-#[derive(Default, Debug, PartialEq, Serialize)]
-struct FlightInfo {
-    /// Name of the pilot, as configured in the flight instrument.
-    pilot: Option<String>,
-    /// Name of the glider, as configured in the flight instrument.
-    glidertype: Option<String>,
-    /// Name of the launch site, as configured in the flight instrument.
-    site: Option<String>,
-    /// Lauch infos.
-    launch: Option<LaunchLandingInfo>,
-    /// Landing infos.
-    landing: Option<LaunchLandingInfo>,
-}
-
-impl FlightInfo {
-    fn duration(&self) -> Option<u32> {
-        if let (Some(launch), Some(landing)) = (&self.launch, &self.landing) {
-            let launch_seconds = launch.seconds_since_midnight();
-            let landing_seconds = landing.seconds_since_midnight();
-            if landing_seconds > launch_seconds {
-                Some(landing_seconds - launch_seconds)
-            } else {
-                Some(86400 - launch_seconds + landing_seconds)
-            }
-        } else {
-            None
-        }
-    }
-}
-
-#[derive(Debug, Serialize)]
-#[serde(tag = "type")]
-#[serde(rename_all = "lowercase")]
-enum FlightInfoResult {
-    Success(FlightInfo),
-    Error(String),
-}
-
-/// Process IGC file, return parsed data.
-///
-/// This endpoint is meant to be called from a XmlHttpRequest.
-#[post("/submit/process_igc", format = "application/octet-stream", data = "<data>")]
-fn process_igc(data: Data, db: data::Database) -> Json<FlightInfoResult> {
-    // Read IGC file, create FlightInfo instance
-    let reader = data.open().take(MAX_UPLOAD_BYTES);
-    let buf_reader = BufReader::new(reader);
-    let lines = match buf_reader.lines().collect::<Result<Vec<String>, io::Error>>() {
-        Ok(res) => res,
-        Err(e) => return Json(FlightInfoResult::Error(format!("I/O Error: {}", e))),
-    };
-    let mut info = FlightInfo::default();
-    for line in &lines {
-        match Record::parse_line(&line) {
-            Ok(Record::H(h @ HRecord { mnemonic: "PLT", .. })) => {
-                info.pilot = Some(h.data.trim().into());
-            }
-            Ok(Record::H(h @ HRecord { mnemonic: "GTY", .. })) => {
-                info.glidertype = Some(h.data.trim().into());
-            }
-            Ok(Record::H(h @ HRecord { mnemonic: "SIT", .. })) => {
-                info.site = Some(h.data.trim().into());
-            }
-            Ok(Record::B(b)) => {
-                println!("{}: {} (GPS) / {} (Baro)", b.timestamp, b.gps_alt, b.pressure_alt);
-                if info.launch.is_none() {
-                    info.launch = Some(LaunchLandingInfo {
-                        pos: b.pos.into(),
-                        alt: b.gps_alt,
-                        time_hms: (b.timestamp.hours, b.timestamp.minutes, b.timestamp.seconds),
-                    });
-                } else {
-                    info.landing = Some(LaunchLandingInfo {
-                        pos: b.pos.into(),
-                        alt: b.gps_alt,
-                        time_hms: (b.timestamp.hours, b.timestamp.minutes, b.timestamp.seconds),
-                    });
-                }
-            }
-            Ok(_rec) => {},
-            Err(e) => return Json(FlightInfoResult::Error(format!("Error parsing lines: {:?}", e))),
-        }
-    }
-    println!("Info: {:#?}", info);
-    println!("Flight duration: {:?} seconds", info.duration());
-
-    // Create a flight
-    //let flight = data::create_flight(&db, models::NewFlight {
-    //    user_id: 0,
-    //    ..Default::default()
-    //});
-    //println!("{:?}", flight);
-
-    Json(FlightInfoResult::Success(info))
-}
-
-
 // Handle missing DB
 
 #[catch(503)]
@@ -245,7 +113,7 @@ fn main() {
         .attach(Template::fairing())
         .register(catchers![service_not_available])
         // Main routes
-        .mount("/", routes![index, submit, submit_nologin, process_igc])
+        .mount("/", routes![index, submit, submit_nologin, process_igc::process_igc])
         // Profile
         .mount("/", routes![profile, profile_nologin])
         // Auth routes
