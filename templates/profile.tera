@@ -12,7 +12,7 @@
 <section class="section">
     <div class="container">
         <h3 class="title is-4">Gear</h3>
-        <h4 class="subtitle is-6">{{ aircraft|length }} gliders registered so far.</h4>
+        <h4 class="subtitle is-6">{{ aircraft_list|length }} gliders registered so far.</h4>
         <table class="table is-hoverable">
             <thead>
                 <tr>
@@ -22,10 +22,10 @@
                 </tr>
             </thead>
             <tbody>
-                {% for glider in aircraft %}
+                {% for aircraft in aircraft_list %}
                 <tr>
-                    <td>{{ glider.manufacturer }}</td>
-                    <td>{{ glider.model }}</td>
+                    <td>{{ aircraft.manufacturer }}</td>
+                    <td>{{ aircraft.model }}</td>
                     <td>
                         <a href="#">
                             <span class="icon"><i class="fas fa-pen-square"></i></span>

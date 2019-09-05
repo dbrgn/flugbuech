@@ -55,14 +55,14 @@ fn index(db: data::Database, user: Option<auth::AuthUser>) -> Template {
 #[derive(Serialize)]
 struct ProfileContext {
     user: models::User,
-    aircraft: Vec<models::Aircraft>,
+    aircraft_list: Vec<models::Aircraft>,
 }
 
 #[get("/profile")]
 fn profile(user: auth::AuthUser, db: data::Database) -> Template {
     let user = user.into_inner();
-    let aircraft = data::get_aircraft_for_user(&db, &user);
-    let context = ProfileContext { user, aircraft };
+    let aircraft_list = data::get_aircraft_for_user(&db, &user);
+    let context = ProfileContext { user, aircraft_list };
     Template::render("profile", context)
 }
 
@@ -81,13 +81,14 @@ struct SubmitForm {
 #[derive(Serialize)]
 struct SubmitContext {
     user: models::User,
+    aircraft_list: Vec<models::Aircraft>,
 }
 
 #[get("/submit")]
-fn submit(user: auth::AuthUser) -> Template {
-    let context = SubmitContext {
-        user: user.into_inner(),
-    };
+fn submit(user: auth::AuthUser, db: data::Database) -> Template {
+    let user = user.into_inner();
+    let aircraft_list = data::get_aircraft_for_user(&db, &user);
+    let context = SubmitContext { user, aircraft_list };
     Template::render("submit", context)
 }
 

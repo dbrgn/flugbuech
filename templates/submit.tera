@@ -24,20 +24,76 @@
         <h3 class="title is-4">Flight details</h3>
         <div class="field">
             <label class="label" for="number">Flight Number</label>
-            <div class="control">
+            <div class="control has-icons-left">
                 <input class="input" type="number" name="number">
+                <div class="icon is-small is-left">
+                    <i class="fas fa-list-ol"></i>
+                </div>
             </div>
         </div>
         <div class="field">
-            <label class="label" for="glider">Glider</label>
-            <div class="control">
-                <input class="input" type="text" name="glider">
+            <label class="label" for="aircraft">Aircraft</label>
+            <div class="control has-icons-left">
+                <div class="select">
+                    <select name="aircraft">
+                        {% for aircraft in aircraft_list %}
+                        <option value="{{ aircraft.id }}">{{ aircraft.manufacturer }} {{ aircraft.model }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="icon is-small is-left">
+                        <i class="fas fa-parachute-box"></i>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </section>
 
 <script>
+    const aircraftList = [
+        {%- for aircraft in aircraft_list %}
+        {
+            "id": {{ aircraft.id }},
+            "model": {{ aircraft.model | safe | json_encode() }},
+            "manufacturer": {{ aircraft.manufacturer | safe | json_encode() }},
+        },
+        {%- endfor %}
+    ];
+
+    /**
+     * Match an aircraft name against the list of aircraft.
+     * If the model or the manufacturer + model match, return the corresponding id.
+     * Otherwise, return null.
+     */
+    aircraftList.match = function(value) {
+        if (value) {
+            for (aircraft of this) {
+                if (value === aircraft.model) {
+                    return aircraft.id;
+                }
+                if (value === `${aircraft.manufacturer} ${aircraft.model}`) {
+                    return aircraft.id;
+                }
+            }
+        }
+        return null;
+    }
+
+    function processData(data) {
+        console.log('data: ', data);
+
+        const aircraftId = aircraftList.match(data.glidertype);
+        if (aircraftId !== null) {
+            const options = document.querySelector('select[name=aircraft]');
+            for (const option of options.children) {
+                if (option.value === aircraftId.toString()) {
+                    option.selected = true;
+                    break;
+                }
+            }
+        }
+    }
+
     function submitIgc(blob) {
         console.log('Submitting data');
         const request = new Request('/submit/process_igc/', {
@@ -51,7 +107,7 @@
                 if (response.ok) {
                     response.json().then((data) => {
                         if (data.type === 'success') {
-                            console.log('data: ', data);
+                            processData(data);
                         } else if (data.type === 'error') {
                             throw new Error(data.error);
                         } else {
