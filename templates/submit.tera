@@ -22,20 +22,22 @@
         </div>
 
         <h3 class="title is-4">Flight details</h3>
+
+        <label class="label" for="number">Flight Number</label>
         <div class="field">
-            <label class="label" for="number">Flight Number</label>
             <div class="control has-icons-left">
-                <input class="input" type="number" name="number">
+                <input class="input" type="number" id="number" name="number">
                 <div class="icon is-small is-left">
                     <i class="fas fa-list-ol"></i>
                 </div>
             </div>
         </div>
+
+        <label class="label" for="aircraft">Aircraft</label>
         <div class="field">
-            <label class="label" for="aircraft">Aircraft</label>
-            <div class="control has-icons-left">
-                <div class="select">
-                    <select name="aircraft">
+            <div class="control is-expanded has-icons-left">
+                <div class="select is-fullwidth">
+                    <select name="aircraft" id="aircraft">
                         {% for aircraft in aircraft_list %}
                         <option value="{{ aircraft.id }}">{{ aircraft.manufacturer }} {{ aircraft.model }}</option>
                         {% endfor %}
@@ -45,6 +47,60 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <label class="label" for="launchSite">Launch Site</label>
+        <div class="field">
+            <div class="control has-icons-left">
+                <input class="input" type="text" id="launchSite" name="launchSite">
+                <div class="icon is-small is-left">
+                    <i class="fas fa-plane-departure"></i>
+                </div>
+            </div>
+        </div>
+
+        <label class="label" for="landingSite">Landing Site</label>
+        <div class="field">
+            <div class="control has-icons-left">
+                <input class="input" type="text" id="landingSite", name="landingSite">
+                <div class="icon is-small is-left">
+                    <i class="fas fa-plane-arrival"></i>
+                </div>
+            </div>
+        </div>
+
+
+        <label class="label" for="launchDate">Launch Date</label>
+        <div class="field">
+            <div class="control has-icons-left">
+                <input class="input" type="date" id="launchDate" name="launchDate">
+                <div class="icon is-small is-left">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+            </div>
+        </div>
+
+        <label class="label" for="launchTime">Launch Time</label>
+        <div class="field">
+            <div class="control has-icons-left">
+                <input class="input" type="time" step="60" id="launchTime" name="launchTime">
+                <div class="icon is-small is-left">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+        </div>
+
+        <label class="label" for="landingTime">Landing Time</label>
+        <div class="field has-addons">
+            <div class="control is-expanded has-icons-left">
+                <input class="input" type="time" step="60" id="landingTime" name="landingTime">
+                <div class="icon is-small is-left">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+            <p class="control" id="flightDuration" style="display: none;">
+                <a class="button is-static"></a>
+            </p>
         </div>
     </div>
 </section>
@@ -79,9 +135,41 @@
         return null;
     }
 
+    function hmsToTimevalue(hms) {
+        const hours = hms[0];
+        const minutes = Math.round(hms[1] + hms[2] / 100);
+        return `${hours}:${minutes}`;
+    }
+
+    function recalculateDuration() {
+        const launchTime = document.getElementById('launchTime').value;
+        const landingTime = document.getElementById('landingTime').value;
+        const flightDuration = document.getElementById('flightDuration');
+        if (launchTime && landingTime) {
+            const [launchHour, launchMinute] = launchTime.split(':').map(v => parseInt(v));
+            const [landingHour, landingMinute] = landingTime.split(':').map(v => parseInt(v));
+
+            const launch = launchHour * 60 + launchMinute;
+            const landing = landingHour * 60 + landingMinute;
+            let duration = landing - launch;
+            if (duration < 0) {
+                duration += 1440;
+            }
+            const hours = Math.floor(duration / 60);
+            const minutes = duration % 60;
+
+            flightDuration.children[0].text = `+${hours}:${minutes}`;
+            flightDuration.style.display = 'block';
+        } else {
+            flightDuration.children[0].text = '';
+            flightDuration.style.display = 'none';
+        }
+    }
+
     function processData(data) {
         console.log('data: ', data);
 
+        // Determine aircraft
         const aircraftId = aircraftList.match(data.glidertype);
         if (aircraftId !== null) {
             const options = document.querySelector('select[name=aircraft]');
@@ -92,6 +180,20 @@
                 }
             }
         }
+
+        // Determine launch time
+        if (data.launch && data.launch.time_hms) {
+            const launchTime = document.querySelector('input[name=launchTime]');
+            launchTime.value = hmsToTimevalue(data.launch.time_hms);
+        }
+
+        // Determine landing time
+        if (data.landing && data.landing.time_hms) {
+            const landingTime = document.querySelector('input[name=landingTime]');
+            landingTime.value = hmsToTimevalue(data.landing.time_hms);
+        }
+
+        recalculateDuration();
     }
 
     function submitIgc(blob) {
@@ -130,5 +232,8 @@
                 });
         }
     });
+
+    document.getElementById('launchTime').addEventListener('change', recalculateDuration);
+    document.getElementById('landingTime').addEventListener('change', recalculateDuration);
 </script>
 {% endblock %}
