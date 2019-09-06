@@ -181,6 +181,15 @@
             }
         }
 
+        // Determine flight date
+        if (data.date_ymd) {
+            const launchDate = document.querySelector('input[name=launchDate]');
+            const y = data.date_ymd[0].toString();
+            const m = data.date_ymd[1].toString().padStart(2, '0');
+            const d = data.date_ymd[2].toString().padStart(2, '0');
+            launchDate.value = `${y}-${m}-${d}`;
+        }
+
         // Determine launch time
         if (data.launch && data.launch.time_hms) {
             const launchTime = document.querySelector('input[name=launchTime]');

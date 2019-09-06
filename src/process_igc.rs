@@ -48,6 +48,8 @@ pub(crate) struct FlightInfo {
     glidertype: Option<String>,
     /// Name of the launch site, as configured in the flight instrument.
     site: Option<String>,
+    /// Date of flight (YYYY, MM, DD).
+    date_ymd: Option<(u16, u8, u8)>,
     /// Lauch infos.
     launch: Option<LaunchLandingInfo>,
     /// Landing infos.
@@ -101,6 +103,22 @@ pub(crate) fn process_igc(data: Data) -> Json<FlightInfoResult> {
             }
             Ok(Record::H(h @ HRecord { mnemonic: "SIT", .. })) => {
                 info.site = Some(h.data.trim().into());
+            }
+            Ok(Record::H(h @ HRecord { mnemonic: "DTE", .. })) => {
+                let string_val = h.data.trim();
+                if string_val.len() == 6 {
+                    if let (Ok(day), Ok(month), Ok(year)) = (
+                        string_val.get(0..2).unwrap().parse::<u8>(),
+                        string_val.get(2..4).unwrap().parse::<u8>(),
+                        string_val.get(4..6).unwrap().parse::<u16>(),
+                    ) {
+                        info.date_ymd = Some((
+                            if year > 85 { 1900 + year } else { 2000 + year },
+                            month,
+                            day
+                        ));
+                    }
+                }
             }
             Ok(Record::B(b)) => {
                 println!("{}: {} (GPS) / {} (Baro)", b.timestamp, b.gps_alt, b.pressure_alt);
