@@ -17,3 +17,11 @@
 .navbar-brand .navbar-item {
     margin-left: 8px;
 }
+
+.submitcontrols {
+    margin-top: 48px;
+}
+
+.submitform form h3.title {
+    margin-top: 48px;
+}

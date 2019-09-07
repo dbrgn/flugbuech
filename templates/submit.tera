@@ -1,10 +1,14 @@
 {% extends 'base' %}
 
+{% block sectionclass %}submitform{% endblock %}
+
 {% block content %}
 <h2 class="title is-2">Submit Flight</h2>
 
 <p class="content">Fill out this form to submit a flight. If you upload an IGC
 file, some of the fields will be automatically filled for you.</p>
+
+<form action="/submit/" method="post">
 
 <h3 class="title is-4">Basic Information</h3>
 
@@ -51,6 +55,7 @@ file, some of the fields will be automatically filled for you.</p>
         </div>
     </div>
 </div>
+
 
 <h3 class="title is-4">Launch &amp; Landing</h3>
 
@@ -202,6 +207,12 @@ file, some of the fields will be automatically filled for you.</p>
         </div>
     </div>
 </div>
+
+<div class="control submitcontrols">
+    <button type="submit" class="button is-info">Submit</button>
+</div>
+
+</form>
 
 <script>
     const aircraftList = [

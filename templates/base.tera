@@ -59,7 +59,7 @@
         </section>
 
         <!-- Content -->
-        <div class="section">
+        <div class="section {% block sectionclass %}{% endblock %}">
             {% if flash %}
             <div class="container">
                 <div class="notification is-danger">
