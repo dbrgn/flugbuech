@@ -1,37 +1,26 @@
 {% extends 'base' %}
 
 {% block content %}
-
-<section class="section">
-    <div class="container">
-        <h2 class="title is-2">Overview</h2>
-    </div>
-</section>
+<h2 class="title is-2">Overview</h2>
 
 {% if user %}
-<section class="section">
-    <div class="container">
-        <h3 class="title is-4">Flights</h3>
-        <a class="button is-primary" href="/submit/">Submit new flight</a>
-    </div>
-</section>
+    <h3 class="title is-4">Flights</h3>
+    <p class="content">
+        <a href="/submit/">Submit new flight</a>
+    <p>
 {% endif %}
 
-<section class="section">
-    <div class="container">
-        <h3 class="title is-4">Users</h3>
-        <table class="table is-bordered is-hoverable">
-            <tr>
-                <th>Username</th>
-                <th>Aircraft</th>
-            </tr>
-        {% for uwa in users_with_aircraft %}
-            <tr>
-                <td>{{ uwa.0.username }}</td>
-                <td>{% for a in uwa.1 %}{{ a.manufacturer }} {{ a.model }}<br>{% endfor %}</td>
-            </tr>
-        {% endfor %}
-        </table>
-    </div>
-</section>
+<h3 class="title is-4">Users</h3>
+<table class="table is-bordered is-hoverable">
+    <tr>
+        <th>Username</th>
+        <th>Aircraft</th>
+    </tr>
+{% for uwa in users_with_aircraft %}
+    <tr>
+        <td>{{ uwa.0.username }}</td>
+        <td>{% for a in uwa.1 %}{{ a.manufacturer }} {{ a.model }}<br>{% endfor %}</td>
+    </tr>
+{% endfor %}
+</table>
 {% endblock %}

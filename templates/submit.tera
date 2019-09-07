@@ -1,131 +1,168 @@
 {% extends 'base' %}
 
 {% block content %}
-<section class="section">
-    <div class="container">
-        <h2 class="title is-2">Submit Flight</h2>
+<h2 class="title is-2">Submit Flight</h2>
 
-        <h3 class="title is-4">Basic Information</h3>
+<p class="content">Fill out this form to submit a flight. If you upload an IGC
+file, some of the fields will be automatically filled for you.</p>
 
-        <label class="label">IGC Flight Recording</label>
-        <div class="field">
-            <div class="file has-name">
-                <label class="file-label">
-                    <input class="file-input" type="file" name="igcFile" id="igcFile" accept=".igc">
-                    <span class="file-cta">
-                        <span class="file-icon">
-                            <i class="fas fa-upload"></i>
-                        </span>
-                        <span class="file-label">
-                            Click to upload
-                        </span>
-                    </span>
-                    <span class="file-name" id="igcFilename">No file selected…</span>
-                </label>
+<h3 class="title is-4">Basic Information</h3>
+
+<label class="label">IGC Flight Recording</label>
+<div class="field">
+    <div class="file has-name">
+        <label class="file-label">
+            <input class="file-input" type="file" name="igcFile" id="igcFile" accept=".igc">
+            <span class="file-cta">
+                <span class="file-icon">
+                    <i class="fas fa-upload"></i>
+                </span>
+                <span class="file-label">
+                    Click to upload IGC file
+                </span>
+            </span>
+            <span class="file-name" id="igcFilename">No file selected…</span>
+        </label>
+    </div>
+</div>
+
+<label class="label" for="number">Flight Number</label>
+<div class="field">
+    <div class="control has-icons-left">
+        <input class="input" type="number" id="number" name="number">
+        <div class="icon is-small is-left">
+            <i class="fas fa-list-ol"></i>
+        </div>
+    </div>
+</div>
+
+<label class="label" for="aircraft">Aircraft</label>
+<div class="field">
+    <div class="control is-expanded has-icons-left">
+        <div class="select is-fullwidth">
+            <select name="aircraft" id="aircraft">
+                {% for aircraft in aircraft_list %}
+                <option value="{{ aircraft.id }}">{{ aircraft.manufacturer }} {{ aircraft.model }}</option>
+                {% endfor %}
+            </select>
+            <div class="icon is-small is-left">
+                <i class="fas fa-parachute-box"></i>
             </div>
         </div>
+    </div>
+</div>
 
-        <label class="label" for="number">Flight Number</label>
+<h3 class="title is-4">Launch &amp; Landing</h3>
+
+<div class="columns">
+    <div class="column">
+        <label class="label" for="launchSite">Launch Site</label>
         <div class="field">
             <div class="control has-icons-left">
-                <input class="input" type="number" id="number" name="number">
+                <input class="input" type="text" id="launchSite" name="launchSite" placeholder="Where did you launch?">
                 <div class="icon is-small is-left">
-                    <i class="fas fa-list-ol"></i>
+                    <i class="fas fa-plane-departure"></i>
                 </div>
             </div>
         </div>
+    </div>
 
-        <label class="label" for="aircraft">Aircraft</label>
+    <div class="column">
+        <label class="label" for="landingSite">Landing Site</label>
+        <div class="field">
+            <div class="control has-icons-left">
+                <input class="input" type="text" id="landingSite", name="landingSite" placeholder="Where did you land?">
+                <div class="icon is-small is-left">
+                    <i class="fas fa-plane-arrival"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="columns">
+    <div class="column">
+        <label class="label" for="launchDate">Launch Date</label>
+        <div class="field">
+            <div class="control has-icons-left">
+                <input class="input" type="date" id="launchDate" name="launchDate">
+                <div class="icon is-small is-left">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="column">
+        <label class="label" for="launchTime">Launch Time</label>
+        <div class="field">
+            <div class="control has-icons-left">
+                <input class="input" type="time" step="60" id="launchTime" name="launchTime">
+                <div class="icon is-small is-left">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="column">
+        <label class="label" for="landingTime">Landing Time</label>
+        <div class="field has-addons">
+            <div class="control is-expanded has-icons-left">
+                <input class="input" type="time" step="60" id="landingTime" name="landingTime">
+                <div class="icon is-small is-left">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+            <p class="control is-hidden" id="flightDuration">
+                <a class="button is-static"></a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<h3 class="title is-4">GPS Track</h3>
+
+<label class="label" for="trackDistance">GPS Track Distance</label>
+<div class="field has-addons">
+    <div class="control is-expanded has-icons-left">
+        <input class="input" type="number" min="0.0" step="0.01" id="trackDistance" name="trackDistance">
+        <div class="icon is-small is-left">
+            <i class="fas fa-ruler"></i>
+        </div>
+    </div>
+    <p class="control">
+        <a class="button is-static">km</a>
+    </p>
+</div>
+
+<h3 class="title is-4">XContest</h3>
+
+<div class="columns">
+    <div class="column">
+        <label class="label" for="xcontestTracktype">XContest Track Type</label>
         <div class="field">
             <div class="control is-expanded has-icons-left">
                 <div class="select is-fullwidth">
-                    <select name="aircraft" id="aircraft">
-                        {% for aircraft in aircraft_list %}
-                        <option value="{{ aircraft.id }}">{{ aircraft.manufacturer }} {{ aircraft.model }}</option>
-                        {% endfor %}
+                    <select name="xcontestTracktype" id="xcontestTracktype">
+                        <option value="" selected></option>
+                        <option value="free_flight">Free Flight</option>
+                        <option value="flat_triangle">Flat Triangle</option>
+                        <option value="fai_triangle">FAI Triangle</option>
                     </select>
                     <div class="icon is-small is-left">
-                        <i class="fas fa-parachute-box"></i>
+                        <i class="fas fa-globe-americas"></i>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <h3 class="title is-4">Launch &amp; Landing</h3>
-
-        <div class="columns">
-            <div class="column">
-                <label class="label" for="launchSite">Launch Site</label>
-                <div class="field">
-                    <div class="control has-icons-left">
-                        <input class="input" type="text" id="launchSite" name="launchSite" placeholder="Where did you launch?">
-                        <div class="icon is-small is-left">
-                            <i class="fas fa-plane-departure"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="column">
-                <label class="label" for="landingSite">Landing Site</label>
-                <div class="field">
-                    <div class="control has-icons-left">
-                        <input class="input" type="text" id="landingSite", name="landingSite" placeholder="Where did you land?">
-                        <div class="icon is-small is-left">
-                            <i class="fas fa-plane-arrival"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="columns">
-            <div class="column">
-                <label class="label" for="launchDate">Launch Date</label>
-                <div class="field">
-                    <div class="control has-icons-left">
-                        <input class="input" type="date" id="launchDate" name="launchDate">
-                        <div class="icon is-small is-left">
-                            <i class="fas fa-calendar-alt"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="column">
-                <label class="label" for="launchTime">Launch Time</label>
-                <div class="field">
-                    <div class="control has-icons-left">
-                        <input class="input" type="time" step="60" id="launchTime" name="launchTime">
-                        <div class="icon is-small is-left">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="column">
-                <label class="label" for="landingTime">Landing Time</label>
-                <div class="field has-addons">
-                    <div class="control is-expanded has-icons-left">
-                        <input class="input" type="time" step="60" id="landingTime" name="landingTime">
-                        <div class="icon is-small is-left">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                    </div>
-                    <p class="control is-hidden" id="flightDuration">
-                        <a class="button is-static"></a>
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <h3 class="title is-4">GPS Track</h3>
-
-        <label class="label" for="trackDistance">GPS Track Distance</label>
+    <div class="column">
+        <label class="label" for="xcontestDistance">XContest Scored Distance</label>
         <div class="field has-addons">
             <div class="control is-expanded has-icons-left">
-                <input class="input" type="number" min="0.0" step="0.01" id="trackDistance" name="trackDistance">
+                <input class="input" type="number" min="0.0" step="0.01" id="xcontestDistance" name="xcontestDistance">
                 <div class="icon is-small is-left">
                     <i class="fas fa-ruler"></i>
                 </div>
@@ -134,75 +171,37 @@
                 <a class="button is-static">km</a>
             </p>
         </div>
+    </div>
+</div>
 
-        <h3 class="title is-4">XContest</h3>
-
-        <div class="columns">
-            <div class="column">
-                <label class="label" for="xcontestTracktype">XContest Track Type</label>
-                <div class="field">
-                    <div class="control is-expanded has-icons-left">
-                        <div class="select is-fullwidth">
-                            <select name="xcontestTracktype" id="xcontestTracktype">
-                                <option value="" selected></option>
-                                <option value="free_flight">Free Flight</option>
-                                <option value="flat_triangle">Flat Triangle</option>
-                                <option value="fai_triangle">FAI Triangle</option>
-                            </select>
-                            <div class="icon is-small is-left">
-                                <i class="fas fa-globe-americas"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="column">
-                <label class="label" for="xcontestDistance">XContest Scored Distance</label>
-                <div class="field has-addons">
-                    <div class="control is-expanded has-icons-left">
-                        <input class="input" type="number" min="0.0" step="0.01" id="xcontestDistance" name="xcontestDistance">
-                        <div class="icon is-small is-left">
-                            <i class="fas fa-ruler"></i>
-                        </div>
-                    </div>
-                    <p class="control">
-                        <a class="button is-static">km</a>
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <label class="label" for="xcontestUrl">XContest URL</label>
-        <div class="field">
-            <div class="control has-icons-left">
-                <input class="input" type="url" pattern="https?://.*" id="xcontestUrl" name="xcontestUrl" placeholder="https://www.xcontest.org/...">
-                <div class="icon is-small is-left">
-                    <i class="fas fa-link"></i>
-                </div>
-            </div>
-        </div>
-
-        <h3 class="title is-4">Other</h3>
-
-        <label class="label" for="comment">Comment</label>
-        <div class="field">
-            <div class="control">
-                <textarea class="textarea" id="comment" name="comment" placeholder="Describe your flight"></textarea>
-            </div>
-        </div>
-
-        <label class="label" for="videoUrl">Video URL</label>
-        <div class="field">
-            <div class="control has-icons-left">
-                <input class="input" type="url" pattern="https?://.*" id="videoUrl" name="videoUrl" placeholder="https://www.youtube.com/...">
-                <div class="icon is-small is-left">
-                    <i class="fas fa-film"></i>
-                </div>
-            </div>
+<label class="label" for="xcontestUrl">XContest URL</label>
+<div class="field">
+    <div class="control has-icons-left">
+        <input class="input" type="url" pattern="https?://.*" id="xcontestUrl" name="xcontestUrl" placeholder="https://www.xcontest.org/...">
+        <div class="icon is-small is-left">
+            <i class="fas fa-link"></i>
         </div>
     </div>
-</section>
+</div>
+
+<h3 class="title is-4">Other</h3>
+
+<label class="label" for="comment">Comment</label>
+<div class="field">
+    <div class="control">
+        <textarea class="textarea" id="comment" name="comment" placeholder="Describe your flight"></textarea>
+    </div>
+</div>
+
+<label class="label" for="videoUrl">Video URL</label>
+<div class="field">
+    <div class="control has-icons-left">
+        <input class="input" type="url" pattern="https?://.*" id="videoUrl" name="videoUrl" placeholder="https://www.youtube.com/...">
+        <div class="icon is-small is-left">
+            <i class="fas fa-film"></i>
+        </div>
+    </div>
+</div>
 
 <script>
     const aircraftList = [
