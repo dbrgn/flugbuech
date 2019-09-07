@@ -5,8 +5,9 @@
     <div class="container">
         <h2 class="title is-2">Submit Flight</h2>
 
-        <label class="label">IGC Upload</label>
-        <p>Pre-fill the form below by uploading an IGC file.</p>
+        <h3 class="title is-4">Basic Information</h3>
+
+        <label class="label">IGC Flight Recording</label>
         <div class="field">
             <div class="file has-name">
                 <label class="file-label">
@@ -49,6 +50,8 @@
                 </div>
             </div>
         </div>
+
+        <h3 class="title is-4">Launch &amp; Landing</h3>
 
         <label class="label" for="launchSite">Launch Site</label>
         <div class="field">
@@ -104,6 +107,8 @@
             </p>
         </div>
 
+        <h3 class="title is-4">GPS Track</h3>
+
         <label class="label" for="trackDistance">GPS Track Distance</label>
         <div class="field has-addons">
             <div class="control is-expanded has-icons-left">
@@ -115,6 +120,48 @@
             <p class="control">
                 <a class="button is-static">km</a>
             </p>
+        </div>
+
+        <h3 class="title is-4">XContest</h3>
+
+        <label class="label" for="xcontestTracktype">XContest Track Type</label>
+        <div class="field">
+            <div class="control is-expanded has-icons-left">
+                <div class="select is-fullwidth">
+                    <select name="xcontestTracktype" id="xcontestTracktype">
+                        <option value="" selected></option>
+                        <option value="free_flight">Free Flight</option>
+                        <option value="flat_triangle">Flat Triangle</option>
+                        <option value="fai_triangle">FAI Triangle</option>
+                    </select>
+                    <div class="icon is-small is-left">
+                        <i class="fas fa-globe-americas"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <label class="label" for="xcontestDistance">XContest Scored Distance</label>
+        <div class="field has-addons">
+            <div class="control is-expanded has-icons-left">
+                <input class="input" type="number" min="0.0" step="0.01" id="xcontestDistance" name="xcontestDistance">
+                <div class="icon is-small is-left">
+                    <i class="fas fa-ruler"></i>
+                </div>
+            </div>
+            <p class="control">
+                <a class="button is-static">km</a>
+            </p>
+        </div>
+
+        <label class="label" for="xcontestUrl">XContest URL</label>
+        <div class="field">
+            <div class="control has-icons-left">
+                <input class="input" type="text" id="xcontestUrl" name="xcontestUrl">
+                <div class="icon is-small is-left">
+                    <i class="fas fa-link"></i>
+                </div>
+            </div>
         </div>
     </div>
 </section>
