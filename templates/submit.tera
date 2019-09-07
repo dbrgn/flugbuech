@@ -56,7 +56,7 @@
         <label class="label" for="launchSite">Launch Site</label>
         <div class="field">
             <div class="control has-icons-left">
-                <input class="input" type="text" id="launchSite" name="launchSite">
+                <input class="input" type="text" id="launchSite" name="launchSite" placeholder="Where did you launch?">
                 <div class="icon is-small is-left">
                     <i class="fas fa-plane-departure"></i>
                 </div>
@@ -66,7 +66,7 @@
         <label class="label" for="landingSite">Landing Site</label>
         <div class="field">
             <div class="control has-icons-left">
-                <input class="input" type="text" id="landingSite", name="landingSite">
+                <input class="input" type="text" id="landingSite", name="landingSite" placeholder="Where did you land?">
                 <div class="icon is-small is-left">
                     <i class="fas fa-plane-arrival"></i>
                 </div>
@@ -157,9 +157,28 @@
         <label class="label" for="xcontestUrl">XContest URL</label>
         <div class="field">
             <div class="control has-icons-left">
-                <input class="input" type="text" id="xcontestUrl" name="xcontestUrl">
+                <input class="input" type="url" pattern="https?://.*" id="xcontestUrl" name="xcontestUrl" placeholder="https://www.xcontest.org/...">
                 <div class="icon is-small is-left">
                     <i class="fas fa-link"></i>
+                </div>
+            </div>
+        </div>
+
+        <h3 class="title is-4">Other</h3>
+
+        <label class="label" for="comment">Comment</label>
+        <div class="field">
+            <div class="control">
+                <textarea class="textarea" id="comment" name="comment" placeholder="Describe your flight"></textarea>
+            </div>
+        </div>
+
+        <label class="label" for="videoUrl">Video URL</label>
+        <div class="field">
+            <div class="control has-icons-left">
+                <input class="input" type="url" pattern="https?://.*" id="videoUrl" name="videoUrl" placeholder="https://www.youtube.com/...">
+                <div class="icon is-small is-left">
+                    <i class="fas fa-film"></i>
                 </div>
             </div>
         </div>
