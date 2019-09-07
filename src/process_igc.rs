@@ -2,8 +2,10 @@
 
 use std::io::{self, Read, BufRead, BufReader};
 
+use flat_projection::{FlatPoint, FlatProjection};
 use igc::records::{Record, HRecord};
 use igc::util::RawPosition;
+use num_traits::Float;
 use rocket::post;
 use rocket::data::Data;
 use rocket_contrib::json::Json;
@@ -14,15 +16,6 @@ use serde::Serialize;
 struct LatLon {
     lat: f64,
     lon: f64,
-}
-
-impl From<RawPosition> for LatLon {
-    fn from(pos: RawPosition) -> Self {
-        Self {
-            lat: pos.lat.into(),
-            lon: pos.lon.into(),
-        }
-    }
 }
 
 #[derive(Debug, PartialEq, Serialize)]
@@ -54,6 +47,8 @@ pub(crate) struct FlightInfo {
     launch: Option<LaunchLandingInfo>,
     /// Landing infos.
     landing: Option<LaunchLandingInfo>,
+    /// Track length in kilometers.
+    track_distance: f64,
 }
 
 impl FlightInfo {
@@ -80,19 +75,47 @@ pub(crate) enum FlightInfoResult {
     Error(String),
 }
 
+#[derive(Debug, PartialEq, Clone)]
+struct FlatPointString<T>(Vec<FlatPoint<T>>);
+
+impl<T: Float> FlatPointString<T> {
+    fn new() -> Self {
+        Self(vec![])
+    }
+
+    fn add_point(&mut self, point: FlatPoint<T>) {
+        self.0.push(point);
+    }
+
+    /// Return the flight path length in km.
+    fn length(&self) -> T {
+        self.0.windows(2)
+            .map(|pair| pair[0].distance(&pair[1]))
+            .fold(T::zero(), |total, distance| total + distance)
+    }
+}
+
 /// Process IGC file, return parsed data.
 ///
 /// This endpoint is meant to be called from a XmlHttpRequest.
 #[post("/submit/process_igc", format = "application/octet-stream", data = "<data>")]
 pub(crate) fn process_igc(data: Data) -> Json<FlightInfoResult> {
-    // Read IGC file, create FlightInfo instance
+    // Open IGC file
     let reader = data.open().take(crate::MAX_UPLOAD_BYTES);
     let buf_reader = BufReader::new(reader);
     let lines = match buf_reader.lines().collect::<Result<Vec<String>, io::Error>>() {
         Ok(res) => res,
         Err(e) => return Json(FlightInfoResult::Error(format!("I/O Error: {}", e))),
     };
+
+    // Prepare FlightInfo instance
     let mut info = FlightInfo::default();
+
+    // Vector to collect track coordinates projected from WGS84 into a
+    // cartesian coordinate system
+    let mut projection: Option<FlatProjection<f64>> = None;
+    let mut flight_path = FlatPointString::new();
+
     for line in &lines {
         match Record::parse_line(&line) {
             Ok(Record::H(h @ HRecord { mnemonic: "PLT", .. })) => {
@@ -122,15 +145,31 @@ pub(crate) fn process_igc(data: Data) -> Json<FlightInfoResult> {
             }
             Ok(Record::B(b)) => {
                 println!("{}: {} (GPS) / {} (Baro)", b.timestamp, b.gps_alt, b.pressure_alt);
+
+                // Extract raw float coordinates
+                let RawPosition { lat: raw_lat, lon: raw_lon } = b.pos;
+                let lat = raw_lat.into();
+                let lon = raw_lon.into();
+                let pos = LatLon { lat, lon };
+
+                // Initialize projection with the first latitude in the track
+                if projection.is_none() {
+                    projection = Some(FlatProjection::new(lat));
+                }
+
+                // Project the coordinate onto a flat coordinate system
+                let flat_point = projection.unwrap().project(lon, lat);
+                flight_path.add_point(flat_point);
+
                 if info.launch.is_none() {
                     info.launch = Some(LaunchLandingInfo {
-                        pos: b.pos.into(),
+                        pos,
                         alt: b.gps_alt,
                         time_hms: (b.timestamp.hours, b.timestamp.minutes, b.timestamp.seconds),
                     });
                 } else {
                     info.landing = Some(LaunchLandingInfo {
-                        pos: b.pos.into(),
+                        pos,
                         alt: b.gps_alt,
                         time_hms: (b.timestamp.hours, b.timestamp.minutes, b.timestamp.seconds),
                     });
@@ -140,6 +179,8 @@ pub(crate) fn process_igc(data: Data) -> Json<FlightInfoResult> {
             Err(e) => return Json(FlightInfoResult::Error(format!("Error parsing lines: {:?}", e))),
         }
     }
+    info.track_distance = flight_path.length();
+
     println!("Info: {:#?}", info);
     println!("Flight duration: {:?} seconds", info.duration());
 

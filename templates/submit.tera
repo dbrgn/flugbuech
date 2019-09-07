@@ -103,6 +103,19 @@
                 <a class="button is-static"></a>
             </p>
         </div>
+
+        <label class="label" for="trackDistance">GPS Track Distance</label>
+        <div class="field has-addons">
+            <div class="control is-expanded has-icons-left">
+                <input class="input" type="number" min="0.0" step="0.01" id="trackDistance" name="trackDistance">
+                <div class="icon is-small is-left">
+                    <i class="fas fa-ruler"></i>
+                </div>
+            </div>
+            <p class="control">
+                <a class="button is-static">km</a>
+            </p>
+        </div>
     </div>
 </section>
 
@@ -202,6 +215,10 @@
             const landingTime = document.querySelector('input[name=landingTime]');
             landingTime.value = hmsToTimevalue(data.landing.time_hms);
         }
+
+        // Determine track distance
+        const trackDistance = document.querySelector('input[name=trackDistance]');
+        trackDistance.value = data.track_distance.toFixed(2);
 
         recalculateDuration();
     }
