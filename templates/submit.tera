@@ -102,7 +102,7 @@
                     <i class="fas fa-clock"></i>
                 </div>
             </div>
-            <p class="control" id="flightDuration" style="display: none;">
+            <p class="control is-hidden" id="flightDuration">
                 <a class="button is-static"></a>
             </p>
         </div>
@@ -239,10 +239,10 @@
             const minutes = duration % 60;
 
             flightDuration.children[0].text = `+${hours}:${minutes}`;
-            flightDuration.style.display = 'block';
+            flightDuration.classList.remove('is-hidden');
         } else {
             flightDuration.children[0].text = '';
-            flightDuration.style.display = 'none';
+            flightDuration.classList.add('is-hidden');
         }
     }
 
