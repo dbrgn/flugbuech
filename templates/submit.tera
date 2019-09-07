@@ -136,8 +136,8 @@
     }
 
     function hmsToTimevalue(hms) {
-        const hours = hms[0];
-        const minutes = Math.round(hms[1] + hms[2] / 100);
+        const hours = hms[0].toString().padStart(2, '0');
+        const minutes = Math.round(hms[1] + hms[2] / 100).toString().padStart(2, '0');
         return `${hours}:${minutes}`;
     }
 
