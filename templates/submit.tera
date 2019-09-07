@@ -5,23 +5,24 @@
     <div class="container">
         <h2 class="title is-2">Submit Flight</h2>
 
-        <h3 class="title is-4">IGC Upload</h3>
+        <label class="label">IGC Upload</label>
         <p>Pre-fill the form below by uploading an IGC file.</p>
-        <div class="file">
-            <label class="file-label">
-                <input class="file-input" type="file" id="igcFile">
-                <span class="file-cta">
-                    <span class="file-icon">
-                        <i class="fas fa-upload"></i>
+        <div class="field">
+            <div class="file has-name">
+                <label class="file-label">
+                    <input class="file-input" type="file" name="igcFile" id="igcFile" accept=".igc">
+                    <span class="file-cta">
+                        <span class="file-icon">
+                            <i class="fas fa-upload"></i>
+                        </span>
+                        <span class="file-label">
+                            Click to upload
+                        </span>
                     </span>
-                    <span class="file-label">
-                        Choose a file…
-                    </span>
-                </span>
-            </label>
+                    <span class="file-name" id="igcFilename">No file selected…</span>
+                </label>
+            </div>
         </div>
-
-        <h3 class="title is-4">Flight details</h3>
 
         <label class="label" for="number">Flight Number</label>
         <div class="field">
@@ -236,6 +237,7 @@
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             submitIgc(file)
+                .then(() => document.getElementById('igcFilename').textContent = file.name)
                 .catch((e) => {
                     alert(`Could not process IGC file: ${e}`);
                 });
