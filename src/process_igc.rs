@@ -1,16 +1,15 @@
 //! Process IGC files and extract relevant information.
 
-use std::io::{self, Read, BufRead, BufReader};
+use std::io::{self, BufRead, BufReader, Read};
 
 use flat_projection::{FlatPoint, FlatProjection};
-use igc::records::{Record, HRecord};
+use igc::records::{HRecord, Record};
 use igc::util::RawPosition;
 use num_traits::Float;
-use rocket::post;
 use rocket::data::Data;
+use rocket::post;
 use rocket_contrib::json::Json;
 use serde::Serialize;
-
 
 #[derive(Debug, PartialEq, Serialize)]
 struct LatLon {
@@ -27,9 +26,10 @@ struct LaunchLandingInfo {
 
 impl LaunchLandingInfo {
     fn seconds_since_midnight(&self) -> u32 {
-        u32::from(self.time_hms.0) * 24 * 60 +
-        u32::from(self.time_hms.1) * 60 +
-        u32::from(self.time_hms.2)
+        let hs = u32::from(self.time_hms.0) * 24 * 60;
+        let ms = u32::from(self.time_hms.1) * 60;
+        let ss = u32::from(self.time_hms.2);
+        hs + ms + ss
     }
 }
 
@@ -89,7 +89,8 @@ impl<T: Float> FlatPointString<T> {
 
     /// Return the flight path length in km.
     fn length(&self) -> T {
-        self.0.windows(2)
+        self.0
+            .windows(2)
             .map(|pair| pair[0].distance(&pair[1]))
             .fold(T::zero(), |total, distance| total + distance)
     }
@@ -120,13 +121,13 @@ pub(crate) fn process_igc(data: Data) -> Json<FlightInfoResult> {
         match Record::parse_line(&line) {
             Ok(Record::H(h @ HRecord { mnemonic: "PLT", .. })) => {
                 info.pilot = Some(h.data.trim().into());
-            }
+            },
             Ok(Record::H(h @ HRecord { mnemonic: "GTY", .. })) => {
                 info.glidertype = Some(h.data.trim().into());
-            }
+            },
             Ok(Record::H(h @ HRecord { mnemonic: "SIT", .. })) => {
                 info.site = Some(h.data.trim().into());
-            }
+            },
             Ok(Record::H(h @ HRecord { mnemonic: "DTE", .. })) => {
                 let string_val = h.data.trim();
                 if string_val.len() == 6 {
@@ -135,19 +136,19 @@ pub(crate) fn process_igc(data: Data) -> Json<FlightInfoResult> {
                         string_val.get(2..4).unwrap().parse::<u8>(),
                         string_val.get(4..6).unwrap().parse::<u16>(),
                     ) {
-                        info.date_ymd = Some((
-                            if year > 85 { 1900 + year } else { 2000 + year },
-                            month,
-                            day
-                        ));
+                        let year = if year > 85 { 1900 + year } else { 2000 + year };
+                        info.date_ymd = Some((year, month, day));
                     }
                 }
-            }
+            },
             Ok(Record::B(b)) => {
                 println!("{}: {} (GPS) / {} (Baro)", b.timestamp, b.gps_alt, b.pressure_alt);
 
                 // Extract raw float coordinates
-                let RawPosition { lat: raw_lat, lon: raw_lon } = b.pos;
+                let RawPosition {
+                    lat: raw_lat,
+                    lon: raw_lon,
+                } = b.pos;
                 let lat = raw_lat.into();
                 let lon = raw_lon.into();
                 let pos = LatLon { lat, lon };
@@ -174,7 +175,7 @@ pub(crate) fn process_igc(data: Data) -> Json<FlightInfoResult> {
                         time_hms: (b.timestamp.hours, b.timestamp.minutes, b.timestamp.seconds),
                     });
                 }
-            }
+            },
             Ok(_rec) => {},
             Err(e) => return Json(FlightInfoResult::Error(format!("Error parsing lines: {:?}", e))),
         }

@@ -2,10 +2,10 @@ use chrono::{DateTime, Utc};
 use diesel::{Associations, Identifiable, Queryable};
 use serde::Serialize;
 
-use crate::schema::{users, aircraft, locations, flights};
+use crate::schema::{aircraft, flights, locations, users};
 
 #[derive(Identifiable, Queryable, Serialize, PartialEq, Debug, Clone)]
-#[table_name="users"]
+#[table_name = "users"]
 pub struct User {
     pub id: i32,
     pub username: String,
@@ -15,7 +15,7 @@ pub struct User {
 }
 
 #[derive(Insertable)]
-#[table_name="users"]
+#[table_name = "users"]
 pub struct NewUser {
     pub username: String,
     /// Password is automatically hashed on insert or update
@@ -24,8 +24,8 @@ pub struct NewUser {
 }
 
 #[derive(Identifiable, Queryable, Associations, Serialize, PartialEq, Debug, Clone)]
-#[belongs_to(User, foreign_key="user_id")]
-#[table_name="aircraft"]
+#[belongs_to(User, foreign_key = "user_id")]
+#[table_name = "aircraft"]
 pub struct Aircraft {
     pub id: i32,
     pub user_id: i32,
@@ -34,7 +34,7 @@ pub struct Aircraft {
 }
 
 #[derive(Insertable, Default)]
-#[table_name="aircraft"]
+#[table_name = "aircraft"]
 pub struct NewAircraft {
     pub user_id: i32,
     pub model: String,
@@ -42,7 +42,7 @@ pub struct NewAircraft {
 }
 
 #[derive(Identifiable, Queryable, Serialize, PartialEq, Debug, Clone)]
-#[table_name="locations"]
+#[table_name = "locations"]
 pub struct Location {
     pub id: i32,
     pub name: String,
@@ -51,9 +51,9 @@ pub struct Location {
 }
 
 #[derive(Identifiable, Queryable, Associations, Serialize, PartialEq, Debug, Clone)]
-#[belongs_to(User, foreign_key="user_id")]
-#[belongs_to(Aircraft, foreign_key="aircraft_id")]
-#[table_name="flights"]
+#[belongs_to(User, foreign_key = "user_id")]
+#[belongs_to(Aircraft, foreign_key = "aircraft_id")]
+#[table_name = "flights"]
 pub struct Flight {
     /// Primary key
     pub id: i32,
@@ -86,7 +86,7 @@ pub struct Flight {
 }
 
 #[derive(Insertable, Default)]
-#[table_name="flights"]
+#[table_name = "flights"]
 pub struct NewFlight {
     /// The user-defined flight number
     pub number: Option<i32>,

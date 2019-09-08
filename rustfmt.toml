@@ -1,0 +1,3 @@
+max_width = 110
+inline_attribute_width = 80
+match_block_trailing_comma = true

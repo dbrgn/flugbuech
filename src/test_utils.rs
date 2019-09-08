@@ -1,15 +1,15 @@
 use std::env;
 use std::sync::{Mutex, MutexGuard};
 
-use diesel::prelude::*;
 use diesel::connection::SimpleConnection;
 use diesel::pg::PgConnection;
+use diesel::prelude::*;
 use diesel_migrations;
 use dotenv;
 use lazy_static::lazy_static;
 use log::debug;
 
-use crate::models::{User, NewUser};
+use crate::models::{NewUser, User};
 use crate::schema::users;
 
 lazy_static! {
@@ -51,10 +51,11 @@ impl<'a> DbTestContext<'a> {
 
         // Connect to test database
         debug!("Connecting to test database...");
-        let database_url = env::var("TEST_DATABASE_URL")
-            .expect("TEST_DATABASE_URL must be set");
-        let conn = PgConnection::establish(&database_url)
-            .expect(&format!("Could not establish database connection with \"{}\"", database_url));
+        let database_url = env::var("TEST_DATABASE_URL").expect("TEST_DATABASE_URL must be set");
+        let conn = PgConnection::establish(&database_url).expect(&format!(
+            "Could not establish database connection with \"{}\"",
+            database_url
+        ));
         debug!("Connected to test database");
 
         // Drop all tables
@@ -82,8 +83,14 @@ impl<'a> DbTestContext<'a> {
 
         DbTestContext {
             conn: Mutex::new(conn),
-            testuser1: TestUser { user: testuser1, password: "testpass".into() },
-            testuser2: TestUser { user: testuser2, password: "testpass".into() },
+            testuser1: TestUser {
+                user: testuser1,
+                password: "testpass".into(),
+            },
+            testuser2: TestUser {
+                user: testuser2,
+                password: "testpass".into(),
+            },
             db_mutex,
         }
     }

@@ -1,7 +1,6 @@
 #![feature(proc_macro_hygiene, decl_macro, never_type)]
 
-#[macro_use]
-extern crate diesel;
+#[macro_use] extern crate diesel;
 
 mod auth;
 mod data;
@@ -11,17 +10,15 @@ mod schema;
 mod submit;
 #[cfg(test)] mod test_utils;
 
-use std::collections::HashMap;
-use rocket::{get, routes, catchers, catch};
 use rocket::request::Request;
 use rocket::response::Redirect;
+use rocket::{catch, catchers, get, routes};
 use rocket_contrib::serve::StaticFiles;
 use rocket_contrib::templates::Template;
 use serde::Serialize;
-
+use std::collections::HashMap;
 
 pub(crate) const MAX_UPLOAD_BYTES: u64 = 50 * 1024 * 1024;
-
 
 // Index
 
@@ -44,11 +41,10 @@ fn index(db: data::Database, user: Option<auth::AuthUser>) -> Template {
 
     let context = IndexContext {
         user: user.map(|u| u.into_inner()),
-        users_with_aircraft: usermap.values().cloned().collect::<Vec<_>>()
+        users_with_aircraft: usermap.values().cloned().collect::<Vec<_>>(),
     };
     Template::render("index", &context)
 }
-
 
 // Profile
 
@@ -78,7 +74,6 @@ fn service_not_available(_req: &Request) -> &'static str {
     "Service is not available. (Is the database up?)"
 }
 
-
 // Main
 
 fn main() {
@@ -87,13 +82,24 @@ fn main() {
         .attach(Template::fairing())
         .register(catchers![service_not_available])
         // Main routes
-        .mount("/", routes![index, process_igc::process_igc])
-        .mount("/", routes![submit::submit_form, submit::submit_form_nologin, submit::submit])
+        .mount(
+            "/",
+            routes![
+                index,
+                process_igc::process_igc,
+                submit::submit_form,
+                submit::submit_form_nologin,
+                submit::submit,
+            ],
+        )
         // Profile
-        .mount("/", routes![profile, profile_nologin])
+        .mount("/", routes![profile, profile_nologin,])
         // Auth routes
         .mount("/", auth::get_routes())
         // Static files
-        .mount("/static", StaticFiles::from(concat!(env!("CARGO_MANIFEST_DIR"), "/static")))
+        .mount(
+            "/static",
+            StaticFiles::from(concat!(env!("CARGO_MANIFEST_DIR"), "/static")),
+        )
         .launch();
 }

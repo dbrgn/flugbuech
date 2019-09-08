@@ -1,12 +1,12 @@
-use diesel::{sql_function, PgConnection};
 use diesel::dsl::max;
 use diesel::prelude::*;
 use diesel::sql_types::Text;
+use diesel::{sql_function, PgConnection};
 use log::error;
 use rocket_contrib::database;
 
-use crate::models::{User, Aircraft, Flight, NewFlight};
-use crate::schema::{users, aircraft, flights};
+use crate::models::{Aircraft, Flight, NewFlight, User};
+use crate::schema::{aircraft, flights, users};
 
 sql_function! {
     /// The pgcrypto "crypt" function.
@@ -22,7 +22,10 @@ pub fn get_user(conn: &PgConnection, id: i32) -> Option<User> {
     users::table
         .find(id)
         .first(conn)
-        .map_err(|e| { error!("Could not query user: {}", e); e })
+        .map_err(|e| {
+            error!("Could not query user: {}", e);
+            e
+        })
         .ok()
 }
 
@@ -36,9 +39,7 @@ pub fn validate_login(conn: &PgConnection, username: &str, password: &str) -> Op
 }
 
 pub fn get_users(conn: &PgConnection) -> Vec<User> {
-    users::table
-        .load::<User>(conn)
-        .expect("Error loading users")
+    users::table.load::<User>(conn).expect("Error loading users")
 }
 
 pub fn get_aircraft(conn: &PgConnection) -> Vec<Aircraft> {
@@ -71,8 +72,8 @@ pub fn create_flight(conn: &PgConnection, flight: NewFlight) -> Flight {
 
 #[cfg(test)]
 mod tests {
-    use crate::test_utils;
     use crate::models::NewAircraft;
+    use crate::test_utils;
 
     use super::*;
 
@@ -99,11 +100,31 @@ mod tests {
         // Now insert some flights with a flight number
         diesel::insert_into(flights::table)
             .values(vec![
-                NewFlight { number: Some(1), user_id: ctx.testuser1.user.id, ..Default::default() },
-                NewFlight { number: Some(-1), user_id: ctx.testuser1.user.id, ..Default::default() },
-                NewFlight { number: Some(7), user_id: ctx.testuser1.user.id, ..Default::default() },
-                NewFlight { number: None, user_id: ctx.testuser1.user.id, ..Default::default() },
-                NewFlight { number: Some(2), user_id: ctx.testuser1.user.id, ..Default::default() },
+                NewFlight {
+                    number: Some(1),
+                    user_id: ctx.testuser1.user.id,
+                    ..Default::default()
+                },
+                NewFlight {
+                    number: Some(-1),
+                    user_id: ctx.testuser1.user.id,
+                    ..Default::default()
+                },
+                NewFlight {
+                    number: Some(7),
+                    user_id: ctx.testuser1.user.id,
+                    ..Default::default()
+                },
+                NewFlight {
+                    number: None,
+                    user_id: ctx.testuser1.user.id,
+                    ..Default::default()
+                },
+                NewFlight {
+                    number: Some(2),
+                    user_id: ctx.testuser1.user.id,
+                    ..Default::default()
+                },
             ])
             .execute(&*ctx.force_get_conn())
             .expect("Could not create flight");
@@ -169,11 +190,7 @@ mod tests {
     fn validate_login_invalid_bad_password() {
         let ctx = test_utils::DbTestContext::new();
         // Wrong password, this must fail
-        let user = validate_login(
-            &*ctx.force_get_conn(),
-            &ctx.testuser1.user.username,
-            "bazbong",
-        );
+        let user = validate_login(&*ctx.force_get_conn(), &ctx.testuser1.user.username, "bazbong");
         assert!(user.is_none());
     }
 

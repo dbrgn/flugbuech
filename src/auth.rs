@@ -1,13 +1,13 @@
-//! Authentication and authorization related functionality. 
+//! Authentication and authorization related functionality.
 
 use std::collections::HashMap;
 
 use log::error;
-use rocket::{FromForm, get, post, uri, routes, Route};
 use rocket::http::{Cookie, Cookies};
 use rocket::outcome::IntoOutcome;
 use rocket::request::{self, FlashMessage, Form, FromRequest, Request};
-use rocket::response::{Redirect, Flash};
+use rocket::response::{Flash, Redirect};
+use rocket::{get, post, routes, uri, FromForm, Route};
 use rocket_contrib::templates::Template;
 
 use crate::data::{self, Database};
@@ -32,19 +32,21 @@ impl<'a, 'r> FromRequest<'a, 'r> for AuthUser {
     fn from_request(request: &'a Request<'r>) -> request::Outcome<AuthUser, Self::Error> {
         Database::from_request(request).and_then(|db| {
             let mut cookies = request.cookies();
-            cookies.get_private(USER_COOKIE_ID).and_then(|cookie| {
-                // A login cookie was found. Look up the corresponding database user.
-                cookie.value().parse().ok().and_then(|id| {
-                    let user = data::get_user(&db, id);
-                    if user.is_none() {
-                        error!("Login cookie with invalid user id found. Removing cookie.");
-                        cookies.remove_private(cookie);
-                    }
-                    user
+            cookies
+                .get_private(USER_COOKIE_ID)
+                .and_then(|cookie| {
+                    // A login cookie was found. Look up the corresponding database user.
+                    cookie.value().parse().ok().and_then(|id| {
+                        let user = data::get_user(&db, id);
+                        if user.is_none() {
+                            error!("Login cookie with invalid user id found. Removing cookie.");
+                            cookies.remove_private(cookie);
+                        }
+                        user
+                    })
                 })
-            })
-            .map(AuthUser)
-            .or_forward(())
+                .map(AuthUser)
+                .or_forward(())
         })
     }
 }
@@ -58,19 +60,16 @@ impl AuthUser {
 
 /// Login handler.
 #[post("/auth/login", data = "<login>")]
-pub fn login(
-    mut cookies: Cookies,
-    login: Form<Login>,
-    db: Database,
-) -> Result<Redirect, Flash<Redirect>> {
+pub fn login(mut cookies: Cookies, login: Form<Login>, db: Database) -> Result<Redirect, Flash<Redirect>> {
     match data::validate_login(&db, &login.username, &login.password) {
         Some(user) => {
             cookies.add_private(Cookie::new(USER_COOKIE_ID, user.id.to_string()));
             Ok(Redirect::to("/"))
-        }
-        None => {
-            Err(Flash::error(Redirect::to(uri!(login_page)), "Invalid username/password."))
-        }
+        },
+        None => Err(Flash::error(
+            Redirect::to(uri!(login_page)),
+            "Invalid username/password.",
+        )),
     }
 }
 

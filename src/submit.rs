@@ -3,17 +3,16 @@
 use std::fmt;
 
 use base64;
+use chrono::naive::{NaiveDate, NaiveDateTime, NaiveTime};
 use chrono::{DateTime, Utc};
-use chrono::naive::{NaiveDate, NaiveTime, NaiveDateTime};
-use rocket::{get, post};
 use rocket::http::RawStr;
 use rocket::request::{Form, FromForm, FromFormValue};
 use rocket::response::Redirect;
+use rocket::{get, post};
 use rocket_contrib::templates::Template;
 use serde::Serialize;
 
 use crate::{auth, data, models};
-
 
 /// A combined Option / Result type.
 #[derive(Debug)]
@@ -35,14 +34,14 @@ impl<T> OptionResult<T> {
     fn is_ok(&self) -> bool {
         match self {
             Self::Ok(_) => true,
-            _ => false
+            _ => false,
         }
     }
 
     fn is_none(&self) -> bool {
         match self {
             Self::None => true,
-            _ => false
+            _ => false,
         }
     }
 }
@@ -84,7 +83,8 @@ impl<'v> FromFormValue<'v> for OptionResult<i32> {
         if form_value.trim().is_empty() {
             return Ok(OptionResult::None);
         }
-        form_value.parse()
+        form_value
+            .parse()
             .map(OptionResult::Ok)
             .or_else(|e| Ok(OptionResult::Err(format!("Invalid integer: {}", e))))
     }
@@ -96,7 +96,8 @@ impl<'v> FromFormValue<'v> for OptionResult<f32> {
         if form_value.trim().is_empty() {
             return Ok(OptionResult::None);
         }
-        form_value.parse()
+        form_value
+            .parse()
             .map(OptionResult::Ok)
             .or_else(|e| Ok(OptionResult::Err(format!("Invalid integer: {}", e))))
     }
@@ -139,7 +140,7 @@ pub(crate) struct SubmitForm {
     igc_data: OptionResult<Base64Data>,
     number: OptionResult<i32>,
     aircraft: Option<i32>,
-    launch_site: String, // TODO
+    launch_site: String,  // TODO
     landing_site: String, // TODO
     launch_date: OptionResult<NaiveDate>,
     launch_time: OptionResult<NaiveTime>,
@@ -163,7 +164,11 @@ struct SubmitContext {
 pub(crate) fn submit_form(user: auth::AuthUser, db: data::Database) -> Template {
     let user = user.into_inner();
     let aircraft_list = data::get_aircraft_for_user(&db, &user);
-    let context = SubmitContext { user, aircraft_list, error_msg: None };
+    let context = SubmitContext {
+        user,
+        aircraft_list,
+        error_msg: None,
+    };
     Template::render("submit", context)
 }
 
@@ -184,9 +189,13 @@ pub(crate) fn submit(
     macro_rules! fail {
         ($msg:expr) => {{
             let error_msg = Some($msg.into());
-            let ctx = SubmitContext { user, aircraft_list, error_msg };
+            let ctx = SubmitContext {
+                user,
+                aircraft_list,
+                error_msg,
+            };
             return Err(Template::render("submit", ctx));
-        }}
+        }};
     }
 
     macro_rules! none_if_empty {
@@ -196,7 +205,7 @@ pub(crate) fn submit(
             } else {
                 Some($val)
             }
-        }
+        };
     }
 
     println!("Form data: {:?}", data);
@@ -215,10 +224,12 @@ pub(crate) fn submit(
         xcontest_url: form_xcontest_url,
         comment: form_comment,
         video_url: form_video_url,
-    })) = data {
-
+    })) = data
+    {
         // TODO
-        if let OptionResult::Err(ref e) = form_igc_data { fail!(format!("IGC File: {}", e)); };
+        if let OptionResult::Err(ref e) = form_igc_data {
+            fail!(format!("IGC File: {}", e));
+        };
 
         // Extract basic model data
         let number = match form_number.into_result() {
@@ -231,15 +242,24 @@ pub(crate) fn submit(
         // Extract date and time
         let mut date_parts = 0;
         let launch_date_naive = match form_launch_date.into_result() {
-            Ok(val) => { date_parts += 1; val },
+            Ok(val) => {
+                date_parts += 1;
+                val
+            },
             Err(e) => fail!(format!("Launch date: {}", e)),
         };
         let launch_time_naive = match form_launch_time.into_result() {
-            Ok(val) => { date_parts += 1; val },
+            Ok(val) => {
+                date_parts += 1;
+                val
+            },
             Err(e) => fail!(format!("Launch time: {}", e)),
         };
         let landing_time_naive = match form_landing_time.into_result() {
-            Ok(val) => { date_parts += 1; val },
+            Ok(val) => {
+                date_parts += 1;
+                val
+            },
             Err(e) => fail!(format!("Landing time: {}", e)),
         };
         if date_parts < 0 && date_parts < 3 {
@@ -276,10 +296,19 @@ pub(crate) fn submit(
 
         // Create model
         let flight = models::NewFlight {
-            number, user_id, aircraft_id,
-            launch_at, landing_at, launch_time, landing_time,
-            track_distance, xcontest_tracktype, xcontest_distance, xcontest_url,
-            comment, video_url,
+            number,
+            user_id,
+            aircraft_id,
+            launch_at,
+            landing_at,
+            launch_time,
+            landing_time,
+            track_distance,
+            xcontest_tracktype,
+            xcontest_distance,
+            xcontest_url,
+            comment,
+            video_url,
         };
         // TODO: Error handling
         data::create_flight(&db, flight);
