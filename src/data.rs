@@ -5,8 +5,8 @@ use diesel::{sql_function, PgConnection};
 use log::error;
 use rocket_contrib::database;
 
-use crate::models::{Aircraft, Flight, NewFlight, User};
-use crate::schema::{aircraft, flights, users};
+use crate::models::{Aircraft, Flight, Location, NewFlight, User};
+use crate::schema::{aircraft, flights, locations, users};
 
 sql_function! {
     /// The pgcrypto "crypt" function.
@@ -34,32 +34,29 @@ pub fn validate_login(conn: &PgConnection, username: &str, password: &str) -> Op
     users::table
         .filter(users::username.eq(username))
         .filter(users::password.eq(crypt(password, users::password)))
-        .first::<User>(conn)
+        .first(conn)
         .ok()
 }
 
 pub fn get_users(conn: &PgConnection) -> Vec<User> {
-    users::table.load::<User>(conn).expect("Error loading users")
+    users::table.load(conn).expect("Error loading users")
 }
 
 pub fn get_aircraft(conn: &PgConnection) -> Vec<Aircraft> {
-    aircraft::table
-        .load::<Aircraft>(conn)
-        .expect("Error loading aircraft")
+    aircraft::table.load(conn).expect("Error loading aircraft")
 }
 
 pub fn get_aircraft_for_user(conn: &PgConnection, user: &User) -> Vec<Aircraft> {
-    aircraft::table
-        .filter(aircraft::user_id.eq(user.id))
-        .load::<Aircraft>(conn)
+    Aircraft::belonging_to(user)
+        .load(conn)
         .expect("Error loading aircraft")
 }
 
 pub fn get_latest_flight_number(conn: &PgConnection, user: &User) -> Option<i32> {
     Flight::belonging_to(user)
         .select(max(flights::number))
-        .first::<Option<i32>>(conn)
-        .expect("Error loading flights")
+        .first(conn)
+        .expect("Error loading flight")
 }
 
 /// Create a new flight.
@@ -68,6 +65,21 @@ pub fn create_flight(conn: &PgConnection, flight: NewFlight) -> Flight {
         .values(flight)
         .get_result(conn)
         .expect("Could not create flight")
+}
+
+/// Retrieve all flights of a specific user.
+pub fn get_flights_for_user(conn: &PgConnection, user: &User) -> Vec<Flight> {
+    Flight::belonging_to(user)
+        .load(conn)
+        .expect("Error loading flights")
+}
+
+/// Retrieve all locations.
+pub fn get_locations_with_ids(conn: &PgConnection, user: &User, ids: &[i32]) -> Vec<Location> {
+    locations::table
+        .filter(locations::id.eq_any(ids))
+        .load(conn)
+        .expect("Error loading locations")
 }
 
 #[cfg(test)]

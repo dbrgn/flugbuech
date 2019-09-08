@@ -1,0 +1,37 @@
+{% extends 'base' %}
+
+{% block content %}
+<h2 class="title is-2">Your Flights</h2>
+
+<section>
+    <p class="content">You've logged {{ flights|length }} flight{{ flights|length|pluralize }} so far!</p>
+    <table class="table is-fullwidth is-striped is-hoverable">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Aircraft</th>
+                <th>Launch</th>
+                <th>Landing</th>
+                <th>GPS Distance</th>
+                <th>XContest Distance</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for info in flights %}
+            {% set flight = info.flight %}
+            {% set aircraft = info.aircraft %}
+            {% set launch_at = info.launch_at %}
+            {% set landing_at = info.landing_at %}
+            <tr>
+                <td>{{ flight.number }}</td>
+                <td>{% if aircraft %}{{ aircraft.manufacturer }} {{ aircraft.model }}{% endif %}</td>
+                <td title="{% if launch_at %}{{ launch_at.elevation }} mASL{% endif %}">{% if launch_at %}{{ launch_at.name }} [{{ launch_at.country }}]{% endif %}</td>
+                <td title="{% if landing_at %}{{ landing_at.elevation }} mASL{% endif %}">{% if landing_at %}{{ landing_at.name }} [{{ landing_at.country }}]{% endif %}</td>
+                <td>{% if flight.track_distance %}{{ flight.track_distance | round(precision=2) }} km{% endif %}</td>
+                <td>{% if flight.xcontest_distance %}{{ flight.xcontest_distance | round(precision=2) }} km {{ flight.xcontest_tracktype }}{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}
