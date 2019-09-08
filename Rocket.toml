@@ -3,3 +3,6 @@ secret_key = "eXqSA0wz+qLlg8umREPesnkBzNlhwaNcp34BttIWLes="
 
 [global.databases]
 flugbuech = { url = "postgres://localhost/flugbuech" }
+
+[global.limits]
+forms = 3145728  # 3 MiB

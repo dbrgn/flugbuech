@@ -5,10 +5,14 @@
 {% block content %}
 <h2 class="title is-2">Submit Flight</h2>
 
+{% if error_msg %}
+<div class="notification is-danger">{{ error_msg }}</div>
+{% endif %}
+
 <p class="content">Fill out this form to submit a flight. If you upload an IGC
 file, some of the fields will be automatically filled for you.</p>
 
-<form action="/submit/" method="post">
+<div class="spaced-headers">
 
 <h3 class="title is-4">Basic Information</h3>
 
@@ -16,7 +20,7 @@ file, some of the fields will be automatically filled for you.</p>
 <div class="field">
     <div class="file has-name">
         <label class="file-label">
-            <input class="file-input" type="file" name="igcFile" id="igcFile" accept=".igc">
+            <input class="file-input" type="file" name="igc_file" id="igcFile" accept=".igc">
             <span class="file-cta">
                 <span class="file-icon">
                     <i class="fas fa-upload"></i>
@@ -29,6 +33,11 @@ file, some of the fields will be automatically filled for you.</p>
         </label>
     </div>
 </div>
+
+<!-- Start form later in order not to include the file upload. -->
+<form action="" method="post">
+
+<input class="is-hidden" type="text" id="igcData" name="igc_data">
 
 <label class="label" for="number">Flight Number</label>
 <div class="field">
@@ -45,6 +54,7 @@ file, some of the fields will be automatically filled for you.</p>
     <div class="control is-expanded has-icons-left">
         <div class="select is-fullwidth">
             <select name="aircraft" id="aircraft">
+                <option value="" selected></option>
                 {% for aircraft in aircraft_list %}
                 <option value="{{ aircraft.id }}">{{ aircraft.manufacturer }} {{ aircraft.model }}</option>
                 {% endfor %}
@@ -64,7 +74,7 @@ file, some of the fields will be automatically filled for you.</p>
         <label class="label" for="launchSite">Launch Site</label>
         <div class="field">
             <div class="control has-icons-left">
-                <input class="input" type="text" id="launchSite" name="launchSite" placeholder="Where did you launch?">
+                <input class="input" type="text" id="launchSite" name="launch_site" placeholder="Where did you launch?">
                 <div class="icon is-small is-left">
                     <i class="fas fa-plane-departure"></i>
                 </div>
@@ -76,7 +86,7 @@ file, some of the fields will be automatically filled for you.</p>
         <label class="label" for="landingSite">Landing Site</label>
         <div class="field">
             <div class="control has-icons-left">
-                <input class="input" type="text" id="landingSite", name="landingSite" placeholder="Where did you land?">
+                <input class="input" type="text" id="landingSite", name="landing_site" placeholder="Where did you land?">
                 <div class="icon is-small is-left">
                     <i class="fas fa-plane-arrival"></i>
                 </div>
@@ -90,7 +100,7 @@ file, some of the fields will be automatically filled for you.</p>
         <label class="label" for="launchDate">Launch Date</label>
         <div class="field">
             <div class="control has-icons-left">
-                <input class="input" type="date" id="launchDate" name="launchDate">
+                <input class="input" type="date" id="launchDate" name="launch_date">
                 <div class="icon is-small is-left">
                     <i class="fas fa-calendar-alt"></i>
                 </div>
@@ -102,7 +112,7 @@ file, some of the fields will be automatically filled for you.</p>
         <label class="label" for="launchTime">Launch Time</label>
         <div class="field">
             <div class="control has-icons-left">
-                <input class="input" type="time" step="60" id="launchTime" name="launchTime">
+                <input class="input" type="time" step="60" id="launchTime" name="launch_time">
                 <div class="icon is-small is-left">
                     <i class="fas fa-clock"></i>
                 </div>
@@ -114,7 +124,7 @@ file, some of the fields will be automatically filled for you.</p>
         <label class="label" for="landingTime">Landing Time</label>
         <div class="field has-addons">
             <div class="control is-expanded has-icons-left">
-                <input class="input" type="time" step="60" id="landingTime" name="landingTime">
+                <input class="input" type="time" step="60" id="landingTime" name="landing_time">
                 <div class="icon is-small is-left">
                     <i class="fas fa-clock"></i>
                 </div>
@@ -131,7 +141,7 @@ file, some of the fields will be automatically filled for you.</p>
 <label class="label" for="trackDistance">GPS Track Distance</label>
 <div class="field has-addons">
     <div class="control is-expanded has-icons-left">
-        <input class="input" type="number" min="0.0" step="0.01" id="trackDistance" name="trackDistance">
+        <input class="input" type="number" min="0.0" step="0.01" id="trackDistance" name="track_distance">
         <div class="icon is-small is-left">
             <i class="fas fa-ruler"></i>
         </div>
@@ -149,7 +159,7 @@ file, some of the fields will be automatically filled for you.</p>
         <div class="field">
             <div class="control is-expanded has-icons-left">
                 <div class="select is-fullwidth">
-                    <select name="xcontestTracktype" id="xcontestTracktype">
+                    <select name="xcontest_tracktype" id="xcontestTracktype">
                         <option value="" selected></option>
                         <option value="free_flight">Free Flight</option>
                         <option value="flat_triangle">Flat Triangle</option>
@@ -167,7 +177,7 @@ file, some of the fields will be automatically filled for you.</p>
         <label class="label" for="xcontestDistance">XContest Scored Distance</label>
         <div class="field has-addons">
             <div class="control is-expanded has-icons-left">
-                <input class="input" type="number" min="0.0" step="0.01" id="xcontestDistance" name="xcontestDistance">
+                <input class="input" type="number" min="0.0" step="0.01" id="xcontestDistance" name="xcontest_distance">
                 <div class="icon is-small is-left">
                     <i class="fas fa-ruler"></i>
                 </div>
@@ -182,7 +192,7 @@ file, some of the fields will be automatically filled for you.</p>
 <label class="label" for="xcontestUrl">XContest URL</label>
 <div class="field">
     <div class="control has-icons-left">
-        <input class="input" type="url" pattern="https?://.*" id="xcontestUrl" name="xcontestUrl" placeholder="https://www.xcontest.org/...">
+        <input class="input" type="url" pattern="https?://.*" id="xcontestUrl" name="xcontest_url" placeholder="https://www.xcontest.org/...">
         <div class="icon is-small is-left">
             <i class="fas fa-link"></i>
         </div>
@@ -201,7 +211,7 @@ file, some of the fields will be automatically filled for you.</p>
 <label class="label" for="videoUrl">Video URL</label>
 <div class="field">
     <div class="control has-icons-left">
-        <input class="input" type="url" pattern="https?://.*" id="videoUrl" name="videoUrl" placeholder="https://www.youtube.com/...">
+        <input class="input" type="url" pattern="https?://.*" id="videoUrl" name="video_url" placeholder="https://www.youtube.com/...">
         <div class="icon is-small is-left">
             <i class="fas fa-film"></i>
         </div>
@@ -213,6 +223,8 @@ file, some of the fields will be automatically filled for you.</p>
 </div>
 
 </form>
+
+</div>
 
 <script>
     const aircraftList = [
@@ -281,7 +293,7 @@ file, some of the fields will be automatically filled for you.</p>
         // Determine aircraft
         const aircraftId = aircraftList.match(data.glidertype);
         if (aircraftId !== null) {
-            const options = document.querySelector('select[name=aircraft]');
+            const options = document.querySelector('select#aircraft');
             for (const option of options.children) {
                 if (option.value === aircraftId.toString()) {
                     option.selected = true;
@@ -292,7 +304,7 @@ file, some of the fields will be automatically filled for you.</p>
 
         // Determine flight date
         if (data.date_ymd) {
-            const launchDate = document.querySelector('input[name=launchDate]');
+            const launchDate = document.querySelector('input#launchDate');
             const y = data.date_ymd[0].toString();
             const m = data.date_ymd[1].toString().padStart(2, '0');
             const d = data.date_ymd[2].toString().padStart(2, '0');
@@ -301,18 +313,18 @@ file, some of the fields will be automatically filled for you.</p>
 
         // Determine launch time
         if (data.launch && data.launch.time_hms) {
-            const launchTime = document.querySelector('input[name=launchTime]');
+            const launchTime = document.querySelector('input#launchTime');
             launchTime.value = hmsToTimevalue(data.launch.time_hms);
         }
 
         // Determine landing time
         if (data.landing && data.landing.time_hms) {
-            const landingTime = document.querySelector('input[name=landingTime]');
+            const landingTime = document.querySelector('input#landingTime');
             landingTime.value = hmsToTimevalue(data.landing.time_hms);
         }
 
         // Determine track distance
-        const trackDistance = document.querySelector('input[name=trackDistance]');
+        const trackDistance = document.querySelector('input#trackDistance');
         trackDistance.value = data.track_distance.toFixed(2);
 
         recalculateDuration();
@@ -349,7 +361,20 @@ file, some of the fields will be automatically filled for you.</p>
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             submitIgc(file)
-                .then(() => document.getElementById('igcFilename').textContent = file.name)
+                .then(() => {
+                    // Because multipart form submissions suck, we convert the file to base64
+                    // and submit it as text. Not nice either, but at least allows us to use
+                    // regular form parsing. And because we want to store the file in the database,
+                    // we can't stream it to disk anyways.
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const binaryString = e.target.result;
+                        // TODO: btoa cannot handle unicode
+                        document.getElementById('igcData').value = btoa(binaryString).replace('+', '-').replace('/', '_');
+                    }
+                    reader.readAsBinaryString(file);
+                    document.getElementById('igcFilename').textContent = file.name;
+                })
                 .catch((e) => {
                     alert(`Could not process IGC file: ${e}`);
                 });
