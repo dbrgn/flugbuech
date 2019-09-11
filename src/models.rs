@@ -41,13 +41,15 @@ pub struct NewAircraft {
     pub manufacturer: String,
 }
 
-#[derive(Identifiable, Queryable, Serialize, PartialEq, Debug, Clone)]
+#[derive(Identifiable, Queryable, Associations, Serialize, PartialEq, Debug, Clone)]
+#[belongs_to(User, foreign_key = "user_id")]
 #[table_name = "locations"]
 pub struct Location {
     pub id: i32,
     pub name: String,
     pub country: String,
     pub elevation: i32,
+    pub user_id: i32,
 }
 
 #[derive(Identifiable, Queryable, Associations, Serialize, PartialEq, Debug, Clone)]

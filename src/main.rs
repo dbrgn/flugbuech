@@ -83,7 +83,7 @@ fn flights(db: data::Database, user: auth::AuthUser) -> Template {
         .collect::<Vec<_>>();
     location_ids.sort();
     location_ids.dedup();
-    let location_map = data::get_locations_with_ids(&db, &user, &location_ids)
+    let location_map = data::get_locations_with_ids(&db, &location_ids)
         .into_iter()
         .map(|location| (location.id, location))
         .collect::<HashMap<i32, models::Location>>();
@@ -118,6 +118,31 @@ fn flights(db: data::Database, user: auth::AuthUser) -> Template {
 
 #[get("/flights", rank = 2)]
 fn flights_nologin() -> Redirect {
+    Redirect::to("/auth/login")
+}
+
+// Locations
+
+#[derive(Serialize)]
+struct LocationsContext {
+    user: models::User,
+    locations: Vec<models::Location>,
+}
+
+#[get("/locations")]
+fn locations(db: data::Database, user: auth::AuthUser) -> Template {
+    let user = user.into_inner();
+
+    // Get all locations
+    let locations = data::get_locations_for_user(&db, &user);
+
+    // Render template
+    let context = LocationsContext { user, locations };
+    Template::render("locations", &context)
+}
+
+#[get("/locations", rank = 2)]
+fn locations_nologin() -> Redirect {
     Redirect::to("/auth/login")
 }
 
@@ -163,6 +188,8 @@ fn main() {
                 index,
                 flights,
                 flights_nologin,
+                locations,
+                locations_nologin,
                 process_igc::process_igc,
                 submit::submit_form,
                 submit::submit_form_nologin,

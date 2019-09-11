@@ -32,6 +32,7 @@ table! {
         name -> Text,
         country -> Bpchar,
         elevation -> Int4,
+        user_id -> Int4,
     }
 }
 
@@ -46,5 +47,11 @@ table! {
 joinable!(aircraft -> users (user_id));
 joinable!(flights -> aircraft (aircraft_id));
 joinable!(flights -> users (user_id));
+joinable!(locations -> users (user_id));
 
-allow_tables_to_appear_in_same_query!(aircraft, flights, locations, users);
+allow_tables_to_appear_in_same_query!(
+    aircraft,
+    flights,
+    locations,
+    users,
+);

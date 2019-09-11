@@ -74,10 +74,17 @@ pub fn get_flights_for_user(conn: &PgConnection, user: &User) -> Vec<Flight> {
         .expect("Error loading flights")
 }
 
-/// Retrieve all locations.
-pub fn get_locations_with_ids(conn: &PgConnection, user: &User, ids: &[i32]) -> Vec<Location> {
+/// Retrieve all locations with the specified IDs.
+pub fn get_locations_with_ids(conn: &PgConnection, ids: &[i32]) -> Vec<Location> {
     locations::table
         .filter(locations::id.eq_any(ids))
+        .load(conn)
+        .expect("Error loading locations")
+}
+
+/// Retrieve all locations for the specified user.
+pub fn get_locations_for_user(conn: &PgConnection, user: &User) -> Vec<Location> {
+    Location::belonging_to(user)
         .load(conn)
         .expect("Error loading locations")
 }
