@@ -20,6 +20,13 @@ use std::collections::HashMap;
 
 pub(crate) const MAX_UPLOAD_BYTES: u64 = 50 * 1024 * 1024;
 
+// Generic
+
+#[derive(Serialize)]
+struct UserContext {
+    user: models::User,
+}
+
 // Index
 
 #[derive(Serialize)]
@@ -130,7 +137,7 @@ struct LocationsContext {
 }
 
 #[get("/locations")]
-fn locations(db: data::Database, user: auth::AuthUser) -> Template {
+fn location_list(db: data::Database, user: auth::AuthUser) -> Template {
     let user = user.into_inner();
 
     // Get all locations
@@ -142,8 +149,17 @@ fn locations(db: data::Database, user: auth::AuthUser) -> Template {
 }
 
 #[get("/locations", rank = 2)]
-fn locations_nologin() -> Redirect {
+fn location_list_nologin() -> Redirect {
     Redirect::to("/auth/login")
+}
+
+#[get("/locations/add")]
+fn location_add(user: auth::AuthUser) -> Template {
+    let user = user.into_inner();
+
+    // Render template
+    let context = UserContext { user };
+    Template::render("location", &context)
 }
 
 // Profile
@@ -188,8 +204,9 @@ fn main() {
                 index,
                 flights,
                 flights_nologin,
-                locations,
-                locations_nologin,
+                location_list,
+                location_list_nologin,
+                location_add,
                 process_igc::process_igc,
                 submit::submit_form,
                 submit::submit_form_nologin,

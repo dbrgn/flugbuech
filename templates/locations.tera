@@ -5,6 +5,9 @@
 
 <section>
     <p class="content">You've been at {{ locations|length }} location{{ locations|length|pluralize }} so far!</p>
+    <p class="content">
+        <a href="/locations/add/" class="button is-primary">Add location</a>
+    </p>
     <table class="table is-fullwidth is-striped is-hoverable">
         <thead>
             <tr>
