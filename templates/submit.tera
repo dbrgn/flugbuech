@@ -381,9 +381,9 @@ file, some of the fields will be automatically filled for you.</p>
                         const binaryString = e.target.result;
                         // TODO: btoa cannot handle unicode
                         document.getElementById('igcData').value = btoa(binaryString)
-                            .replace('+', '-')
-                            .replace('/', '_')
-                            .replace('=', '');
+                            .replace(/\+/g, '-')
+                            .replace(/\//g, '_')
+                            .replace(/=/g, '');
                     }
                     reader.readAsBinaryString(file);
                     document.getElementById('igcFilename').textContent = file.name;
