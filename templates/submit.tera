@@ -287,7 +287,7 @@ file, some of the fields will be automatically filled for you.</p>
                 duration += 1440;
             }
             const hours = Math.floor(duration / 60);
-            const minutes = duration % 60;
+            const minutes = (duration % 60).toString().padStart(2, '0');
 
             flightDuration.children[0].text = `+${hours}:${minutes}`;
             flightDuration.classList.remove('is-hidden');
