@@ -332,7 +332,7 @@ file, some of the fields will be automatically filled for you.</p>
 
     function submitIgc(blob) {
         console.log('Submitting data');
-        const request = new Request('/submit/process_igc/', {
+        const request = new Request('/flights/add/process_igc/', {
             method: 'POST',
             mode: 'same-origin',
             headers: new Headers({'content-type': 'application/octet-stream'}),

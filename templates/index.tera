@@ -6,7 +6,7 @@
 {% if user %}
     <h3 class="title is-4">Flights</h3>
     <p class="content">
-        <a href="/submit/">Submit new flight</a>
+        <a href="/flights/add/">Submit new flight</a>
     <p>
 {% endif %}
 

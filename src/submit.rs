@@ -160,7 +160,7 @@ struct SubmitContext {
     error_msg: Option<String>,
 }
 
-#[get("/submit")]
+#[get("/flights/add")]
 pub(crate) fn submit_form(user: auth::AuthUser, db: data::Database) -> Template {
     let user = user.into_inner();
     let aircraft_list = data::get_aircraft_for_user(&db, &user);
@@ -172,12 +172,12 @@ pub(crate) fn submit_form(user: auth::AuthUser, db: data::Database) -> Template 
     Template::render("submit", context)
 }
 
-#[get("/submit", rank = 2)]
+#[get("/flights/add", rank = 2)]
 pub(crate) fn submit_form_nologin() -> Redirect {
     Redirect::to("/auth/login")
 }
 
-#[post("/submit", data = "<data>")]
+#[post("/flights/add", data = "<data>")]
 pub(crate) fn submit(
     user: auth::AuthUser,
     db: data::Database,

@@ -5,6 +5,9 @@
 
 <section>
     <p class="content">You've logged {{ flights|length }} flight{{ flights|length|pluralize }} so far!</p>
+    <p class="content">
+        <a href="/flights/add/" class="button is-primary">Add flight</a>
+    </p>
     <table class="table is-fullwidth is-striped is-hoverable">
         <thead>
             <tr>

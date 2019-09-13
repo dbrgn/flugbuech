@@ -99,7 +99,7 @@ impl<T: Float> FlatPointString<T> {
 /// Process IGC file, return parsed data.
 ///
 /// This endpoint is meant to be called from a XmlHttpRequest.
-#[post("/submit/process_igc", format = "application/octet-stream", data = "<data>")]
+#[post("/flights/add/process_igc", format = "application/octet-stream", data = "<data>")]
 pub(crate) fn process_igc(data: Data) -> Json<FlightInfoResult> {
     // Open IGC file
     let reader = data.open().take(crate::MAX_UPLOAD_BYTES);
