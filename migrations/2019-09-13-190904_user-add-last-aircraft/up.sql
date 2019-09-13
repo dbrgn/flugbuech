@@ -1,0 +1,2 @@
+ALTER TABLE users
+    ADD COLUMN last_aircraft_id INTEGER NULL REFERENCES aircraft(id) ON DELETE SET NULL;

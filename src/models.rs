@@ -12,6 +12,8 @@ pub struct User {
     /// Password is automatically hashed on insert or update
     /// by a PostgreSQL trigger.
     pub password: String,
+    /// Last used aircraft
+    pub last_aircraft_id: Option<i32>,
 }
 
 #[derive(Insertable)]

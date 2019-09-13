@@ -52,6 +52,13 @@ pub fn get_aircraft_for_user(conn: &PgConnection, user: &User) -> Vec<Aircraft> 
         .expect("Error loading aircraft")
 }
 
+pub fn get_aircraft_with_id(conn: &PgConnection, id: i32) -> Option<Aircraft> {
+    aircraft::table.find(id)
+        .first(conn)
+        .optional()
+        .expect("Error loading aircraft by id")
+}
+
 pub fn get_latest_flight_number(conn: &PgConnection, user: &User) -> Option<i32> {
     Flight::belonging_to(user)
         .select(max(flights::number))
@@ -97,6 +104,14 @@ pub fn create_location(conn: &PgConnection, location: NewLocation) -> Location {
         .values(location)
         .get_result(conn)
         .expect("Could not create location")
+}
+
+/// Create a new flight.
+pub fn update_user_last_aircraft(conn: &PgConnection, user: &User, aircraft: &Aircraft) {
+    diesel::update(user)
+        .set(users::last_aircraft_id.eq(aircraft.id))
+        .execute(conn)
+        .expect("Could not set user last aircraft id");
 }
 
 #[cfg(test)]

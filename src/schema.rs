@@ -41,10 +41,10 @@ table! {
         id -> Int4,
         username -> Varchar,
         password -> Text,
+        last_aircraft_id -> Nullable<Int4>,
     }
 }
 
-joinable!(aircraft -> users (user_id));
 joinable!(flights -> aircraft (aircraft_id));
 joinable!(flights -> users (user_id));
 joinable!(locations -> users (user_id));

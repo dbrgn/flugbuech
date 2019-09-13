@@ -227,7 +227,23 @@ pub(crate) fn submit(
             Err(_) => fail!("Invalid flight number"),
         };
         let user_id = user.id;
-        let aircraft_id = form_aircraft;
+
+        // Extract and validate aircraft
+        let aircraft = match form_aircraft {
+            Some(id) => {
+                match data::get_aircraft_with_id(&db, id) {
+                    Some(aircraft) => {
+                        // Validate ownership
+                        if aircraft.user_id != user.id {
+                            fail!("Invalid aircraft")
+                        }
+                        Some(aircraft)
+                    }
+                    None => fail!("Invalid aircraft"),
+                }
+            },
+            None => None,
+        };
 
         // Extract date and time
         let mut date_parts = 0;
@@ -285,6 +301,7 @@ pub(crate) fn submit(
         let video_url = none_if_empty!(form_video_url);
 
         // Create model
+        let aircraft_id = aircraft.as_ref().map(|a| a.id);
         let flight = models::NewFlight {
             number,
             user_id,
@@ -302,6 +319,9 @@ pub(crate) fn submit(
         };
         // TODO: Error handling
         data::create_flight(&db, flight);
+        if let Some(aircraft) = aircraft {
+            data::update_user_last_aircraft(&db, &user, &aircraft);
+        }
 
         Ok(Redirect::to("/flights/"))
     } else {
