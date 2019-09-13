@@ -72,9 +72,14 @@ file, some of the fields will be automatically filled for you.</p>
 <div class="columns">
     <div class="column">
         <label class="label" for="launchSite">Launch Site</label>
-        <div class="field">
-            <div class="control has-icons-left">
-                <input class="input" type="text" id="launchSite" name="launch_site" placeholder="Where did you launch?">
+        <div class="control is-expanded has-icons-left">
+            <div class="select is-fullwidth">
+                <select name="launch_site" id="launchSite">
+                    <option value="" selected></option>
+                    {% for location in locations %}
+                    <option value="{{ location.id }}">{{ location.name }} [{{ location.country }}, {{ location.elevation }} m]</option>
+                    {% endfor %}
+                </select>
                 <div class="icon is-small is-left">
                     <i class="fas fa-plane-departure"></i>
                 </div>
@@ -84,9 +89,14 @@ file, some of the fields will be automatically filled for you.</p>
 
     <div class="column">
         <label class="label" for="landingSite">Landing Site</label>
-        <div class="field">
-            <div class="control has-icons-left">
-                <input class="input" type="text" id="landingSite", name="landing_site" placeholder="Where did you land?">
+        <div class="control is-expanded has-icons-left">
+            <div class="select is-fullwidth">
+                <select name="landing_site" id="landingSite">
+                    <option value="" selected></option>
+                    {% for location in locations %}
+                    <option value="{{ location.id }}">{{ location.name }} [{{ location.country }}, {{ location.elevation }} m]</option>
+                    {% endfor %}
+                </select>
                 <div class="icon is-small is-left">
                     <i class="fas fa-plane-arrival"></i>
                 </div>

@@ -70,6 +70,7 @@ pub fn create_flight(conn: &PgConnection, flight: NewFlight) -> Flight {
 /// Retrieve all flights of a specific user.
 pub fn get_flights_for_user(conn: &PgConnection, user: &User) -> Vec<Flight> {
     Flight::belonging_to(user)
+        .order((flights::number.desc(), flights::launch_time.desc()))
         .load(conn)
         .expect("Error loading flights")
 }
@@ -85,6 +86,7 @@ pub fn get_locations_with_ids(conn: &PgConnection, ids: &[i32]) -> Vec<Location>
 /// Retrieve all locations for the specified user.
 pub fn get_locations_for_user(conn: &PgConnection, user: &User) -> Vec<Location> {
     Location::belonging_to(user)
+        .order(locations::name)
         .load(conn)
         .expect("Error loading locations")
 }

@@ -30,20 +30,6 @@ impl<T> OptionResult<T> {
             Self::Err(e) => Err(e),
         }
     }
-
-    fn is_ok(&self) -> bool {
-        match self {
-            Self::Ok(_) => true,
-            _ => false,
-        }
-    }
-
-    fn is_none(&self) -> bool {
-        match self {
-            Self::None => true,
-            _ => false,
-        }
-    }
 }
 
 impl<'v> FromFormValue<'v> for OptionResult<NaiveDate> {
@@ -140,8 +126,8 @@ pub(crate) struct SubmitForm {
     igc_data: OptionResult<Base64Data>,
     number: OptionResult<i32>,
     aircraft: Option<i32>,
-    launch_site: String,  // TODO
-    landing_site: String, // TODO
+    launch_site: Option<i32>,
+    landing_site: Option<i32>,
     launch_date: OptionResult<NaiveDate>,
     launch_time: OptionResult<NaiveTime>,
     landing_time: OptionResult<NaiveTime>,
@@ -157,6 +143,7 @@ pub(crate) struct SubmitForm {
 struct SubmitContext {
     user: models::User,
     aircraft_list: Vec<models::Aircraft>,
+    locations: Vec<models::Location>,
     error_msg: Option<String>,
 }
 
@@ -164,9 +151,11 @@ struct SubmitContext {
 pub(crate) fn submit_form(user: auth::AuthUser, db: data::Database) -> Template {
     let user = user.into_inner();
     let aircraft_list = data::get_aircraft_for_user(&db, &user);
+    let locations = data::get_locations_for_user(&db, &user);
     let context = SubmitContext {
         user,
         aircraft_list,
+        locations,
         error_msg: None,
     };
     Template::render("submit", context)
@@ -185,6 +174,7 @@ pub(crate) fn submit(
 ) -> Result<Redirect, Template> {
     let user = user.into_inner();
     let aircraft_list = data::get_aircraft_for_user(&db, &user);
+    let locations = data::get_locations_for_user(&db, &user);
 
     macro_rules! fail {
         ($msg:expr) => {{
@@ -192,6 +182,7 @@ pub(crate) fn submit(
             let ctx = SubmitContext {
                 user,
                 aircraft_list,
+                locations,
                 error_msg,
             };
             return Err(Template::render("submit", ctx));
@@ -266,8 +257,8 @@ pub(crate) fn submit(
         }
 
         // Extract launch / landing information
-        let launch_at = None;
-        let landing_at = None;
+        let launch_at = form_launch_site;
+        let landing_at = form_landing_site;
         let launch_time = launch_time_naive.map(|time| {
             let ndt = NaiveDateTime::new(launch_date_naive.unwrap(), time);
             DateTime::from_utc(ndt, Utc) // TODO: Timezone
@@ -312,7 +303,7 @@ pub(crate) fn submit(
         // TODO: Error handling
         data::create_flight(&db, flight);
 
-        Ok(Redirect::to("/"))
+        Ok(Redirect::to("/flights/"))
     } else {
         fail!("Invalid form, could not parse data. Note: Only IGC files up to ~2 MiB can be uploaded.");
     }
