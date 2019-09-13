@@ -119,7 +119,7 @@ file, some of the fields will be automatically filled for you.</p>
     </div>
 
     <div class="column">
-        <label class="label" for="launchTime">Launch Time</label>
+        <label class="label" for="launchTime">Launch Time (UTC)</label>
         <div class="field">
             <div class="control has-icons-left">
                 <input class="input" type="time" step="60" id="launchTime" name="launch_time">
@@ -131,7 +131,7 @@ file, some of the fields will be automatically filled for you.</p>
     </div>
 
     <div class="column">
-        <label class="label" for="landingTime">Landing Time</label>
+        <label class="label" for="landingTime">Landing Time (UTC)</label>
         <div class="field has-addons">
             <div class="control is-expanded has-icons-left">
                 <input class="input" type="time" step="60" id="landingTime" name="landing_time">

@@ -162,6 +162,7 @@ pub(crate) fn process_igc(data: Data) -> Json<FlightInfoResult> {
                 let flat_point = projection.unwrap().project(lon, lat);
                 flight_path.add_point(flat_point);
 
+                // TODO: More elaborate launch detection using altitude
                 if info.launch.is_none() {
                     info.launch = Some(LaunchLandingInfo {
                         pos,
