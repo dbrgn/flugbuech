@@ -208,7 +208,6 @@ pub(crate) fn submit(
         };
     }
 
-    println!("Form data: {:?}", data);
     if let Some(Form(SubmitForm {
         igc_data: form_igc_data,
         number: form_number,

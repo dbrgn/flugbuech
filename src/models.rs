@@ -52,6 +52,15 @@ pub struct Location {
     pub user_id: i32,
 }
 
+#[derive(Insertable, Default)]
+#[table_name = "locations"]
+pub struct NewLocation {
+    pub name: String,
+    pub country: String,
+    pub elevation: i32,
+    pub user_id: i32,
+}
+
 #[derive(Identifiable, Queryable, Associations, Serialize, PartialEq, Debug, Clone)]
 #[belongs_to(User, foreign_key = "user_id")]
 #[belongs_to(Aircraft, foreign_key = "aircraft_id")]

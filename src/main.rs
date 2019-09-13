@@ -4,6 +4,7 @@
 
 mod auth;
 mod data;
+mod locations;
 mod models;
 mod process_igc;
 mod schema;
@@ -19,13 +20,6 @@ use serde::Serialize;
 use std::collections::HashMap;
 
 pub(crate) const MAX_UPLOAD_BYTES: u64 = 50 * 1024 * 1024;
-
-// Generic
-
-#[derive(Serialize)]
-struct UserContext {
-    user: models::User,
-}
 
 // Index
 
@@ -128,40 +122,6 @@ fn flights_nologin() -> Redirect {
     Redirect::to("/auth/login")
 }
 
-// Locations
-
-#[derive(Serialize)]
-struct LocationsContext {
-    user: models::User,
-    locations: Vec<models::Location>,
-}
-
-#[get("/locations")]
-fn location_list(db: data::Database, user: auth::AuthUser) -> Template {
-    let user = user.into_inner();
-
-    // Get all locations
-    let locations = data::get_locations_for_user(&db, &user);
-
-    // Render template
-    let context = LocationsContext { user, locations };
-    Template::render("locations", &context)
-}
-
-#[get("/locations", rank = 2)]
-fn location_list_nologin() -> Redirect {
-    Redirect::to("/auth/login")
-}
-
-#[get("/locations/add")]
-fn location_add(user: auth::AuthUser) -> Template {
-    let user = user.into_inner();
-
-    // Render template
-    let context = UserContext { user };
-    Template::render("location", &context)
-}
-
 // Profile
 
 #[derive(Serialize)]
@@ -204,9 +164,11 @@ fn main() {
                 index,
                 flights,
                 flights_nologin,
-                location_list,
-                location_list_nologin,
-                location_add,
+                locations::list,
+                locations::list_nologin,
+                locations::add_form,
+                locations::add_form_nologin,
+                locations::add,
                 process_igc::process_igc,
                 submit::submit_form,
                 submit::submit_form_nologin,

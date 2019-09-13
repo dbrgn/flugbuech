@@ -5,7 +5,7 @@ use diesel::{sql_function, PgConnection};
 use log::error;
 use rocket_contrib::database;
 
-use crate::models::{Aircraft, Flight, Location, NewFlight, User};
+use crate::models::{Aircraft, Flight, Location, NewFlight, NewLocation, User};
 use crate::schema::{aircraft, flights, locations, users};
 
 sql_function! {
@@ -87,6 +87,14 @@ pub fn get_locations_for_user(conn: &PgConnection, user: &User) -> Vec<Location>
     Location::belonging_to(user)
         .load(conn)
         .expect("Error loading locations")
+}
+
+/// Create a new location.
+pub fn create_location(conn: &PgConnection, location: NewLocation) -> Location {
+    diesel::insert_into(locations::table)
+        .values(location)
+        .get_result(conn)
+        .expect("Could not create location")
 }
 
 #[cfg(test)]

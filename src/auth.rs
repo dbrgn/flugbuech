@@ -9,6 +9,7 @@ use rocket::request::{self, FlashMessage, Form, FromRequest, Request};
 use rocket::response::{Flash, Redirect};
 use rocket::{get, post, routes, uri, FromForm, Route};
 use rocket_contrib::templates::Template;
+use serde::Serialize;
 
 use crate::data::{self, Database};
 use crate::models::User;
@@ -99,4 +100,16 @@ pub fn login_page(flash: Option<FlashMessage>) -> Template {
 /// Return the auth routes.
 pub fn get_routes() -> Vec<Route> {
     routes![login, login_user, login_page, logout]
+}
+
+/// A context that just contains the user.
+#[derive(Serialize)]
+pub struct UserContext {
+    pub user: User,
+}
+
+impl UserContext {
+    pub fn new(user: User) -> Self {
+        Self { user }
+    }
 }
