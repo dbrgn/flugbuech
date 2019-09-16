@@ -15,6 +15,7 @@
                 <th>Aircraft</th>
                 <th>Launch</th>
                 <th>Landing</th>
+                <th>Duration</th>
                 <th>GPS Distance</th>
                 <th>XContest Distance</th>
             </tr>
@@ -25,11 +26,13 @@
             {% set aircraft = info.aircraft %}
             {% set launch_at = info.launch_at %}
             {% set landing_at = info.landing_at %}
+            {% set duration_seconds = info.duration_seconds %}
             <tr>
                 <td>{{ flight.number }}</td>
                 <td>{% if aircraft %}{{ aircraft.manufacturer }} {{ aircraft.model }}{% endif %}</td>
                 <td title="{% if launch_at %}{{ launch_at.elevation }} mASL{% endif %}">{% if launch_at %}{{ launch_at.name }} [{{ launch_at.country }}]{% endif %}</td>
                 <td title="{% if landing_at %}{{ landing_at.elevation }} mASL{% endif %}">{% if landing_at %}{{ landing_at.name }} [{{ landing_at.country }}]{% endif %}</td>
+                <td>{% if duration_seconds %}{{ duration_seconds | duration }}{% endif %}</td>
                 <td>{% if flight.track_distance %}{{ flight.track_distance | round(precision=2) }} km{% endif %}</td>
                 <td>{% if flight.xcontest_distance %}{{ flight.xcontest_distance | round(precision=2) }} km {{ flight.xcontest_tracktype }}{% endif %}</td>
             </tr>

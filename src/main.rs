@@ -4,6 +4,7 @@
 
 mod auth;
 mod data;
+mod filters;
 mod locations;
 mod models;
 mod process_igc;
@@ -55,6 +56,7 @@ struct FlightWithDetails<'a> {
     aircraft: Option<&'a models::Aircraft>,
     launch_at: Option<&'a models::Location>,
     landing_at: Option<&'a models::Location>,
+    duration_seconds: Option<u64>,
 }
 
 #[derive(Serialize)]
@@ -100,11 +102,24 @@ fn flights(db: data::Database, user: auth::AuthUser) -> Template {
             let launch_at = flight.launch_at.and_then(|id| location_map.get(&id));
             let landing_at = flight.landing_at.and_then(|id| location_map.get(&id));
 
+            // Calculate duration
+            let duration_seconds = match (flight.launch_time, flight.landing_time) {
+                (Some(launch), Some(landing)) => {
+                    let duration = (landing - launch).num_seconds();
+                    if duration < 0 {
+                        None
+                    } else {
+                        Some(duration as u64)
+                    }
+                },
+                _ => None,
+            };
             FlightWithDetails {
                 flight,
                 aircraft,
                 launch_at,
                 landing_at,
+                duration_seconds,
             }
         })
         .collect::<Vec<_>>();
@@ -155,7 +170,9 @@ fn service_not_available(_req: &Request) -> &'static str {
 fn main() {
     rocket::ignite()
         .attach(data::Database::fairing())
-        .attach(Template::fairing())
+        .attach(Template::custom(|engines| {
+            engines.tera.register_filter("duration", filters::duration);
+        }))
         .register(catchers![service_not_available])
         // Main routes
         .mount(
