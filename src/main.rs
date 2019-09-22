@@ -93,6 +93,7 @@ fn main() {
                 index,
                 flights::flights,
                 flights::flights_nologin,
+                flights::flight,
                 locations::list,
                 locations::list_nologin,
                 locations::add_form,

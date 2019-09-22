@@ -82,6 +82,14 @@ pub fn get_flights_for_user(conn: &PgConnection, user: &User) -> Vec<Flight> {
         .expect("Error loading flights")
 }
 
+/// Retrieve flight with the specified ID.
+pub fn get_flight_with_id(conn: &PgConnection, id: i32) -> Option<Flight> {
+    flights::table.find(id)
+        .first(conn)
+        .optional()
+        .expect("Error loading flight by id")
+}
+
 /// Retrieve all locations with the specified IDs.
 pub fn get_locations_with_ids(conn: &PgConnection, ids: &[i32]) -> Vec<Location> {
     locations::table
@@ -96,6 +104,14 @@ pub fn get_locations_for_user(conn: &PgConnection, user: &User) -> Vec<Location>
         .order(locations::name)
         .load(conn)
         .expect("Error loading locations")
+}
+
+/// Retrieve location with the specified ID.
+pub fn get_location_with_id(conn: &PgConnection, id: i32) -> Option<Location> {
+    locations::table.find(id)
+        .first(conn)
+        .optional()
+        .expect("Error loading location by id")
 }
 
 /// Create a new location.

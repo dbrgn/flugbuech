@@ -3,12 +3,13 @@
 use std::collections::HashMap;
 
 use rocket::get;
+use rocket::http::Status;
 use rocket::response::Redirect;
 use rocket_contrib::templates::Template;
 use serde::Serialize;
 
+use crate::models::{Aircraft, Flight, Location, User};
 use crate::{auth, data};
-use crate::models::{Location, Flight, Aircraft, User};
 
 #[derive(Serialize)]
 struct FlightWithDetails<'a> {
@@ -95,4 +96,65 @@ pub fn flights(db: data::Database, user: auth::AuthUser) -> Template {
 #[get("/flights", rank = 2)]
 pub fn flights_nologin() -> Redirect {
     Redirect::to("/auth/login")
+}
+
+#[derive(Serialize)]
+struct FlightContext<'a> {
+    user: User,
+    flight: Flight,
+    aircraft: Option<&'a Aircraft>,
+    launch_at: Option<&'a Location>,
+    landing_at: Option<&'a Location>,
+    duration_seconds: Option<u64>,
+}
+
+#[get("/flights/<id>")]
+pub fn flight(id: i32, db: data::Database, user: auth::AuthUser) -> Result<Template, Status> {
+    let user = user.into_inner();
+
+    // Get flight
+    let flight = match data::get_flight_with_id(&db, id) {
+        Some(flight) => flight,
+        None => return Err(Status::NotFound),
+    };
+
+    // Ownership check
+    if flight.user_id != user.id {
+        return Err(Status::Forbidden);
+    }
+
+    // Resolve foreign keys
+    let launch_at = flight
+        .launch_at
+        .and_then(|id| data::get_location_with_id(&db, id));
+    let landing_at = flight
+        .landing_at
+        .and_then(|id| data::get_location_with_id(&db, id));
+    let aircraft = flight
+        .aircraft_id
+        .and_then(|id| data::get_aircraft_with_id(&db, id));
+
+    // Calculate duration
+    let duration_seconds = match (flight.launch_time, flight.landing_time) {
+        (Some(launch), Some(landing)) => {
+            let duration = (landing - launch).num_seconds();
+            if duration < 0 {
+                None
+            } else {
+                Some(duration as u64)
+            }
+        },
+        _ => None,
+    };
+
+    // Render template
+    let context = FlightContext {
+        user,
+        flight,
+        aircraft: aircraft.as_ref(),
+        launch_at: launch_at.as_ref(),
+        landing_at: landing_at.as_ref(),
+        duration_seconds,
+    };
+    Ok(Template::render("flight", &context))
 }
