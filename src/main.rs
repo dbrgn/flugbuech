@@ -99,6 +99,8 @@ fn main() {
                 locations::add_form,
                 locations::add_form_nologin,
                 locations::add,
+                locations::edit_form,
+                locations::edit,
                 process_igc::process_igc,
                 submit::submit_form,
                 submit::submit_form_nologin,

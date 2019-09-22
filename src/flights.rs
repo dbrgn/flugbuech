@@ -27,7 +27,7 @@ struct FlightsContext<'a> {
 }
 
 #[get("/flights")]
-pub fn flights(db: data::Database, user: auth::AuthUser) -> Template {
+pub(crate) fn flights(db: data::Database, user: auth::AuthUser) -> Template {
     let user = user.into_inner();
 
     // Get all flights
@@ -94,7 +94,7 @@ pub fn flights(db: data::Database, user: auth::AuthUser) -> Template {
 }
 
 #[get("/flights", rank = 2)]
-pub fn flights_nologin() -> Redirect {
+pub(crate) fn flights_nologin() -> Redirect {
     Redirect::to("/auth/login")
 }
 
@@ -109,7 +109,7 @@ struct FlightContext<'a> {
 }
 
 #[get("/flights/<id>")]
-pub fn flight(id: i32, db: data::Database, user: auth::AuthUser) -> Result<Template, Status> {
+pub(crate) fn flight(id: i32, db: data::Database, user: auth::AuthUser) -> Result<Template, Status> {
     let user = user.into_inner();
 
     // Get flight

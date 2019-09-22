@@ -24,7 +24,7 @@
                 <td>{{ location.country }}</td>
                 <td>{{ location.elevation }} m ASL</td>
                 <td>
-                    <a href="#">
+                    <a href="/locations/{{ location.id }}/edit/">
                         <span class="icon"><i class="fas fa-pen-square"></i></span>
                     </a>
                     <a href="#">

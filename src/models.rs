@@ -43,7 +43,7 @@ pub struct NewAircraft {
     pub manufacturer: String,
 }
 
-#[derive(Identifiable, Queryable, Associations, Serialize, PartialEq, Debug, Clone)]
+#[derive(Identifiable, Queryable, Associations, AsChangeset, Serialize, PartialEq, Debug, Clone)]
 #[belongs_to(User, foreign_key = "user_id")]
 #[table_name = "locations"]
 pub struct Location {

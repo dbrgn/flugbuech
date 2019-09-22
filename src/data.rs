@@ -122,6 +122,14 @@ pub fn create_location(conn: &PgConnection, location: NewLocation) -> Location {
         .expect("Could not create location")
 }
 
+/// Save an updated location in the database.
+pub fn update_location(conn: &PgConnection, location: &Location) {
+    diesel::update(location)
+        .set(location)
+        .execute(conn)
+        .expect("Could not update location");
+}
+
 /// Create a new flight.
 pub fn update_user_last_aircraft(conn: &PgConnection, user: &User, aircraft: &Aircraft) {
     diesel::update(user)
