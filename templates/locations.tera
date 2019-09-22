@@ -29,9 +29,14 @@
                     <a href="/locations/{{ location.id }}/edit/">
                         <span class="icon"><i class="fas fa-pen-square"></i></span>
                     </a>
-                    <a href="#">
-                        <span class="icon has-text-danger"><i class="fas fa-trash-alt"></i></span>
+                    {% if location.geog %}
+                    <a href="https://www.google.com/maps/place/{{ location.geog.y }},{{ location.geog.x }}/" title="View in Google Maps">
+                        <span class="icon"><i class="fas fa-map-marker-alt"></i></span>
                     </a>
+                    <a href="https://www.openstreetmap.org/?mlat={{ location.geog.y }}&mlon={{ location.geog.x }}#map=16/{{ location.geog.y }}/{{ location.geog.x }}" title="View in OpenStreetMap">
+                        <span class="icon"><i class="fas fa-map-pin"></i></span>
+                    </a>
+                    {% endif %}
                 </td>
             </tr>
             {% endfor %}
