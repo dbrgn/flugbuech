@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use diesel::{Associations, Identifiable, Queryable};
+use diesel_geography::types::GeogPoint;
 use serde::Serialize;
 
 use crate::schema::{aircraft, flights, locations, users};
@@ -52,6 +53,7 @@ pub struct Location {
     pub country: String,
     pub elevation: i32,
     pub user_id: i32,
+    pub geog: Option<GeogPoint>,
 }
 
 #[derive(Insertable, Default)]
