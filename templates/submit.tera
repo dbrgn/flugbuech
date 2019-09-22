@@ -12,6 +12,10 @@
 <p class="content">Fill out this form to submit a flight. If you upload an IGC
 file, some of the fields will be automatically filled for you.</p>
 
+<p class="content"><strong>NOTE:</strong> If the launch or landing location is
+still missing, please add it before filling out this form! Currently locations
+cannot be created automatically.</p>
+
 <div class="spaced-headers">
 
 <h3 class="title is-4">Basic Information</h3>
