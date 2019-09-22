@@ -1,5 +1,7 @@
 {% extends 'base' %}
 
+{% import 'macros' as macros %}
+
 {% block content %}
 <nav class="breadcrumb" aria-label="breadcrumbs">
   <ul>
@@ -38,8 +40,12 @@
             <tr>
                 <td>{{ flight.number }}</td>
                 <td>{% if aircraft %}{{ aircraft.manufacturer }} {{ aircraft.model }}{% endif %}</td>
-                <td title="{% if launch_at %}{{ launch_at.elevation }} mASL{% endif %}">{% if launch_at %}{{ launch_at.name }} [{{ launch_at.country }}]{% endif %}</td>
-                <td title="{% if landing_at %}{{ landing_at.elevation }} mASL{% endif %}">{% if landing_at %}{{ landing_at.name }} [{{ landing_at.country }}]{% endif %}</td>
+                <td title="{% if launch_at %}{{ launch_at.elevation }} mASL{% endif %}">
+                    {% if launch_at %}{{ macros::flag(country_code=launch_at.country) }} {{ launch_at.name }}{% endif %}
+                </td>
+                <td title="{% if landing_at %}{{ landing_at.elevation }} mASL{% endif %}">
+                    {% if landing_at %}{{ macros::flag(country_code=landing_at.country) }} {{ landing_at.name }}{% endif %}
+                </td>
                 <td>{% if duration_seconds %}{{ duration_seconds | duration }}{% endif %}</td>
                 <td>{% if flight.track_distance %}{{ flight.track_distance | round(precision=2) }} km{% endif %}</td>
                 <td>{% if flight.xcontest_distance %}{{ flight.xcontest_distance | round(precision=2) }} km {{ flight.xcontest_tracktype }}{% endif %}</td>

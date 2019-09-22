@@ -1,5 +1,7 @@
 {% extends 'base' %}
 
+{% import 'macros' as macros %}
+
 {% block content %}
 <nav class="breadcrumb" aria-label="breadcrumbs">
   <ul>
@@ -32,14 +34,14 @@
         <tr>
             <th><span class="icon is-small"><i class="fas fa-plane-departure"></i></span>&nbsp;&nbsp;Launch</th>
             <td>
-                {% if launch_at %}{{ launch_at.name }} [{{ launch_at.country }}], {{ launch_at.elevation }} mASL{% endif %}
+                {% if launch_at %}{{ macros::flag(country_code=launch_at.country) }} {{ launch_at.name }}, {{ launch_at.elevation }} mASL{% endif %}
                 {%- if flight.launch_time %}, {{ flight.launch_time | date(format="%H:%M") }}{% endif %}
             </td>
         </tr>
         <tr>
             <th><span class="icon is-small"><i class="fas fa-plane-arrival"></i></span>&nbsp;&nbsp;Landing</th>
             <td>
-                {% if landing_at %}{{ landing_at.name }} [{{ landing_at.country }}], {{ landing_at.elevation }} mASL{% else %}-{% endif %}
+                {% if landing_at %}{{ macros::flag(country_code=landing_at.country) }} {{ landing_at.name }}, {{ landing_at.elevation }} mASL{% else %}-{% endif %}
                 {%- if flight.landing_time %}, {{ flight.landing_time | date(format="%H:%M") }}{% endif %}
             </td>
         </tr>

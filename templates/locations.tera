@@ -1,5 +1,7 @@
 {% extends 'base' %}
 
+{% import 'macros' as macros %}
+
 {% block content %}
 <h2 class="title is-2">Your Locations</h2>
 
@@ -21,7 +23,7 @@
             {% for location in locations %}
             <tr>
                 <td>{{ location.name }}</td>
-                <td>{{ location.country }}</td>
+                <td>{{ macros::flag(country_code=location.country) }} {{ location.country }}</td>
                 <td>{{ location.elevation }} m ASL</td>
                 <td>
                     <a href="/locations/{{ location.id }}/edit/">
