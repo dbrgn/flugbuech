@@ -35,14 +35,14 @@
             <th><span class="icon is-small"><i class="fas fa-plane-departure"></i></span>&nbsp;&nbsp;Launch</th>
             <td>
                 {% if launch_at %}{{ macros::flag(country_code=launch_at.country) }} {{ launch_at.name }}, {{ launch_at.elevation }} mASL{% endif %}
-                {%- if flight.launch_time %}, {{ flight.launch_time | date(format="%H:%M") }}{% endif %}
+                {%- if flight.launch_time %}, {{ flight.launch_time | date(format="%H:%M") }} UTC{% endif %}
             </td>
         </tr>
         <tr>
             <th><span class="icon is-small"><i class="fas fa-plane-arrival"></i></span>&nbsp;&nbsp;Landing</th>
             <td>
                 {% if landing_at %}{{ macros::flag(country_code=landing_at.country) }} {{ landing_at.name }}, {{ landing_at.elevation }} mASL{% else %}-{% endif %}
-                {%- if flight.landing_time %}, {{ flight.landing_time | date(format="%H:%M") }}{% endif %}
+                {%- if flight.landing_time %}, {{ flight.landing_time | date(format="%H:%M") }} UTC{% endif %}
             </td>
         </tr>
         <tr>
