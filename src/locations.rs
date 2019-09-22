@@ -1,5 +1,6 @@
 //! Location views.
 
+use diesel_geography::types::GeogPoint;
 use rocket::http::Status;
 use rocket::request::{Form, FromForm};
 use rocket::response::Redirect;
@@ -17,6 +18,8 @@ pub(crate) struct LocationForm {
     name: String,
     country: String,
     elevation: i32,
+    lat: Option<f64>,
+    lon: Option<f64>,
 }
 
 // Contexts
@@ -127,10 +130,15 @@ pub(crate) fn edit(
     }
 
     // Update model
-    let LocationForm { name, country, elevation } = data.into_inner();
+    let LocationForm { name, country, elevation, lat, lon } = data.into_inner();
     location.name = name;
     location.country = country;
     location.elevation = elevation;
+    if let (Some(lat), Some(lon)) = (lat, lon) {
+        location.geog = Some(GeogPoint { x: lon, y: lat, srid: None });
+    } else {
+        location.geog = None;
+    }
 
     // Update database
     // TODO: Error handling
