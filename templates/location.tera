@@ -68,10 +68,10 @@
 </div>
 
 <div id="map" class="map">
-    <div class="map-style-switcher switch-to-satellite icon">
+    <div class="map-style-switcher switch-to-satellite icon" title="Switch to satellite">
         <i class="fas fa-satellite"></i>
     </div>
-    <div class="map-style-switcher switch-to-default icon is-hidden">
+    <div class="map-style-switcher switch-to-default icon is-hidden" title="Switch to default map">
         <i class="fas fa-map"></i>
     </div>
 </div>
