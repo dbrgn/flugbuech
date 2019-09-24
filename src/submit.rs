@@ -216,9 +216,11 @@ pub(crate) fn submit(
         video_url: form_video_url,
     })) = data
     {
-        // TODO
-        if let OptionResult::Err(ref e) = form_igc_data {
-            fail!(format!("IGC File: {}", e));
+        // IGC data
+        let igc = match form_igc_data {
+            OptionResult::Ok(bytes) => Some(bytes.0),
+            OptionResult::None => None,
+            OptionResult::Err(ref e) => fail!(format!("IGC File: {}", e)),
         };
 
         // Extract basic model data
@@ -316,6 +318,7 @@ pub(crate) fn submit(
             xcontest_url,
             comment,
             video_url,
+            igc,
         };
         // TODO: Error handling
         data::create_flight(&db, flight);

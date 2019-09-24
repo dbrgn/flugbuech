@@ -1,0 +1,2 @@
+ALTER TABLE flights
+    ADD COLUMN igc BYTEA NULL;

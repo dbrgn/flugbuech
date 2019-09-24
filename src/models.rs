@@ -99,6 +99,8 @@ pub struct Flight {
     pub comment: Option<String>,
     /// Link to a video of your flight
     pub video_url: Option<String>,
+    /// IGC file contents
+    pub igc: Option<Vec<u8>>,
 }
 
 #[derive(Insertable, Default)]
@@ -130,4 +132,6 @@ pub struct NewFlight {
     pub comment: Option<String>,
     /// Link to a video of your flight
     pub video_url: Option<String>,
+    /// IGC file contents
+    pub igc: Option<Vec<u8>>,
 }

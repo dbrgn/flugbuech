@@ -31,6 +31,7 @@ table! {
         xcontest_url -> Nullable<Text>,
         comment -> Nullable<Text>,
         video_url -> Nullable<Text>,
+        igc -> Nullable<Bytea>,
     }
 }
 
