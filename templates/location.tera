@@ -67,6 +67,80 @@
     </div>
 </div>
 
+<div id="map" class="map">
+    <div class="map-style-switcher switch-to-satellite icon">
+        <i class="fas fa-satellite"></i>
+    </div>
+    <div class="map-style-switcher switch-to-default icon is-hidden">
+        <i class="fas fa-map"></i>
+    </div>
+</div>
+
+<script>
+    const STYLE_DEFAULT = 'outdoors-v11';
+    const STYLE_SATELLITE = 'satellite-v9';
+    const ICON_MAP = 'fa-map';
+    const ICON_SATELLITE = 'fa-satellite';
+
+    // Create map
+    let style = STYLE_DEFAULT;
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: `mapbox://styles/mapbox/${style}`,
+        {% if location and location.geog %}
+        center: [{{ location.geog.x }}, {{ location.geog.y }}],
+        zoom: 13,
+        {% endif %}
+    });
+
+    // Find style switchers
+    const styleSwitcherSatellite = document.querySelector('.switch-to-satellite');
+    const styleSwitcherDefault = document.querySelector('.switch-to-default');
+
+    // Style update function
+    function updateStyle() {
+        map.setStyle(`mapbox://styles/mapbox/${style}`);
+        if (style === STYLE_DEFAULT) {
+            styleSwitcherDefault.classList.add('is-hidden');
+            styleSwitcherSatellite.classList.remove('is-hidden');
+        } else {
+            styleSwitcherDefault.classList.remove('is-hidden');
+            styleSwitcherSatellite.classList.add('is-hidden');
+        }
+    }
+
+    // Add navigation controls
+    map.addControl(new mapboxgl.NavigationControl());
+
+    // Add draggable marker
+    const marker = new mapboxgl.Marker({draggable: true});
+    {% if location and location.geog %}
+        marker.setLngLat([{{ location.geog.x }}, {{ location.geog.y }}]);
+    {% else %}
+        marker.setLngLat([0, 0]);
+    {% endif %}
+    marker.addTo(map);
+
+    // Handle marker dragging
+    marker.on('dragend', () => {
+        const lonLat = marker.getLngLat();
+        const lonInput = document.getElementById('lon');
+        const latInput = document.getElementById('lat');
+        lonInput.value = lonLat.lng.toFixed(5);
+        latInput.value = lonLat.lat.toFixed(5);
+    });
+
+    // Handle style switches
+    styleSwitcherDefault.addEventListener('click', () => {
+        style = STYLE_DEFAULT;
+        updateStyle();
+    });
+    styleSwitcherSatellite.addEventListener('click', () => {
+        style = STYLE_SATELLITE;
+        updateStyle();
+    });
+</script>
+
 <div class="control submitcontrols">
     <button type="submit" class="button is-info">Submit</button>
 </div>

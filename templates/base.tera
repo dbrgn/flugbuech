@@ -6,8 +6,13 @@
         <title>Flugbuech</title>
         <link rel="stylesheet" href="/static/css/bulma.min.css">
         <link rel="stylesheet" href="/static/css/flugbuech.css">
-        <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+        <link rel="stylesheet" href="/static/css/mapbox-gl.css">
+        <script defer src="https://use.fontawesome.com/releases/v5.10.1/js/all.js"></script>
         <script src="/static/js/elements.flagmeister.min.js"></script>
+        <script src="/static/js/mapbox-gl.js"></script>
+        <script>
+            mapboxgl.accessToken = 'pk.eyJ1IjoiZGFuaWxvIiwiYSI6ImNrMHk4bHcyaTA0OGMzcHA2aXloems2MnQifQ.YovfgNgeajD4aORTUE5aFw';
+        </script>
     </head>
     <body>
         <!-- Navbar -->
