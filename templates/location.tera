@@ -81,15 +81,20 @@
     const STYLE_SATELLITE = 'satellite-v9';
     const ICON_MAP = 'fa-map';
     const ICON_SATELLITE = 'fa-satellite';
+    const DEFAULT_CENTER = [8, 47];
 
     // Create map
     let style = STYLE_DEFAULT;
     const map = new mapboxgl.Map({
         container: 'map',
         style: `mapbox://styles/mapbox/${style}`,
+        doubleClickZoom: false,
         {% if location and location.geog %}
         center: [{{ location.geog.x }}, {{ location.geog.y }}],
         zoom: 13,
+        {% else %}
+        center: DEFAULT_CENTER,
+        zoom: 7,
         {% endif %}
     });
 
@@ -117,17 +122,26 @@
     {% if location and location.geog %}
         marker.setLngLat([{{ location.geog.x }}, {{ location.geog.y }}]);
     {% else %}
-        marker.setLngLat([0, 0]);
+        marker.setLngLat(DEFAULT_CENTER);
     {% endif %}
     marker.addTo(map);
 
-    // Handle marker dragging
-    marker.on('dragend', () => {
+    // Function to update location from marker
+    function updateCoordinatesFromMarker() {
         const lonLat = marker.getLngLat();
         const lonInput = document.getElementById('lon');
         const latInput = document.getElementById('lat');
         lonInput.value = lonLat.lng.toFixed(5);
         latInput.value = lonLat.lat.toFixed(5);
+    }
+
+    // Update coordinates on marker drag
+    marker.on('dragend', updateCoordinatesFromMarker);
+
+    // Update marker on click
+    map.on('dblclick', function(e) {
+        marker.setLngLat(e.lngLat)
+        updateCoordinatesFromMarker();
     });
 
     // Handle style switches
