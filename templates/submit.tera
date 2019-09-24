@@ -302,8 +302,6 @@ cannot be created automatically.</p>
     }
 
     function processData(data) {
-        console.log('data: ', data);
-
         // Determine aircraft
         const aircraftId = aircraftList.match(data.glidertype);
         if (aircraftId !== null) {
@@ -370,10 +368,9 @@ cannot be created automatically.</p>
             });
     };
 
-    document.getElementById('igcFile').addEventListener('change', (e) => {
-        console.log('Change', e);
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
+    function onInputChange(fileList) {
+        if (fileList[0]) {
+            const file = fileList[0];
             submitIgc(file)
                 .then(() => {
                     // Because multipart form submissions suck, we convert the file to base64
@@ -396,9 +393,49 @@ cannot be created automatically.</p>
                     alert(`Could not process IGC file: ${e}`);
                 });
         }
+    }
+
+    document.getElementById('igcFile').addEventListener('change', (e) => {
+        if (e.target.files) {
+            onInputChange(e.target.files);
+        }
     });
 
     document.getElementById('launchTime').addEventListener('change', recalculateDuration);
     document.getElementById('landingTime').addEventListener('change', recalculateDuration);
 </script>
+
+<script>
+    function onDragOver(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        document.querySelector('.drag-file-overlay').classList.remove('is-hidden');
+    }
+
+    function onDragLeave(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        document.querySelector('.drag-file-overlay').classList.add('is-hidden');
+    }
+
+    function onDrop(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        onDragLeave(e);
+        if (e.dataTransfer && e.dataTransfer.files) {
+            onInputChange(e.dataTransfer.files);
+        }
+    }
+
+    const body = document.querySelector('body');
+    body.addEventListener('dragover', onDragOver);
+    body.addEventListener('dragenter', onDragOver);
+    body.addEventListener('dragleave', onDragLeave);
+    body.addEventListener('dragend', onDragLeave);
+    body.addEventListener('drop', onDrop);
+</script>
+
+<div class="drag-file-overlay is-hidden">
+    <div>Drop file to process</div>
+</div>
 {% endblock %}
