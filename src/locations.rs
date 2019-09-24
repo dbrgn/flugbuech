@@ -73,12 +73,19 @@ pub(crate) fn add_form_nologin() -> Redirect {
 pub(crate) fn add(user: auth::AuthUser, db: data::Database, data: Form<LocationForm>) -> Redirect {
     let user = user.into_inner();
 
+    let LocationForm { name, country, elevation, lat, lon } = data.into_inner();
+
     // Create model
     let location = NewLocation {
-        name: data.name.clone(),
-        country: data.country.clone(),
-        elevation: data.elevation,
+        name: name,
+        country: country,
+        elevation: elevation,
         user_id: user.id,
+        geog: if let (Some(lat), Some(lon)) = (lat, lon) {
+            Some(GeogPoint { x: lon, y: lat, srid: None })
+        } else {
+            None
+        }
     };
 
     // Create database entry

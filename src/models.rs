@@ -63,6 +63,7 @@ pub struct NewLocation {
     pub country: String,
     pub elevation: i32,
     pub user_id: i32,
+    pub geog: Option<GeogPoint>,
 }
 
 #[derive(Identifiable, Queryable, Associations, Serialize, PartialEq, Debug, Clone)]
