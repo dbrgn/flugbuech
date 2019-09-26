@@ -67,7 +67,7 @@
         </tr>
         <tr>
             <th><span class="icon is-small"><i class="fas fa-comment"></i></span>&nbsp;&nbsp;Comment</th>
-            <td>{% if flight.comment %}{{ flight.comment }}{% else %}-{% endif %}</td>
+            <td>{% if flight.comment %}{{ flight.comment | replace(from="\n", to="<br>") }}{% else %}-{% endif %}</td>
         </tr>
         <tr>
             <th><span class="icon is-small"><i class="fas fa-film"></i></span>&nbsp;&nbsp;Video URL</th>

@@ -3,18 +3,24 @@
 {% block sectionclass %}submitform{% endblock %}
 
 {% block content %}
+{% if flight %}
+<h2 class="title is-2">Edit Flight {% if flight.number %}{{ flight.number }}{% endif %}</h2>
+{% else %}
 <h2 class="title is-2">Submit Flight</h2>
+{% endif %}
 
 {% if error_msg %}
 <div class="notification is-danger">{{ error_msg }}</div>
 {% endif %}
 
+{% if not flight %}
 <p class="content">Fill out this form to submit a flight. If you upload an IGC
 file, some of the fields will be automatically filled for you.</p>
 
 <p class="content"><strong>NOTE:</strong> If the launch or landing location is
 still missing, please add it before filling out this form! Currently locations
 cannot be created automatically.</p>
+{% endif %}
 
 <div class="spaced-headers">
 
@@ -41,12 +47,12 @@ cannot be created automatically.</p>
 <!-- Start form later in order not to include the file upload. -->
 <form action="" method="post">
 
-<input class="is-hidden" type="text" id="igcData" name="igc_data">
+<input class="is-hidden" type="text" id="igcData" name="igc_data" value="{% if flight %}{{ flight.igc }}{% endif %}">
 
 <label class="label" for="number">Flight Number</label>
 <div class="field">
     <div class="control has-icons-left">
-        <input class="input" type="number" id="number" name="number">
+        <input class="input" type="number" id="number" name="number" value="{% if flight %}{{ flight.number }}{% endif %}">
         <div class="icon is-small is-left">
             <i class="fas fa-list-ol"></i>
         </div>
@@ -79,9 +85,11 @@ cannot be created automatically.</p>
         <div class="control is-expanded has-icons-left">
             <div class="select is-fullwidth">
                 <select name="launch_site" id="launchSite">
-                    <option value="" selected></option>
+                    <option value=""{% if not flight or not flight.launch_at %} selected{% endif %}></option>
                     {% for location in locations %}
-                    <option value="{{ location.id }}">{{ location.name }} [{{ location.country }}, {{ location.elevation }} m]</option>
+                    <option value="{{ location.id }}"{% if flight and flight.launch_at == location.id %} selected{% endif %}>
+                        {{ location.name }} [{{ location.country }}, {{ location.elevation }} m]
+                    </option>
                     {% endfor %}
                 </select>
                 <div class="icon is-small is-left">
@@ -98,7 +106,9 @@ cannot be created automatically.</p>
                 <select name="landing_site" id="landingSite">
                     <option value="" selected></option>
                     {% for location in locations %}
-                    <option value="{{ location.id }}">{{ location.name }} [{{ location.country }}, {{ location.elevation }} m]</option>
+                    <option value="{{ location.id }}"{% if flight and flight.landing_at == location.id %} selected{% endif %}>
+                        {{ location.name }} [{{ location.country }}, {{ location.elevation }} m]
+                    </option>
                     {% endfor %}
                 </select>
                 <div class="icon is-small is-left">
@@ -114,7 +124,7 @@ cannot be created automatically.</p>
         <label class="label" for="launchDate">Launch Date</label>
         <div class="field">
             <div class="control has-icons-left">
-                <input class="input" type="date" id="launchDate" name="launch_date">
+                <input class="input" type="date" id="launchDate" name="launch_date" value="{% if flight and flight.launch_time %}{{ flight.launch_time | date }}{% endif %}">
                 <div class="icon is-small is-left">
                     <i class="fas fa-calendar-alt"></i>
                 </div>
@@ -126,7 +136,7 @@ cannot be created automatically.</p>
         <label class="label" for="launchTime">Launch Time (UTC)</label>
         <div class="field">
             <div class="control has-icons-left">
-                <input class="input" type="time" step="60" id="launchTime" name="launch_time">
+                <input class="input" type="time" step="60" id="launchTime" name="launch_time" value="{% if flight and flight.launch_time %}{{ flight.launch_time | date(format="%H:%M:%S") }}{% endif %}">
                 <div class="icon is-small is-left">
                     <i class="fas fa-clock"></i>
                 </div>
@@ -138,7 +148,7 @@ cannot be created automatically.</p>
         <label class="label" for="landingTime">Landing Time (UTC)</label>
         <div class="field has-addons">
             <div class="control is-expanded has-icons-left">
-                <input class="input" type="time" step="60" id="landingTime" name="landing_time">
+                <input class="input" type="time" step="60" id="landingTime" name="landing_time" value="{% if flight and flight.landing_time %}{{ flight.landing_time | date(format="%H:%M:%S") }}{% endif %}">
                 <div class="icon is-small is-left">
                     <i class="fas fa-clock"></i>
                 </div>
@@ -155,7 +165,7 @@ cannot be created automatically.</p>
 <label class="label" for="trackDistance">GPS Track Distance</label>
 <div class="field has-addons">
     <div class="control is-expanded has-icons-left">
-        <input class="input" type="number" min="0.0" step="0.01" id="trackDistance" name="track_distance">
+        <input class="input" type="number" min="0.0" step="0.01" id="trackDistance" name="track_distance" value="{% if flight and flight.track_distance %}{{ flight.track_distance | round(precision=2) }}{% endif %}">
         <div class="icon is-small is-left">
             <i class="fas fa-ruler"></i>
         </div>
@@ -174,10 +184,10 @@ cannot be created automatically.</p>
             <div class="control is-expanded has-icons-left">
                 <div class="select is-fullwidth">
                     <select name="xcontest_tracktype" id="xcontestTracktype">
-                        <option value="" selected></option>
-                        <option value="free_flight">Free Flight</option>
-                        <option value="flat_triangle">Flat Triangle</option>
-                        <option value="fai_triangle">FAI Triangle</option>
+                        <option value=""{% if not flight or not flight.xcontest_tracktype %} selected{% endif %}></option>
+                        <option value="free_flight"{% if flight and flight.xcontest_tracktype == "free_flight" %} selected{% endif %}>Free Flight</option>
+                        <option value="flat_triangle"{% if flight and flight.xcontest_tracktype == "flat_triangle" %} selected{% endif %}>Flat Triangle</option>
+                        <option value="fai_triangle"{% if flight and flight.xcontest_tracktype == "fai_triangle" %} selected{% endif %}>FAI Triangle</option>
                     </select>
                     <div class="icon is-small is-left">
                         <i class="fas fa-globe-americas"></i>
@@ -191,7 +201,7 @@ cannot be created automatically.</p>
         <label class="label" for="xcontestDistance">XContest Scored Distance</label>
         <div class="field has-addons">
             <div class="control is-expanded has-icons-left">
-                <input class="input" type="number" min="0.0" step="0.01" id="xcontestDistance" name="xcontest_distance">
+                <input class="input" type="number" min="0.0" step="0.01" id="xcontestDistance" name="xcontest_distance" value="{% if flight and flight.xcontest_distance %}{{ flight.xcontest_distance | round(precision=2) }}{% endif %}">
                 <div class="icon is-small is-left">
                     <i class="fas fa-ruler"></i>
                 </div>
@@ -206,7 +216,7 @@ cannot be created automatically.</p>
 <label class="label" for="xcontestUrl">XContest URL</label>
 <div class="field">
     <div class="control has-icons-left">
-        <input class="input" type="url" pattern="https?://.*" id="xcontestUrl" name="xcontest_url" placeholder="https://www.xcontest.org/...">
+        <input class="input" type="url" pattern="https?://.*" id="xcontestUrl" name="xcontest_url" placeholder="https://www.xcontest.org/..." value="{% if flight %}{{ flight.xcontest_url }}{% endif %}">
         <div class="icon is-small is-left">
             <i class="fas fa-link"></i>
         </div>
@@ -218,14 +228,14 @@ cannot be created automatically.</p>
 <label class="label" for="comment">Comment</label>
 <div class="field">
     <div class="control">
-        <textarea class="textarea" id="comment" name="comment" placeholder="Describe your flight"></textarea>
+        <textarea class="textarea" id="comment" name="comment" placeholder="Describe your flight">{% if flight %}{{ flight.comment }}{% endif %}</textarea>
     </div>
 </div>
 
 <label class="label" for="videoUrl">Video URL</label>
 <div class="field">
     <div class="control has-icons-left">
-        <input class="input" type="url" pattern="https?://.*" id="videoUrl" name="video_url" placeholder="https://www.youtube.com/...">
+        <input class="input" type="url" pattern="https?://.*" id="videoUrl" name="video_url" placeholder="https://www.youtube.com/..." value="{% if flight %}{{ flight.video_url }}{% endif %}">
         <div class="icon is-small is-left">
             <i class="fas fa-film"></i>
         </div>
@@ -306,10 +316,12 @@ cannot be created automatically.</p>
         const aircraftId = aircraftList.match(data.glidertype);
         if (aircraftId !== null) {
             const options = document.querySelector('select#aircraft');
-            for (const option of options.children) {
-                if (option.value === aircraftId.toString()) {
-                    option.selected = true;
-                    break;
+            if (options.value === '') {
+                for (const option of options.children) {
+                    if (option.value === aircraftId.toString()) {
+                        option.selected = true;
+                        break;
+                    }
                 }
             }
         }
@@ -317,27 +329,35 @@ cannot be created automatically.</p>
         // Determine flight date
         if (data.date_ymd) {
             const launchDate = document.querySelector('input#launchDate');
-            const y = data.date_ymd[0].toString();
-            const m = data.date_ymd[1].toString().padStart(2, '0');
-            const d = data.date_ymd[2].toString().padStart(2, '0');
-            launchDate.value = `${y}-${m}-${d}`;
+            if (launchDate.value === '') {
+                const y = data.date_ymd[0].toString();
+                const m = data.date_ymd[1].toString().padStart(2, '0');
+                const d = data.date_ymd[2].toString().padStart(2, '0');
+                launchDate.value = `${y}-${m}-${d}`;
+            }
         }
 
         // Determine launch time
         if (data.launch && data.launch.time_hms) {
             const launchTime = document.querySelector('input#launchTime');
-            launchTime.value = hmsToTimevalue(data.launch.time_hms);
+            if (launchTime.value === '') {
+                launchTime.value = hmsToTimevalue(data.launch.time_hms);
+            }
         }
 
         // Determine landing time
         if (data.landing && data.landing.time_hms) {
             const landingTime = document.querySelector('input#landingTime');
-            landingTime.value = hmsToTimevalue(data.landing.time_hms);
+            if (landingTime.value === '') {
+                landingTime.value = hmsToTimevalue(data.landing.time_hms);
+            }
         }
 
         // Determine track distance
         const trackDistance = document.querySelector('input#trackDistance');
-        trackDistance.value = data.track_distance.toFixed(2);
+        if (trackDistance.value === '') {
+            trackDistance.value = data.track_distance.toFixed(2);
+        }
 
         recalculateDuration();
     }
@@ -403,6 +423,8 @@ cannot be created automatically.</p>
 
     document.getElementById('launchTime').addEventListener('change', recalculateDuration);
     document.getElementById('landingTime').addEventListener('change', recalculateDuration);
+
+    recalculateDuration();
 </script>
 
 <script>

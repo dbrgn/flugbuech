@@ -95,6 +95,7 @@ fn main() {
                 flights::flights,
                 flights::flights_nologin,
                 flights::flight,
+                flights::edit_form,
                 flights::igc_download,
                 flights::submit_form,
                 flights::submit_form_nologin,

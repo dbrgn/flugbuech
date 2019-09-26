@@ -223,6 +223,7 @@ pub(crate) struct SubmitForm {
 #[derive(Serialize)]
 struct SubmitContext {
     user: User,
+    flight: Option<Flight>,
     aircraft_list: Vec<Aircraft>,
     locations: Vec<Location>,
     error_msg: Option<String>,
@@ -235,6 +236,7 @@ pub(crate) fn submit_form(user: auth::AuthUser, db: data::Database) -> Template 
     let locations = data::get_locations_for_user(&db, &user);
     let context = SubmitContext {
         user,
+        flight: None,
         aircraft_list,
         locations,
         error_msg: None,
@@ -262,6 +264,7 @@ pub(crate) fn submit(
             let error_msg = Some($msg.into());
             let ctx = SubmitContext {
                 user,
+                flight: None,
                 aircraft_list,
                 locations,
                 error_msg,
@@ -411,4 +414,32 @@ pub(crate) fn submit(
     } else {
         fail!("Invalid form, could not parse data. Note: Only IGC files up to ~2 MiB can be uploaded.");
     }
+}
+
+#[get("/flights/<id>/edit")]
+pub(crate) fn edit_form(user: auth::AuthUser, db: data::Database, id: i32) -> Result<Template, Status> {
+    let user = user.into_inner();
+
+    // Get data
+    let aircraft_list = data::get_aircraft_for_user(&db, &user);
+    let locations = data::get_locations_for_user(&db, &user);
+    let flight = match data::get_flight_with_id(&db, id) {
+        Some(flight) => flight,
+        None => return Err(Status::NotFound),
+    };
+
+    // Ownership check
+    if flight.user_id != user.id {
+        return Err(Status::Forbidden);
+    }
+
+    // Render template
+    let context = SubmitContext {
+        user,
+        flight: Some(flight),
+        aircraft_list,
+        locations,
+        error_msg: None,
+    };
+    Ok(Template::render("submit", context))
 }
