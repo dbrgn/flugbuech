@@ -3,14 +3,15 @@
 #[macro_use] extern crate diesel;
 
 mod auth;
+mod base64;
 mod data;
 mod filters;
 mod flights;
 mod locations;
 mod models;
+mod optionresult;
 mod process_igc;
 mod schema;
-mod submit;
 #[cfg(test)] mod test_utils;
 
 use rocket::request::Request;
@@ -95,6 +96,9 @@ fn main() {
                 flights::flights_nologin,
                 flights::flight,
                 flights::igc_download,
+                flights::submit_form,
+                flights::submit_form_nologin,
+                flights::submit,
                 locations::list,
                 locations::list_nologin,
                 locations::add_form,
@@ -103,9 +107,6 @@ fn main() {
                 locations::edit_form,
                 locations::edit,
                 process_igc::process_igc,
-                submit::submit_form,
-                submit::submit_form_nologin,
-                submit::submit,
             ],
         )
         // Profile
