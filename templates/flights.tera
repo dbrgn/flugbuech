@@ -54,6 +54,9 @@
                 <td>
                     <a class="icon" title="View Flight" href="/flights/{{ flight.id }}/"><i class="fas fa-eye"></i></a>
                     <a class="icon" title="Edit Flight" href="/flights/{{ flight.id }}/edit/"><i class="fas fa-pen-square"></i></a>
+                    {% if flight.igc %}
+                    <a class="icon" title="Download IGC" href="/flights/{{ flight.id }}/igc/"><i class="fas fa-download"></i></a>
+                    {% endif %}
                 </td>
             </tr>
             {% endfor %}

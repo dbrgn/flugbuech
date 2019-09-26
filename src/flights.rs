@@ -1,10 +1,12 @@
 //! Flight views.
 
 use std::collections::HashMap;
+use std::io::Cursor;
 
 use rocket::get;
-use rocket::http::Status;
-use rocket::response::Redirect;
+use rocket::http::hyper::header::{Charset, ContentDisposition, DispositionParam, DispositionType};
+use rocket::http::{ContentType, Status};
+use rocket::response::{Redirect, Response};
 use rocket_contrib::templates::Template;
 use serde::Serialize;
 
@@ -157,4 +159,36 @@ pub(crate) fn flight(id: i32, db: data::Database, user: auth::AuthUser) -> Resul
         duration_seconds,
     };
     Ok(Template::render("flight", &context))
+}
+
+#[get("/flights/<id>/igc")]
+pub(crate) fn igc_download(user: auth::AuthUser, db: data::Database, id: i32) -> Result<Response<'static>, Status> {
+    let user = user.into_inner();
+
+    // Get flight
+    let flight = match data::get_flight_with_id(&db, id) {
+        Some(flight) => flight,
+        None => return Err(Status::NotFound),
+    };
+
+    // Ownership check
+    if flight.user_id != user.id {
+        return Err(Status::Forbidden);
+    }
+
+    match flight.igc {
+        Some(igc) => Ok(Response::build()
+            .header(ContentType::new("application", "octet-stream"))
+            .header(ContentDisposition {
+                disposition: DispositionType::Attachment,
+                parameters: vec![DispositionParam::Filename(
+                    Charset::Us_Ascii,
+                    None,
+                    format!("flight{}.igc", flight.id).into_bytes(),
+                )],
+            })
+            .sized_body(Cursor::new(igc))
+            .finalize()),
+        None => Err(Status::NotFound),
+    }
 }
