@@ -34,7 +34,7 @@ struct FlightsContext<'a> {
 }
 
 #[get("/flights")]
-pub(crate) fn flights(db: data::Database, user: auth::AuthUser) -> Template {
+pub(crate) fn list(db: data::Database, user: auth::AuthUser) -> Template {
     let user = user.into_inner();
 
     // Get all flights
@@ -101,7 +101,7 @@ pub(crate) fn flights(db: data::Database, user: auth::AuthUser) -> Template {
 }
 
 #[get("/flights", rank = 2)]
-pub(crate) fn flights_nologin() -> Redirect {
+pub(crate) fn list_nologin() -> Redirect {
     Redirect::to("/auth/login")
 }
 
@@ -203,7 +203,7 @@ pub(crate) fn igc_download(
 }
 
 #[derive(FromForm, Debug)]
-pub(crate) struct SubmitForm {
+pub(crate) struct FlightForm {
     igc_data: OptionResult<Base64Data>,
     number: OptionResult<i32>,
     aircraft: Option<i32>,
@@ -218,6 +218,128 @@ pub(crate) struct SubmitForm {
     xcontest_url: String,
     comment: String,
     video_url: String,
+}
+
+impl FlightForm {
+    /// Validate a `FlightForm` submission and convert it to a `NewFlight` model
+    fn into_new_flight(self, user: &User, db: &data::Database) -> Result<NewFlight, String> {
+        macro_rules! none_if_empty {
+            ($val:expr) => {
+                if $val.trim().is_empty() {
+                    None
+                } else {
+                    Some($val)
+                }
+            };
+        }
+
+        // IGC data
+        let igc = match self.igc_data {
+            OptionResult::Ok(bytes) => Some(bytes.0),
+            OptionResult::None => None,
+            OptionResult::Err(ref e) => return Err(format!("IGC File: {}", e)),
+        };
+
+        // Extract basic model data
+        let number = match self.number.into_result() {
+            Ok(name) => name,
+            Err(_) => return Err("Invalid flight number".into()),
+        };
+        let user_id = user.id;
+
+        // Extract and validate aircraft
+        let aircraft = match self.aircraft {
+            Some(id) => {
+                match data::get_aircraft_with_id(&db, id) {
+                    Some(aircraft) => {
+                        // Validate ownership
+                        if aircraft.user_id != user.id {
+                            return Err("Invalid aircraft".into());
+                        }
+                        Some(aircraft)
+                    },
+                    None => return Err("Invalid aircraft".into()),
+                }
+            },
+            None => None,
+        };
+
+        // Extract date and time
+        let mut date_parts = 0;
+        let launch_date_naive = match self.launch_date.into_result() {
+            Ok(val) => {
+                date_parts += 1;
+                val
+            },
+            Err(e) => return Err(format!("Launch date: {}", e)),
+        };
+        let launch_time_naive = match self.launch_time.into_result() {
+            Ok(val) => {
+                date_parts += 1;
+                val
+            },
+            Err(e) => return Err(format!("Launch time: {}", e)),
+        };
+        let landing_time_naive = match self.landing_time.into_result() {
+            Ok(val) => {
+                date_parts += 1;
+                val
+            },
+            Err(e) => return Err(format!("Landing time: {}", e)),
+        };
+        if date_parts < 0 && date_parts < 3 {
+            return Err("If you specify launch date, launch time or landing time, \
+                        then the other two values must be provided as well"
+                .into());
+        }
+
+        // Extract launch / landing information
+        let launch_at = self.launch_site;
+        let landing_at = self.landing_site;
+        let launch_time = launch_time_naive.map(|time| {
+            let ndt = NaiveDateTime::new(launch_date_naive.unwrap(), time);
+            DateTime::from_utc(ndt, Utc) // TODO: Timezone
+        });
+        let landing_time = landing_time_naive.map(|time| {
+            let ndt = NaiveDateTime::new(launch_date_naive.unwrap(), time);
+            DateTime::from_utc(ndt, Utc) // TODO: Timezone
+        });
+
+        // Extract track information
+        let track_distance = match self.track_distance.into_result() {
+            Ok(val) => val,
+            Err(_) => return Err("Invalid track distance".into()),
+        };
+        let xcontest_tracktype = none_if_empty!(self.xcontest_tracktype);
+        let xcontest_distance = match self.xcontest_distance.into_result() {
+            Ok(val) => val,
+            Err(_) => return Err("Invalid XContest distance".into()),
+        };
+        let xcontest_url = none_if_empty!(self.xcontest_url);
+
+        // Extract other information
+        let comment = none_if_empty!(self.comment);
+        let video_url = none_if_empty!(self.video_url);
+
+        // Create model
+        let aircraft_id = aircraft.as_ref().map(|a| a.id);
+        Ok(NewFlight {
+            number,
+            user_id,
+            aircraft_id,
+            launch_at,
+            landing_at,
+            launch_time,
+            landing_time,
+            track_distance,
+            xcontest_tracktype,
+            xcontest_distance,
+            xcontest_url,
+            comment,
+            video_url,
+            igc,
+        })
+    }
 }
 
 #[derive(Serialize)]
@@ -253,7 +375,7 @@ pub(crate) fn submit_form_nologin() -> Redirect {
 pub(crate) fn submit(
     user: auth::AuthUser,
     db: data::Database,
-    data: Option<Form<SubmitForm>>,
+    data: Option<Form<FlightForm>>,
 ) -> Result<Redirect, Template> {
     let user = user.into_inner();
     let aircraft_list = data::get_aircraft_for_user(&db, &user);
@@ -273,141 +395,15 @@ pub(crate) fn submit(
         }};
     }
 
-    macro_rules! none_if_empty {
-        ($val:expr) => {
-            if $val.trim().is_empty() {
-                None
-            } else {
-                Some($val)
-            }
-        };
-    }
-
-    if let Some(Form(SubmitForm {
-        igc_data: form_igc_data,
-        number: form_number,
-        aircraft: form_aircraft,
-        launch_site: form_launch_site,
-        landing_site: form_landing_site,
-        launch_date: form_launch_date,
-        launch_time: form_launch_time,
-        landing_time: form_landing_time,
-        track_distance: form_track_distance,
-        xcontest_tracktype: form_xcontest_tracktype,
-        xcontest_distance: form_xcontest_distance,
-        xcontest_url: form_xcontest_url,
-        comment: form_comment,
-        video_url: form_video_url,
-    })) = data
-    {
-        // IGC data
-        let igc = match form_igc_data {
-            OptionResult::Ok(bytes) => Some(bytes.0),
-            OptionResult::None => None,
-            OptionResult::Err(ref e) => fail!(format!("IGC File: {}", e)),
-        };
-
-        // Extract basic model data
-        let number = match form_number.into_result() {
-            Ok(name) => name,
-            Err(_) => fail!("Invalid flight number"),
-        };
-        let user_id = user.id;
-
-        // Extract and validate aircraft
-        let aircraft = match form_aircraft {
-            Some(id) => {
-                match data::get_aircraft_with_id(&db, id) {
-                    Some(aircraft) => {
-                        // Validate ownership
-                        if aircraft.user_id != user.id {
-                            fail!("Invalid aircraft")
-                        }
-                        Some(aircraft)
-                    },
-                    None => fail!("Invalid aircraft"),
-                }
-            },
-            None => None,
-        };
-
-        // Extract date and time
-        let mut date_parts = 0;
-        let launch_date_naive = match form_launch_date.into_result() {
-            Ok(val) => {
-                date_parts += 1;
-                val
-            },
-            Err(e) => fail!(format!("Launch date: {}", e)),
-        };
-        let launch_time_naive = match form_launch_time.into_result() {
-            Ok(val) => {
-                date_parts += 1;
-                val
-            },
-            Err(e) => fail!(format!("Launch time: {}", e)),
-        };
-        let landing_time_naive = match form_landing_time.into_result() {
-            Ok(val) => {
-                date_parts += 1;
-                val
-            },
-            Err(e) => fail!(format!("Landing time: {}", e)),
-        };
-        if date_parts < 0 && date_parts < 3 {
-            fail!("If you specify launch date, launch time or landing time, then the other two values must be provided as well");
-        }
-
-        // Extract launch / landing information
-        let launch_at = form_launch_site;
-        let landing_at = form_landing_site;
-        let launch_time = launch_time_naive.map(|time| {
-            let ndt = NaiveDateTime::new(launch_date_naive.unwrap(), time);
-            DateTime::from_utc(ndt, Utc) // TODO: Timezone
-        });
-        let landing_time = landing_time_naive.map(|time| {
-            let ndt = NaiveDateTime::new(launch_date_naive.unwrap(), time);
-            DateTime::from_utc(ndt, Utc) // TODO: Timezone
-        });
-
-        // Extract track information
-        let track_distance = match form_track_distance.into_result() {
+    if let Some(Form(form)) = data {
+        let new_flight = match form.into_new_flight(&user, &db) {
             Ok(val) => val,
-            Err(_) => fail!("Invalid track distance"),
-        };
-        let xcontest_tracktype = none_if_empty!(form_xcontest_tracktype);
-        let xcontest_distance = match form_xcontest_distance.into_result() {
-            Ok(val) => val,
-            Err(_) => fail!("Invalid XContest distance"),
-        };
-        let xcontest_url = none_if_empty!(form_xcontest_url);
-
-        // Extract other information
-        let comment = none_if_empty!(form_comment);
-        let video_url = none_if_empty!(form_video_url);
-
-        // Create model
-        let aircraft_id = aircraft.as_ref().map(|a| a.id);
-        let flight = NewFlight {
-            number,
-            user_id,
-            aircraft_id,
-            launch_at,
-            landing_at,
-            launch_time,
-            landing_time,
-            track_distance,
-            xcontest_tracktype,
-            xcontest_distance,
-            xcontest_url,
-            comment,
-            video_url,
-            igc,
+            Err(msg) => fail!(msg),
         };
         // TODO: Error handling
-        data::create_flight(&db, flight);
-        if let Some(aircraft) = aircraft {
-            data::update_user_last_aircraft(&db, &user, &aircraft);
+        data::create_flight(&db, &new_flight);
+        if let Some(aircraft_id) = new_flight.aircraft_id {
+            data::update_user_last_aircraft(&db, &user, aircraft_id);
         }
 
         Ok(Redirect::to("/flights/"))

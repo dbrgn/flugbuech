@@ -92,8 +92,8 @@ fn main() {
             "/",
             routes![
                 index,
-                flights::flights,
-                flights::flights_nologin,
+                flights::list,
+                flights::list_nologin,
                 flights::flight,
                 flights::edit_form,
                 flights::igc_download,

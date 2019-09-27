@@ -67,7 +67,7 @@ pub fn get_latest_flight_number(conn: &PgConnection, user: &User) -> Option<i32>
 }
 
 /// Create a new flight.
-pub fn create_flight(conn: &PgConnection, flight: NewFlight) -> Flight {
+pub fn create_flight(conn: &PgConnection, flight: &NewFlight) -> Flight {
     diesel::insert_into(flights::table)
         .values(flight)
         .get_result(conn)
@@ -131,9 +131,9 @@ pub fn update_location(conn: &PgConnection, location: &Location) {
 }
 
 /// Create a new flight.
-pub fn update_user_last_aircraft(conn: &PgConnection, user: &User, aircraft: &Aircraft) {
+pub fn update_user_last_aircraft(conn: &PgConnection, user: &User, aircraft_id: i32) {
     diesel::update(user)
-        .set(users::last_aircraft_id.eq(aircraft.id))
+        .set(users::last_aircraft_id.eq(aircraft_id))
         .execute(conn)
         .expect("Could not set user last aircraft id");
 }
