@@ -27,6 +27,13 @@ Start server:
 
     cargo run
 
+## Adding Users
+
+```sql
+INSERT INTO users(username, password)
+VALUES ('user', crypt('password', gen_salt('bf', 10)));
+```
+
 ## Testing
 
 First, set up a test database:
