@@ -56,13 +56,12 @@
         <tr>
             <th><span class="icon is-small"><i class="fas fa-globe-americas"></i></span>&nbsp;&nbsp;XContest</th>
             <td>
-                {% if flight.xcontest_distance and flight.xcontest_tracktype %}
-                    {% if flight.xcontest_url %}<a href="{{ flight.xcontest_url }}">{% endif %}
-                    {{ flight.xcontest_distance | round(precision=2) }} km {{ flight.xcontest_tracktype }}
-                    {% if flight.xcontest_url %}</a>{% endif %}
-                {% else %}
-                    -
+                {% if flight.xcontest_url %}<a href="{{ flight.xcontest_url }}">{% endif %}
+                {% if flight.xcontest_tracktype %}{{ flight.xcontest_tracktype | xcontest_icon }} {% endif %}
+                {% if flight.xcontest_distance %}
+                    {{ flight.xcontest_distance | round(precision=2) }} km
                 {% endif %}
+                {% if flight.xcontest_url %}</a>{% endif %}
             </td>
         </tr>
         <tr>

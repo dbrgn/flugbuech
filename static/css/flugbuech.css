@@ -72,3 +72,7 @@
     top: 50%;
     transform: translatey(-50%);
 }
+
+.xcontest-tracktype {
+    margin-bottom: -3px;
+}
