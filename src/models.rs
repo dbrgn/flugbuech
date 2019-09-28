@@ -1,5 +1,7 @@
 use chrono::{DateTime, Utc};
+use diesel::sql_types::{Double, Integer, Text};
 use diesel::{Associations, Identifiable, Queryable};
+use diesel_geography::sql_types::Geography;
 use diesel_geography::types::GeogPoint;
 use serde::Serialize;
 
@@ -64,6 +66,24 @@ pub struct NewLocation {
     pub elevation: i32,
     pub user_id: i32,
     pub geog: Option<GeogPoint>,
+}
+
+#[derive(QueryableByName, PartialEq, Debug, Clone)]
+pub struct LocationWithDistance {
+    #[sql_type = "Integer"]
+    pub id: i32,
+    #[sql_type = "Text"]
+    pub name: String,
+    #[sql_type = "Text"]
+    pub country: String,
+    #[sql_type = "Integer"]
+    pub elevation: i32,
+    #[sql_type = "Integer"]
+    pub user_id: i32,
+    #[sql_type = "Geography"]
+    pub geog: GeogPoint,
+    #[sql_type = "Double"]
+    pub distance: f64,
 }
 
 #[derive(Identifiable, Queryable, Associations, AsChangeset, Serialize, PartialEq, Debug, Clone)]

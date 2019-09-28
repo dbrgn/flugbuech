@@ -11,6 +11,8 @@ use rocket::post;
 use rocket_contrib::json::Json;
 use serde::Serialize;
 
+use crate::{auth, data};
+
 #[derive(Debug, PartialEq, Serialize)]
 struct LatLon {
     lat: f64,
@@ -22,6 +24,7 @@ struct LaunchLandingInfo {
     pos: LatLon,
     alt: i16,
     time_hms: (u8, u8, u8),
+    location_id: Option<i32>,
 }
 
 impl LaunchLandingInfo {
@@ -99,8 +102,14 @@ impl<T: Float> FlatPointString<T> {
 /// Process IGC file, return parsed data.
 ///
 /// This endpoint is meant to be called from a XmlHttpRequest.
-#[post("/flights/add/process_igc", format = "application/octet-stream", data = "<data>")]
-pub(crate) fn process_igc(data: Data) -> Json<FlightInfoResult> {
+#[post(
+    "/flights/add/process_igc",
+    format = "application/octet-stream",
+    data = "<data>"
+)]
+pub(crate) fn process_igc(data: Data, user: auth::AuthUser, db: data::Database) -> Json<FlightInfoResult> {
+    let user = user.into_inner();
+
     // Open IGC file
     let reader = data.open().take(crate::MAX_UPLOAD_BYTES);
     let buf_reader = BufReader::new(reader);
@@ -164,16 +173,19 @@ pub(crate) fn process_igc(data: Data) -> Json<FlightInfoResult> {
 
                 // TODO: More elaborate launch detection using altitude
                 if info.launch.is_none() {
+                    // Create launch info
                     info.launch = Some(LaunchLandingInfo {
                         pos,
                         alt: b.gps_alt,
                         time_hms: (b.timestamp.hours, b.timestamp.minutes, b.timestamp.seconds),
+                        location_id: None,
                     });
                 } else {
                     info.landing = Some(LaunchLandingInfo {
                         pos,
                         alt: b.gps_alt,
                         time_hms: (b.timestamp.hours, b.timestamp.minutes, b.timestamp.seconds),
+                        location_id: None,
                     });
                 }
             },
@@ -182,6 +194,23 @@ pub(crate) fn process_igc(data: Data) -> Json<FlightInfoResult> {
         }
     }
     info.track_distance = flight_path.length();
+
+    // Find locations within 1000 meters of launch and landing
+    let max_distance = 1000.0;
+    if let Some(ref mut launch) = info.launch {
+        launch.location_id =
+            data::get_locations_around_point(&db, &user, launch.pos.lat, launch.pos.lon, max_distance)
+                .iter()
+                .next()
+                .map(|location| location.id);
+    }
+    if let Some(ref mut landing) = info.landing {
+        landing.location_id =
+            data::get_locations_around_point(&db, &user, landing.pos.lat, landing.pos.lon, max_distance)
+                .iter()
+                .next()
+                .map(|location| location.id);
+    }
 
     println!("Info: {:#?}", info);
     println!("Flight duration: {:?} seconds", info.duration());

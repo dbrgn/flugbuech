@@ -1,11 +1,13 @@
 use diesel::dsl::max;
 use diesel::prelude::*;
-use diesel::sql_types::Text;
-use diesel::{sql_function, PgConnection};
+use diesel::sql_types::{Double, Integer, Text};
+use diesel::{sql_function, sql_query, PgConnection};
+use diesel_geography::sql_types::Geography;
+use diesel_geography::types::GeogPoint;
 use log::error;
 use rocket_contrib::database;
 
-use crate::models::{Aircraft, Flight, Location, NewFlight, NewLocation, User};
+use crate::models::{Aircraft, Flight, Location, LocationWithDistance, NewFlight, NewLocation, User};
 use crate::schema::{aircraft, flights, locations, users};
 
 sql_function! {
@@ -53,7 +55,8 @@ pub fn get_aircraft_for_user(conn: &PgConnection, user: &User) -> Vec<Aircraft> 
 }
 
 pub fn get_aircraft_with_id(conn: &PgConnection, id: i32) -> Option<Aircraft> {
-    aircraft::table.find(id)
+    aircraft::table
+        .find(id)
         .first(conn)
         .optional()
         .expect("Error loading aircraft by id")
@@ -92,7 +95,8 @@ pub fn get_flights_for_user(conn: &PgConnection, user: &User) -> Vec<Flight> {
 
 /// Retrieve flight with the specified ID.
 pub fn get_flight_with_id(conn: &PgConnection, id: i32) -> Option<Flight> {
-    flights::table.find(id)
+    flights::table
+        .find(id)
         .first(conn)
         .optional()
         .expect("Error loading flight by id")
@@ -114,9 +118,38 @@ pub fn get_locations_for_user(conn: &PgConnection, user: &User) -> Vec<Location>
         .expect("Error loading locations")
 }
 
+/// Retrieve all locations for the specified user within a specified radius
+/// from the specified coordinates.
+pub fn get_locations_around_point(
+    conn: &PgConnection,
+    user: &User,
+    lat: f64,
+    lon: f64,
+    max_distance_meters: f64,
+) -> Vec<LocationWithDistance> {
+    let point = GeogPoint {
+        x: lon,
+        y: lat,
+        srid: None,
+    };
+    sql_query(
+        "SELECT id, name, country, elevation, user_id, geog, ST_Distance($1, geog) AS distance
+           FROM locations
+          WHERE user_id = $2
+            AND ST_DWithin(geog, $1, $3)
+          ORDER BY distance ASC",
+    )
+    .bind::<Geography, _>(point)
+    .bind::<Integer, _>(user.id)
+    .bind::<Double, _>(max_distance_meters)
+    .load(conn)
+    .expect("Error loading locations")
+}
+
 /// Retrieve location with the specified ID.
 pub fn get_location_with_id(conn: &PgConnection, id: i32) -> Option<Location> {
-    locations::table.find(id)
+    locations::table
+        .find(id)
         .first(conn)
         .optional()
         .expect("Error loading location by id")

@@ -363,6 +363,32 @@ Currently locations cannot be created automatically.</p>
             }
         }
 
+        // Determine launch site
+        if (data.launch && data.launch.location_id) {
+            const launchSite = document.querySelector('select#launchSite');
+            if (launchSite.value === '') {
+                for (const option of launchSite.children) {
+                    if (option.value === data.launch.location_id.toString()) {
+                        option.selected = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Determine landing site
+        if (data.landing && data.landing.location_id) {
+            const landingSite = document.querySelector('select#landingSite');
+            if (landingSite.value === '') {
+                for (const option of landingSite.children) {
+                    if (option.value === data.landing.location_id.toString()) {
+                        option.selected = true;
+                        break;
+                    }
+                }
+            }
+        }
+
         // Determine track distance
         const trackDistance = document.querySelector('input#trackDistance');
         if (trackDistance.value === '') {

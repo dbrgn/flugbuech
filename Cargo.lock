@@ -240,7 +240,7 @@ dependencies = [
 [[package]]
 name = "diesel-geography"
 version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
+source = "git+https://github.com/dbrgn/diesel-geography?branch=geography-queryid#2e30cc6a0b6f1a93783e10d6f1e5aab235b1d6f7"
 dependencies = [
  "diesel 1.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "postgis 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -356,7 +356,7 @@ dependencies = [
  "base64 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "chrono 0.4.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "diesel 1.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "diesel-geography 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "diesel-geography 0.2.0 (git+https://github.com/dbrgn/diesel-geography?branch=geography-queryid)",
  "diesel_migrations 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "dotenv 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "flat_projection 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1674,7 +1674,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum devise_codegen 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "066ceb7928ca93a9bedc6d0e612a8a0424048b0ab1f75971b203d01420c055d7"
 "checksum devise_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "cf41c59b22b5e3ec0ea55c7847e5f358d340f3a8d6d53a5cf4f1564967f96487"
 "checksum diesel 1.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "8d24935ba50c4a8dc375a0fd1f8a2ba6bdbdc4125713126a74b965d6a01a06d7"
-"checksum diesel-geography 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "76af88cdffd90f90fe707fea1cb3756593117d47ee7fb6f59b8bcf5c7fdecc58"
+"checksum diesel-geography 0.2.0 (git+https://github.com/dbrgn/diesel-geography?branch=geography-queryid)" = "<none>"
 "checksum diesel_derives 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "62a27666098617d52c487a41f70de23d44a1dc1f3aa5877ceba2790fb1f1cab4"
 "checksum diesel_migrations 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "bf3cde8413353dc7f5d72fa8ce0b99a560a359d2c5ef1e5817ca731cd9008f4c"
 "checksum digest 0.7.6 (registry+https://github.com/rust-lang/crates.io-index)" = "03b072242a8cbaf9c145665af9d250c59af3b958f83ed6824e13533cf76d5b90"
