@@ -291,9 +291,15 @@ Currently locations cannot be created automatically.</p>
     }
 
     function hmsToTimevalue(hms) {
-        const hours = hms[0].toString().padStart(2, '0');
-        const minutes = Math.round(hms[1] + hms[2] / 100).toString().padStart(2, '0');
-        return `${hours}:${minutes}`;
+        let hours = hms[0];
+        let minutes = Math.round(hms[1] + hms[2] / 100);
+        if (minutes === 60) {
+            minutes = 0;
+            hours += 1;
+        }
+        const h = hours.toString().padStart(2, '0');
+        const m = minutes.toString().padStart(2, '0');
+        return `${h}:${m}`;
     }
 
     function recalculateDuration() {
