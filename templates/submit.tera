@@ -27,6 +27,9 @@ cannot be created automatically.</p>
 <h3 class="title is-4">Basic Information</h3>
 
 <label class="label">IGC Flight Recording</label>
+{% if flight and flight.igc %}
+<p class="content"><em>IGC file already uploaded. IGC files cannot be changed after the initial upload.</em></p>
+{% else %}
 <div class="field">
     <div class="file has-name">
         <label class="file-label">
@@ -43,11 +46,12 @@ cannot be created automatically.</p>
         </label>
     </div>
 </div>
+{% endif %}
 
 <!-- Start form later in order not to include the file upload. -->
 <form action="" method="post">
 
-<input class="is-hidden" type="text" id="igcData" name="igc_data" value="{% if flight %}{{ flight.igc }}{% endif %}">
+<input class="is-hidden" type="text" id="igcData" name="igc_data">
 
 <label class="label" for="number">Flight Number</label>
 <div class="field">
@@ -66,7 +70,13 @@ cannot be created automatically.</p>
             <select name="aircraft" id="aircraft">
                 <option value=""></option>
                 {% for aircraft in aircraft_list %}
-                <option value="{{ aircraft.id }}"{% if user.last_aircraft_id == aircraft.id %} selected{% endif %}>{{ aircraft.manufacturer }} {{ aircraft.model }}</option>
+                <option
+                    value="{{ aircraft.id }}"
+                    {% if flight and flight.aircraft_id == aircraft.id %}selected{% endif %}
+                    {% if not flight and user.last_aircraft_id == aircraft.id %}selected{% endif %}
+                >
+                    {{ aircraft.manufacturer }} {{ aircraft.model }}
+                </option>
                 {% endfor %}
             </select>
             <div class="icon is-small is-left">

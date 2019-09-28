@@ -74,6 +74,14 @@ pub fn create_flight(conn: &PgConnection, flight: &NewFlight) -> Flight {
         .expect("Could not create flight")
 }
 
+/// Save an updated flight in the database.
+pub fn update_flight(conn: &PgConnection, flight: &Flight) {
+    diesel::update(flight)
+        .set(flight)
+        .execute(conn)
+        .expect("Could not update flight");
+}
+
 /// Retrieve all flights of a specific user.
 pub fn get_flights_for_user(conn: &PgConnection, user: &User) -> Vec<Flight> {
     Flight::belonging_to(user)

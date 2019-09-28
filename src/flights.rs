@@ -7,9 +7,9 @@ use chrono::naive::{NaiveDate, NaiveDateTime, NaiveTime};
 use chrono::{DateTime, Utc};
 use rocket::http::hyper::header::{Charset, ContentDisposition, DispositionParam, DispositionType};
 use rocket::http::{ContentType, Status};
-use rocket::request::{Form, FromForm};
-use rocket::response::{Redirect, Response};
-use rocket::{get, post};
+use rocket::request::{FlashMessage, Form, FromForm};
+use rocket::response::{Flash, Redirect, Responder, Response};
+use rocket::{get, post, uri};
 use rocket_contrib::templates::Template;
 use serde::Serialize;
 
@@ -413,7 +413,12 @@ pub(crate) fn submit(
 }
 
 #[get("/flights/<id>/edit")]
-pub(crate) fn edit_form(user: auth::AuthUser, db: data::Database, id: i32) -> Result<Template, Status> {
+pub(crate) fn edit_form(
+    user: auth::AuthUser,
+    db: data::Database,
+    id: i32,
+    flash: Option<FlashMessage>,
+) -> Result<Template, Status> {
     let user = user.into_inner();
 
     // Get data
@@ -435,7 +440,78 @@ pub(crate) fn edit_form(user: auth::AuthUser, db: data::Database, id: i32) -> Re
         flight: Some(flight),
         aircraft_list,
         locations,
-        error_msg: None,
+        error_msg: flash.map(|f: FlashMessage| f.msg().to_owned()),
     };
     Ok(Template::render("submit", context))
+}
+
+#[derive(Debug, Responder)]
+pub(crate) enum EditResponse {
+    Success(Redirect),
+    Message(Flash<Redirect>),
+    Error(Status),
+}
+
+#[post("/flights/<id>/edit", data = "<data>")]
+pub(crate) fn edit<'r>(
+    user: auth::AuthUser,
+    db: data::Database,
+    id: i32,
+    data: Option<Form<FlightForm>>,
+) -> EditResponse {
+    let user = user.into_inner();
+
+    /// If something fails, redirect back to the edit form with an error message.
+    macro_rules! fail {
+        ($msg:expr) => {{
+            return EditResponse::Message(Flash::error(Redirect::to(uri!(edit_form: id)), $msg));
+        }};
+    }
+
+    // Get flight
+    let mut flight = match data::get_flight_with_id(&db, id) {
+        Some(flight) => flight,
+        None => return EditResponse::Error(Status::NotFound),
+    };
+
+    // Ownership check
+    if flight.user_id != user.id {
+        return EditResponse::Error(Status::Forbidden);
+    }
+
+    // Get `NewFlight` instance from form
+    let new_flight = if let Some(Form(form)) = data {
+        match form.into_new_flight(&user, &db) {
+            Ok(val) => val,
+            Err(msg) => fail!(msg),
+        }
+    } else {
+        fail!("Invalid form, could not parse data. Note: Only IGC files up to ~2 MiB can be uploaded.");
+    };
+
+    // Update existing flight
+    flight.number = new_flight.number;
+    flight.user_id = new_flight.user_id;
+    flight.aircraft_id = new_flight.aircraft_id;
+    flight.launch_at = new_flight.launch_at;
+    flight.landing_at = new_flight.landing_at;
+    flight.launch_time = new_flight.launch_time;
+    flight.landing_time = new_flight.landing_time;
+    flight.track_distance = new_flight.track_distance;
+    flight.xcontest_tracktype = new_flight.xcontest_tracktype;
+    flight.xcontest_distance = new_flight.xcontest_distance;
+    flight.xcontest_url = new_flight.xcontest_url;
+    flight.comment = new_flight.comment;
+    flight.video_url = new_flight.video_url;
+    if new_flight.igc.is_some() {
+        // We don't want to overwrite IGC data with nothing.
+        flight.igc = new_flight.igc;
+    }
+
+    // Save changes
+    // TODO: Error handling
+    data::update_flight(&db, &flight);
+
+    // Render template
+    EditResponse::Success(Redirect::to(uri!(list)))
 }

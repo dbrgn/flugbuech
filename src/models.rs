@@ -66,7 +66,7 @@ pub struct NewLocation {
     pub geog: Option<GeogPoint>,
 }
 
-#[derive(Identifiable, Queryable, Associations, Serialize, PartialEq, Debug, Clone)]
+#[derive(Identifiable, Queryable, Associations, AsChangeset, Serialize, PartialEq, Debug, Clone)]
 #[belongs_to(User, foreign_key = "user_id")]
 #[belongs_to(Aircraft, foreign_key = "aircraft_id")]
 #[table_name = "flights"]
