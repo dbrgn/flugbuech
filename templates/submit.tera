@@ -18,8 +18,8 @@
 file, some of the fields will be automatically filled for you.</p>
 
 <p class="content"><strong>NOTE:</strong> If the launch or landing location is
-still missing, please add it before filling out this form! Currently locations
-cannot be created automatically.</p>
+still missing, please <a href="/locations/add/">add it</a> before filling out this form!
+Currently locations cannot be created automatically.</p>
 {% endif %}
 
 <div class="spaced-headers">
