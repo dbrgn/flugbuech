@@ -419,11 +419,11 @@ Currently locations cannot be created automatically.</p>
                         if (data.type === 'success') {
                             processData(data);
                         } else if (data.type === 'error') {
-                            throw new Error(data.error);
+                            throw new Error(data.msg);
                         } else {
                             throw new Error('Malformed response');
                         }
-                    });
+                    }).catch((e) => alert(`Could not process IGC file: ${e}`));
                 } else {
                     throw new Error(`HTTP ${response.status}`);
                 }

@@ -75,7 +75,7 @@ impl FlightInfo {
 #[serde(rename_all = "lowercase")]
 pub(crate) enum FlightInfoResult {
     Success(FlightInfo),
-    Error(String),
+    Error { msg: String },
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -113,9 +113,13 @@ pub(crate) fn process_igc(data: Data, user: auth::AuthUser, db: data::Database) 
     // Open IGC file
     let reader = data.open().take(crate::MAX_UPLOAD_BYTES);
     let buf_reader = BufReader::new(reader);
-    let lines = match buf_reader.lines().collect::<Result<Vec<String>, io::Error>>() {
+    let lines = match buf_reader.split(b'\n').collect::<Result<Vec<Vec<u8>>, io::Error>>() {
         Ok(res) => res,
-        Err(e) => return Json(FlightInfoResult::Error(format!("I/O Error: {}", e))),
+        Err(e) => {
+            return Json(FlightInfoResult::Error {
+                msg: format!("I/O Error: {}", e),
+            })
+        },
     };
 
     // Prepare FlightInfo instance
@@ -126,7 +130,8 @@ pub(crate) fn process_igc(data: Data, user: auth::AuthUser, db: data::Database) 
     let mut projection: Option<FlatProjection<f64>> = None;
     let mut flight_path = FlatPointString::new();
 
-    for line in &lines {
+    for line_bytes in &lines {
+        let line = String::from_utf8_lossy(line_bytes);
         match Record::parse_line(&line) {
             Ok(Record::H(h @ HRecord { mnemonic: "PLT", .. })) => {
                 info.pilot = Some(h.data.trim().into());
@@ -190,7 +195,11 @@ pub(crate) fn process_igc(data: Data, user: auth::AuthUser, db: data::Database) 
                 }
             },
             Ok(_rec) => {},
-            Err(e) => return Json(FlightInfoResult::Error(format!("Error parsing lines: {:?}", e))),
+            Err(e) => {
+                return Json(FlightInfoResult::Error {
+                    msg: format!("Error parsing lines: {:?}", e),
+                })
+            },
         }
     }
     info.track_distance = flight_path.length();
