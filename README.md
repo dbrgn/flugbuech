@@ -13,7 +13,7 @@ be possible to host it yourself, either on a server or on your own local
 computer.
 
 The IGC file is stored together with the flight data. Every flight can be
-linked to an XContest upload.
+linked to an [XContest](https://www.xcontest.org/) upload.
 
 ## Status
 
@@ -43,9 +43,9 @@ release so far.
 
 Requirements:
 
-    - Rust nightly
-    - PostgreSQL + PostGIS
-    - For production environments: A reverse proxy like Nginx
+- Rust nightly
+- PostgreSQL + PostGIS
+- For production environments: A reverse proxy like Nginx
 
 Use Rust nightly:
 
@@ -58,6 +58,7 @@ Install `diesel_cli`:
 
 Set up PostgreSQL database:
 
+    createdb flugbuech
     diesel setup
 
 Start server:
