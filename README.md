@@ -4,6 +4,8 @@ Personal flight log for paragliding pilots. Written with
 [Rust](https://www.rust-lang.org/) / [Rocket](https://rocket.rs/) in
 the backend and Bulma CSS / Vanilla JavaScript in the frontend.
 
+![Screenshot](screenshot.png)
+
 This software is mostly aimed at pilots that track their flights using a GPS
 tracker which generates IGC files, but it can also be used without an IGC file
 for every flight.
