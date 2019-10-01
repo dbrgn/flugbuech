@@ -1,14 +1,51 @@
 # Flugbuech
 
-Flight log for paragliding pilots.
+Personal flight log for paragliding pilots. Written with
+[Rust](https://www.rust-lang.org/) / [Rocket](https://rocket.rs/) in
+the backend and Bulma CSS / Vanilla JavaScript in the frontend.
 
-Goals:
+This software is mostly aimed at pilots that track their flights using a GPS
+tracker which generates IGC files, but it can also be used without an IGC file
+for every flight.
 
-- [ ] Allow users to add flights to the database
+I plan to provide a free hosted version of the flight book, but it should also
+be possible to host it yourself, either on a server or on your own local
+computer.
+
+The IGC file is stored together with the flight data. Every flight can be
+linked to an XContest upload.
+
+## Status
+
+Right now this software is still under active development. There has been no
+release so far.
+
+### What works
+
+- [x] User login / authentication
+- [x] Adding flights to the database
+- [x] Simple submission of of flights by uploading IGC file (all
+  relevant flight data like launch time/location, landing time/location,
+  duration, distance, etc can be extracted from that file)
+- [x] Manage locations
+
+### What's not yet implemented
+
+- [ ] User registration, password recovery
+- [ ] Map with all your flights
 - [ ] Show stats about the past flights
-- [ ] Simple submission of of flights by uploading IGC file
+- [ ] Host the page on a public website
+- [ ] Make it easy to self-host
+- [ ] Import launch / landing locations from a public database
+- [ ] Adding links to other XC platforms like [XCR](https://xc-paragliding.com/)
 
 ## Setup
+
+Requirements:
+
+    - Rust nightly
+    - PostgreSQL + PostGIS
+    - For production environments: A reverse proxy like Nginx
 
 Use Rust nightly:
 
@@ -28,6 +65,8 @@ Start server:
     cargo run
 
 ## Adding Users
+
+Right now users have to be added to the database manually.
 
 ```sql
 INSERT INTO users(username, password)
