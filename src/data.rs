@@ -1,4 +1,4 @@
-use diesel::dsl::max;
+use diesel::dsl::{count, max};
 use diesel::prelude::*;
 use diesel::sql_types::{Double, Integer, Text};
 use diesel::{sql_function, sql_query, PgConnection};
@@ -44,8 +44,22 @@ pub fn get_users(conn: &PgConnection) -> Vec<User> {
     users::table.load(conn).expect("Error loading users")
 }
 
+pub fn get_user_count(conn: &PgConnection) -> i64 {
+    users::table
+        .select(count(users::id))
+        .first(conn)
+        .expect("Error loading user count")
+}
+
 pub fn get_aircraft(conn: &PgConnection) -> Vec<Aircraft> {
     aircraft::table.load(conn).expect("Error loading aircraft")
+}
+
+pub fn get_aircraft_count(conn: &PgConnection) -> i64 {
+    aircraft::table
+        .select(count(aircraft::id))
+        .first(conn)
+        .expect("Error loading aircraft count")
 }
 
 pub fn get_aircraft_for_user(conn: &PgConnection, user: &User) -> Vec<Aircraft> {
@@ -83,6 +97,13 @@ pub fn update_flight(conn: &PgConnection, flight: &Flight) {
         .set(flight)
         .execute(conn)
         .expect("Could not update flight");
+}
+
+pub fn get_flight_count(conn: &PgConnection) -> i64 {
+    flights::table
+        .select(count(flights::id))
+        .first(conn)
+        .expect("Error loading flight count")
 }
 
 /// Retrieve all flights of a specific user.

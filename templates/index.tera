@@ -1,26 +1,54 @@
 {% extends 'base' %}
 
 {% block content %}
-<h2 class="title is-2">Overview</h2>
+<h2 class="title is-size-2">Overview</h2>
 
-{% if user %}
-    <h3 class="title is-4">Flights</h3>
-    <p class="content">
-        <a href="/flights/add/">Submit new flight</a>
-    <p>
-{% endif %}
+<p class="content">Welcome to Flugbuech! This is a free, oepn source and
+ad-free platform for keeping track of your flights (mainly aimed at paragliding
+pilots).</p>
 
-<h3 class="title is-4">Users</h3>
+<p class="content">The software is mostly aimed at pilots that track their
+flights using a flight computer which generates IGC files, but it can also be
+used without an IGC file for every flight. My goal is to extract as much flight
+data from the IGC file as possible (e.g.  launch site, landing site, distance,
+etc), so that you don't need to enter that data manually. The IGC files are
+stored together with the flight data.</p>
+
+<p class="content">You can find the list of features and the current project
+status <a href="https://github.com/dbrgn/flugbuech#status">on the project
+GitHub page</a>.</p>
+
+<h3 class="title is-size-3">FAQ</h3>
+
+<h4 class="title is-size-5">Is it free?</h4>
+<p class="content">Yes, and there are no ads and no user tracking! Usually free
+things have a catch, but in this case I'm developing the flight log for my own
+needs, and others may use it too.</p>
+
+<h4 class="title is-size-5">Can I sign up?</h4>
+<p class="content">Registration is not yet implemented. However, if you want an
+account, just send me an e-mail at <a
+href="mailto:flugbuech@bargen.dev">flugbuech@bargen.dev</a>.</p>
+
+<h4 class="title is-size-5">Where can I find the source code or report bugs?</h4>
+<p class="content">On <a href="https://github.com/dbrgn/flugbuech">GitHub</a>.</p>
+
+<h4 class="title is-size-5">What does &laquo;Flugbuech&raquo; mean?</h4>
+<p class="content">It's <a href="https://en.wikipedia.org/wiki/Swiss_German">Swiss German</a> for &laquo;Flight Log&raquo;. Sorry for not being more creative.</p>
+
+<h3 class="title is-size-3">Stats</h3>
 <table class="table is-bordered is-hoverable">
     <tr>
-        <th>Username</th>
-        <th>Aircraft</th>
+        <th>Registered Users</th>
+        <td>{{ user_count }}</td>
     </tr>
-{% for uwa in users_with_aircraft %}
     <tr>
-        <td>{{ uwa.0.username }}</td>
-        <td>{% for a in uwa.1 %}{{ a.manufacturer }} {{ a.model }}<br>{% endfor %}</td>
+        <th>Registered Aircraft</th>
+        <td>{{ aircraft_count }}</td>
     </tr>
-{% endfor %}
+    <tr>
+        <th>Total Flights</th>
+        <td>{{ flight_count }}</td>
+    </tr>
 </table>
 {% endblock %}

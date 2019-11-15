@@ -20,7 +20,6 @@ use rocket::{catch, catchers, get, routes};
 use rocket_contrib::serve::StaticFiles;
 use rocket_contrib::templates::Template;
 use serde::Serialize;
-use std::collections::HashMap;
 
 pub(crate) const MAX_UPLOAD_BYTES: u64 = 50 * 1024 * 1024;
 
@@ -29,23 +28,18 @@ pub(crate) const MAX_UPLOAD_BYTES: u64 = 50 * 1024 * 1024;
 #[derive(Serialize)]
 struct IndexContext {
     user: Option<models::User>,
-    users_with_aircraft: Vec<(models::User, Vec<models::Aircraft>)>,
+    user_count: i64,
+    aircraft_count: i64,
+    flight_count: i64,
 }
 
 #[get("/")]
 fn index(db: data::Database, user: Option<auth::AuthUser>) -> Template {
-    let mut usermap: HashMap<i32, (models::User, Vec<models::Aircraft>)> = HashMap::new();
-    for user in data::get_users(&db) {
-        usermap.insert(user.id, (user, vec![]));
-    }
-
-    for aircraft in data::get_aircraft(&db) {
-        usermap.get_mut(&aircraft.user_id).unwrap().1.push(aircraft)
-    }
-
     let context = IndexContext {
         user: user.map(|u| u.into_inner()),
-        users_with_aircraft: usermap.values().cloned().collect::<Vec<_>>(),
+        user_count: data::get_user_count(&db),
+        aircraft_count: data::get_aircraft_count(&db),
+        flight_count: data::get_flight_count(&db),
     };
     Template::render("index", &context)
 }
