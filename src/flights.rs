@@ -346,6 +346,7 @@ impl FlightForm {
 struct SubmitContext {
     user: User,
     flight: Option<Flight>,
+    max_flight_number: Option<i32>,
     aircraft_list: Vec<Aircraft>,
     locations: Vec<Location>,
     error_msg: Option<String>,
@@ -356,9 +357,11 @@ pub(crate) fn submit_form(user: auth::AuthUser, db: data::Database) -> Template 
     let user = user.into_inner();
     let aircraft_list = data::get_aircraft_for_user(&db, &user);
     let locations = data::get_locations_for_user(&db, &user);
+    let max_flight_number = data::get_max_flight_number_for_user(&db, &user);
     let context = SubmitContext {
         user,
         flight: None,
+        max_flight_number,
         aircraft_list,
         locations,
         error_msg: None,
@@ -380,6 +383,7 @@ pub(crate) fn submit(
     let user = user.into_inner();
     let aircraft_list = data::get_aircraft_for_user(&db, &user);
     let locations = data::get_locations_for_user(&db, &user);
+    let max_flight_number = data::get_max_flight_number_for_user(&db, &user);
 
     macro_rules! fail {
         ($msg:expr) => {{
@@ -387,6 +391,7 @@ pub(crate) fn submit(
             let ctx = SubmitContext {
                 user,
                 flight: None,
+                max_flight_number,
                 aircraft_list,
                 locations,
                 error_msg,
@@ -438,6 +443,7 @@ pub(crate) fn edit_form(
     let context = SubmitContext {
         user,
         flight: Some(flight),
+        max_flight_number: None,
         aircraft_list,
         locations,
         error_msg: flash.map(|f: FlashMessage| f.msg().to_owned()),

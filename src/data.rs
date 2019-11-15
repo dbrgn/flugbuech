@@ -114,6 +114,14 @@ pub fn get_flights_for_user(conn: &PgConnection, user: &User) -> Vec<Flight> {
         .expect("Error loading flights")
 }
 
+/// Retrieve the highest flight number for a specific user.
+pub fn get_max_flight_number_for_user(conn: &PgConnection, user: &User) -> Option<i32> {
+    Flight::belonging_to(user)
+        .select(max(flights::number))
+        .first(conn)
+        .expect("Error loading flight count")
+}
+
 /// Retrieve flight with the specified ID.
 pub fn get_flight_with_id(conn: &PgConnection, id: i32) -> Option<Flight> {
     flights::table

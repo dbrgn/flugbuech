@@ -60,6 +60,9 @@ Currently locations cannot be created automatically.</p>
         <div class="icon is-small is-left">
             <i class="fas fa-list-ol"></i>
         </div>
+        {% if max_flight_number %}
+        <p class="formhint">Highest flight number so far: {{ max_flight_number }}</p>
+        {% endif %}
     </div>
 </div>
 
