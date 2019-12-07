@@ -1,5 +1,7 @@
 # Flugbuech
 
+![Build status](https://img.shields.io/github/workflow/status/dbrgn/flugbuech/CI/master)
+
 Personal flight log for paragliding pilots. Written with
 [Rust](https://www.rust-lang.org/) / [Rocket](https://rocket.rs/) in
 the backend and Bulma CSS / Vanilla JavaScript in the frontend.
