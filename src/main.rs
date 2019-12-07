@@ -79,7 +79,9 @@ fn main() {
         .attach(data::Database::fairing())
         .attach(Template::custom(|engines| {
             engines.tera.register_filter("duration", filters::duration);
-            engines.tera.register_filter("xcontest_icon", filters::xcontest_icon);
+            engines
+                .tera
+                .register_filter("xcontest_icon", filters::xcontest_icon);
         }))
         .register(catchers![service_not_available])
         // Main routes
