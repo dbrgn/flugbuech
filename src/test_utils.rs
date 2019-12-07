@@ -9,8 +9,8 @@ use dotenv;
 use lazy_static::lazy_static;
 use log::debug;
 
-use crate::models::{NewUser, User};
-use crate::schema::users;
+use crate::data::create_user;
+use crate::models::User;
 
 lazy_static! {
     static ref DB_MUTEX: Mutex<()> = Mutex::new(());
@@ -66,20 +66,8 @@ impl<'a> DbTestContext<'a> {
         diesel_migrations::run_pending_migrations(&conn).expect("Could not run database migrations");
 
         // Create test user
-        let testuser1 = diesel::insert_into(users::table)
-            .values(&NewUser {
-                username: "testuser1".into(),
-                password: "testpass".into(),
-            })
-            .get_result(&conn)
-            .expect("Could not create test user");
-        let testuser2 = diesel::insert_into(users::table)
-            .values(&NewUser {
-                username: "testuser2".into(),
-                password: "testpass".into(),
-            })
-            .get_result(&conn)
-            .expect("Could not create test user");
+        let testuser1 = create_user(&conn, "testuser1", "testpass");
+        let testuser2 = create_user(&conn, "testuser2", "testpass");
 
         DbTestContext {
             conn: Mutex::new(conn),

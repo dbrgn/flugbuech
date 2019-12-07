@@ -15,6 +15,13 @@ sql_function! {
     fn crypt(pw: Text, salt: Text) -> Text;
 }
 
+sql_function! {
+    /// The pgcrypto "gen_salt" function.
+    fn gen_salt(type_: Text, iter_count: Integer) -> Text;
+}
+
+const PW_SALT_ITERATIONS: i32 = 10;
+
 /// Database connection state object.
 #[database("flugbuech")]
 pub struct Database(diesel::PgConnection);
@@ -49,6 +56,17 @@ pub fn get_user_count(conn: &PgConnection) -> i64 {
         .select(count(users::id))
         .first(conn)
         .expect("Error loading user count")
+}
+
+/// Create a user in the database. The password will be hashed.
+pub fn create_user(conn: &PgConnection, username: impl Into<String>, password: impl Into<String>) -> User {
+    diesel::insert_into(users::table)
+        .values(&(
+            users::username.eq(username.into()),
+            users::password.eq(crypt(password.into(), gen_salt("bf", PW_SALT_ITERATIONS))),
+        ))
+        .get_result(conn)
+        .expect("Could not create user")
 }
 
 pub fn get_aircraft(conn: &PgConnection) -> Vec<Aircraft> {

@@ -19,15 +19,6 @@ pub struct User {
     pub last_aircraft_id: Option<i32>,
 }
 
-#[derive(Insertable)]
-#[table_name = "users"]
-pub struct NewUser {
-    pub username: String,
-    /// Password is automatically hashed on insert or update
-    /// by a PostgreSQL trigger.
-    pub password: String,
-}
-
 #[derive(Identifiable, Queryable, Associations, Serialize, PartialEq, Debug, Clone)]
 #[belongs_to(User, foreign_key = "user_id")]
 #[table_name = "aircraft"]
