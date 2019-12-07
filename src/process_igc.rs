@@ -167,9 +167,9 @@ pub(crate) fn process_igc(data: Data, user: auth::AuthUser, db: data::Database) 
                 let lon = raw_lon.into();
                 let pos = LatLon { lat, lon };
 
-                // Initialize projection with the first latitude in the track
+                // Initialize projection with the first coordinate in the track
                 if projection.is_none() {
-                    projection = Some(FlatProjection::new(lat));
+                    projection = Some(FlatProjection::new(lon, lat));
                 }
 
                 // Project the coordinate onto a flat coordinate system
