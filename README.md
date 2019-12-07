@@ -1,6 +1,7 @@
 # Flugbuech
 
 ![Build status](https://img.shields.io/github/workflow/status/dbrgn/flugbuech/CI/master)
+![Docker image](https://img.shields.io/badge/docker%20image-dbrgn%2Fflugbuech-blue)
 
 Personal flight log for paragliding pilots. Written with
 [Rust](https://www.rust-lang.org/) / [Rocket](https://rocket.rs/) in
@@ -97,7 +98,9 @@ Run tests:
 
 If you want to deploy this software using Docker, please take a look at the
 provided `docker-compose.yml` file. It can serve as an example on how to host
-Flugbuech.
+Flugbuech. The image is also available [on Docker
+Hub](https://hub.docker.com/r/dbrgn/flugbuech/), images are re-built at least
+weekly.
 
 Note that while the default server is able to serve static files, it's probably
 a good idea to put an Nginx instance in front of the `/flugbuech/static` volume
