@@ -8,8 +8,10 @@ license = "AGPL-3.0"
 [dependencies]
 base64 = "0.11"
 chrono = { version = "0.4", features = ["serde"] }
+clap = "2"
 diesel = { version = "1.4", features = ["postgres", "chrono"] }
 diesel-geography = { version = "0.2", features = ["serde"], git = "https://github.com/dbrgn/diesel-geography", branch = "geography-queryid" }
+diesel_migrations = { version = "1.4", features = ["postgres"] }
 dotenv = "0.15"
 flat_projection = "0.3"
 igc = "0.2"
@@ -24,5 +26,4 @@ default-features = false
 features = ["diesel_postgres_pool", "json", "serve", "tera_templates"]
 
 [dev-dependencies]
-diesel_migrations = { version = "1.4", features = ["postgres"] }
 lazy_static = "1"

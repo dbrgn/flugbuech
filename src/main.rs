@@ -1,6 +1,7 @@
 #![feature(proc_macro_hygiene, decl_macro, never_type)]
 
 #[macro_use] extern crate diesel;
+#[macro_use] extern crate diesel_migrations;
 
 mod auth;
 mod base64;
@@ -14,6 +15,8 @@ mod process_igc;
 mod schema;
 #[cfg(test)] mod test_utils;
 
+use clap::{App, Arg};
+use dotenv;
 use rocket::request::Request;
 use rocket::response::Redirect;
 use rocket::{catch, catchers, get, routes};
@@ -22,6 +25,9 @@ use rocket_contrib::templates::Template;
 use serde::Serialize;
 
 pub(crate) const MAX_UPLOAD_BYTES: u64 = 50 * 1024 * 1024;
+pub(crate) const NAME: &str = "flugbuech";
+pub(crate) const VERSION: &str = env!("CARGO_PKG_VERSION");
+pub(crate) const DESCRIPTION: &str = "Paragliding flight book.";
 
 // Index
 
@@ -75,6 +81,27 @@ fn service_not_available(_req: &Request) -> &'static str {
 // Main
 
 fn main() {
+    // Load env
+    let _ = dotenv::dotenv();
+
+    // Parse args
+    let args = App::new(NAME)
+        .about(DESCRIPTION)
+        .version(VERSION)
+        .arg(
+            Arg::with_name("migrate")
+                .long("migrate")
+                .help("Run database migrations before starting"),
+        )
+        .get_matches();
+
+    // Decide whether migrations should be run
+    let migrate = args.is_present("migrate");
+    if migrate {
+        println!("Running database migrations...");
+        data::run_migrations().unwrap();
+    }
+
     rocket::ignite()
         .attach(data::Database::fairing())
         .attach(Template::custom(|engines| {
