@@ -19,6 +19,7 @@ computer.
 The IGC file is stored together with the flight data. Every flight can be
 linked to an [XContest](https://www.xcontest.org/) upload.
 
+
 ## Status
 
 Right now this software is still under active development. There has been no
@@ -42,6 +43,7 @@ release so far.
 - [ ] Make it easy to self-host
 - [ ] Import launch / landing locations from a public database
 - [ ] Adding links to other XC platforms like [XCR](https://xc-paragliding.com/)
+
 
 ## Setup
 
@@ -69,6 +71,7 @@ Start server:
 
     cargo run
 
+
 ## Adding Users
 
 Right now users have to be added to the database manually.
@@ -77,6 +80,7 @@ Right now users have to be added to the database manually.
 INSERT INTO users(username, password)
 VALUES ('user', crypt('password', gen_salt('bf', 10)));
 ```
+
 
 ## Testing
 
@@ -87,6 +91,21 @@ First, set up a test database:
 Run tests:
 
     cargo test
+
+
+## Deployment
+
+If you want to deploy this software using Docker, please take a look at the
+provided `docker-compose.yml` file. It can serve as an example on how to host
+Flugbuech.
+
+Note that while the default server is able to serve static files, it's probably
+a good idea to put an Nginx instance in front of the `/flugbuech/static` volume
+inside the Docker container.
+
+**IMPORTANT**: Make sure to change the `ROCKET_SECRET_KEY` variable when
+configuring your deployment!
+
 
 ## License
 

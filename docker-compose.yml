@@ -1,0 +1,35 @@
+version: '3'
+services:
+
+  db:
+    image: mdillon/postgis:11
+    restart: always
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "flugbuech"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      POSTGRES_DB: flugbuech
+      POSTGRES_USER: flugbuech
+
+  web:
+    build: .
+    restart: always
+    ports:
+      - "8000:8000"
+    links:
+      - db
+    volumes:
+      - "/flugbuech/static"
+    environment:
+      ROCKET_ENV: production
+      ROCKET_HOST: "0.0.0.0"
+      ROCKET_PORT: 8000
+      ROCKET_TEMPLATE_DIR: /flugbuech/templates
+      ROCKET_STATIC_FILES_DIR: /flugbuech/static
+      # IMPORTANT: Change the secret key below in production!
+      # You can generate it with `openssl rand -base64 32`.
+      ROCKET_SECRET_KEY: "2WMWUpOjLnmn39PIAifL4QXxGOsyyf1U17YTpOfoLJ4="
+      DATABASE_URL: postgres://flugbuech@db/flugbuech
+      ROCKET_DATABASES: '{flugbuech={url="postgres://flugbuech@db/flugbuech"}}'

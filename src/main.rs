@@ -1,4 +1,4 @@
-#![feature(proc_macro_hygiene, decl_macro, never_type)]
+#![feature(proc_macro_hygiene, decl_macro, never_type, bind_by_move_pattern_guards)]
 
 #[macro_use] extern crate diesel;
 #[macro_use] extern crate diesel_migrations;
@@ -102,15 +102,31 @@ fn main() {
         data::run_migrations().unwrap();
     }
 
-    rocket::ignite()
+    // Initialize application
+    let app = rocket::ignite();
+
+    // Determine static files dir
+    let static_files_dir = app
+        .config()
+        .get_str("static_files_dir")
+        .unwrap_or(concat!(env!("CARGO_MANIFEST_DIR"), "/static"))
+        .to_string();
+
+    // Attach fairings
+    let app = app
         .attach(data::Database::fairing())
         .attach(Template::custom(|engines| {
             engines.tera.register_filter("duration", filters::duration);
             engines
                 .tera
                 .register_filter("xcontest_icon", filters::xcontest_icon);
-        }))
-        .register(catchers![service_not_available])
+        }));
+
+    // Register custom error catchers
+    let app = app.register(catchers![service_not_available]);
+
+    // Attach routes
+    let app = app
         // Main routes
         .mount(
             "/",
@@ -140,9 +156,8 @@ fn main() {
         // Auth routes
         .mount("/", auth::get_routes())
         // Static files
-        .mount(
-            "/static",
-            StaticFiles::from(concat!(env!("CARGO_MANIFEST_DIR"), "/static")),
-        )
-        .launch();
+        .mount("/static", StaticFiles::from(static_files_dir));
+
+    // Start server
+    app.launch();
 }
