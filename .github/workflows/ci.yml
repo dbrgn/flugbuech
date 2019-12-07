@@ -11,11 +11,11 @@ jobs:
       postgres:
         image: mdillon/postgis:11
         env:
-          POSTGRES_USER: flugbuech-user
-          POSTGRES_PASSWORD: flugbuech-pass
-          POSTGRES_DB: flugbuech
+          POSTGRES_USER: flugbuech
+          POSTGRES_PASSWORD: flugbuech
+          POSTGRES_DB: flugbuech_test
         ports:
-          - 5432/tcp
+          - 5432:5432
         # Needed because the postgres container does not provide a healthcheck
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
@@ -33,6 +33,8 @@ jobs:
           args: --all-features
       - name: Run tests
         uses: actions-rs/cargo@v1
+        env:
+          TEST_DATABASE_URL: 'postgres://flugbuech:flugbuech@localhost:5432/flugbuech_test'
         with:
           command: test
           args: --all-features
