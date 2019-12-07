@@ -73,7 +73,13 @@ pub(crate) fn add_form_nologin() -> Redirect {
 pub(crate) fn add(user: auth::AuthUser, db: data::Database, data: Form<LocationForm>) -> Redirect {
     let user = user.into_inner();
 
-    let LocationForm { name, country, elevation, lat, lon } = data.into_inner();
+    let LocationForm {
+        name,
+        country,
+        elevation,
+        lat,
+        lon,
+    } = data.into_inner();
 
     // Create model
     let location = NewLocation {
@@ -82,10 +88,14 @@ pub(crate) fn add(user: auth::AuthUser, db: data::Database, data: Form<LocationF
         elevation: elevation,
         user_id: user.id,
         geog: if let (Some(lat), Some(lon)) = (lat, lon) {
-            Some(GeogPoint { x: lon, y: lat, srid: None })
+            Some(GeogPoint {
+                x: lon,
+                y: lat,
+                srid: None,
+            })
         } else {
             None
-        }
+        },
     };
 
     // Create database entry
@@ -137,12 +147,22 @@ pub(crate) fn edit(
     }
 
     // Update model
-    let LocationForm { name, country, elevation, lat, lon } = data.into_inner();
+    let LocationForm {
+        name,
+        country,
+        elevation,
+        lat,
+        lon,
+    } = data.into_inner();
     location.name = name;
     location.country = country;
     location.elevation = elevation;
     if let (Some(lat), Some(lon)) = (lat, lon) {
-        location.geog = Some(GeogPoint { x: lon, y: lat, srid: None });
+        location.geog = Some(GeogPoint {
+            x: lon,
+            y: lat,
+            srid: None,
+        });
     } else {
         location.geog = None;
     }

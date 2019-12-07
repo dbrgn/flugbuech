@@ -113,7 +113,10 @@ pub(crate) fn process_igc(data: Data, user: auth::AuthUser, db: data::Database) 
     // Open IGC file
     let reader = data.open().take(crate::MAX_UPLOAD_BYTES);
     let buf_reader = BufReader::new(reader);
-    let lines = match buf_reader.split(b'\n').collect::<Result<Vec<Vec<u8>>, io::Error>>() {
+    let lines = match buf_reader
+        .split(b'\n')
+        .collect::<Result<Vec<Vec<u8>>, io::Error>>()
+    {
         Ok(res) => res,
         Err(e) => {
             return Json(FlightInfoResult::Error {
