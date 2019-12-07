@@ -1,0 +1,35 @@
+on: [push]
+
+name: CI
+
+jobs:
+  build_and_test:
+    name: Build and test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: mdillon/postgis:11
+        env:
+          POSTGRES_USER: flugbuech-user
+          POSTGRES_PASSWORD: flugbuech-pass
+          POSTGRES_DB: flugbuech
+        ports:
+          - 5432/tcp
+        # Needed because the postgres container does not provide a healthcheck
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly-2019-09-03
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --all-features
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --all-features
