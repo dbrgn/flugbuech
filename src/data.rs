@@ -1,3 +1,6 @@
+use std::env;
+use std::io;
+
 use diesel::dsl::{count, max};
 use diesel::prelude::*;
 use diesel::sql_types::{Double, Integer, Text};
@@ -25,6 +28,18 @@ const PW_SALT_ITERATIONS: i32 = 10;
 /// Database connection state object.
 #[database("flugbuech")]
 pub struct Database(diesel::PgConnection);
+
+embed_migrations!();
+
+/// Run migrations on the database indicated with `DATABASE_URL`.
+pub fn run_migrations() -> Result<(), String> {
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    match PgConnection::establish(&database_url) {
+        Ok(connection) => embedded_migrations::run_with_output(&connection, &mut io::stdout())
+            .map_err(|e| format!("Could not run migrations: {}", e)),
+        Err(e) => Err(format!("Could not connect to database: {}", e)),
+    }
+}
 
 /// Return the user model with the specified user id.
 pub fn get_user(conn: &PgConnection, id: i32) -> Option<User> {
