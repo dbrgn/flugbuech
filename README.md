@@ -13,9 +13,11 @@ This software is mostly aimed at pilots that track their flights using a GPS
 tracker which generates IGC files, but it can also be used without an IGC file
 for every flight.
 
-I plan to provide a free hosted version of the flight book, but it should also
-be possible to host it yourself, either on a server or on your own local
-computer.
+A free hosted version of the flight book can be found at
+[flugbuech.bargen.dev](https://flugbuech.bargen.dev/). If you want a
+beta-account, just send me an e-mail to
+[flugbuech@bargen.dev](mailto:flugbuech@bargen.dev). Alternatively you can also
+host the software yourself.
 
 The IGC file is stored together with the flight data. Every flight can be
 linked to an [XContest](https://www.xcontest.org/) upload.
