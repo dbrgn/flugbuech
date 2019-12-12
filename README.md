@@ -42,7 +42,6 @@ release so far.
 - [ ] User registration, password recovery
 - [ ] Map with all your flights
 - [ ] Show stats about the past flights
-- [ ] Host the page on a public website
 - [ ] Make it easy to self-host
 - [ ] Import launch / landing locations from a public database
 - [ ] Adding links to other XC platforms like [XCR](https://xc-paragliding.com/)
