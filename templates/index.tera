@@ -3,7 +3,7 @@
 {% block content %}
 <h2 class="title is-size-2">Overview</h2>
 
-<p class="content">Welcome to Flugbuech! This is a free, oepn source and
+<p class="content">Welcome to Flugbuech! This is a free, open source and
 ad-free platform for keeping track of your free flights (paragliding or hang
 gliding).</p>
 
