@@ -83,9 +83,9 @@ pub(crate) fn add(user: auth::AuthUser, db: data::Database, data: Form<LocationF
 
     // Create model
     let location = NewLocation {
-        name: name,
-        country: country,
-        elevation: elevation,
+        name,
+        country,
+        elevation,
         user_id: user.id,
         geog: if let (Some(lat), Some(lon)) = (lat, lon) {
             Some(GeogPoint {

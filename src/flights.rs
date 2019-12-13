@@ -459,7 +459,7 @@ pub(crate) enum EditResponse {
 }
 
 #[post("/flights/<id>/edit", data = "<data>")]
-pub(crate) fn edit<'r>(
+pub(crate) fn edit(
     user: auth::AuthUser,
     db: data::Database,
     id: i32,
