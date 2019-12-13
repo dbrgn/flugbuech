@@ -32,6 +32,7 @@ table! {
         comment -> Nullable<Text>,
         video_url -> Nullable<Text>,
         igc -> Nullable<Bytea>,
+        created_at -> Timestamptz,
     }
 }
 
