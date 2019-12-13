@@ -5,7 +5,23 @@
 
 <p class="content">Welcome, {{ user.username }}! Here you can update your profile and gear.</p>
 
-<section>
+<div class="container spaced-headers">
+    <h3 class="title is-4">User Info</h3>
+    <table class="table is-hoverable">
+        <tbody>
+            <tr>
+                <th>Username</th>
+                <td>{{ user.username }}</td>
+            </tr>
+            <tr>
+                <th>E-Mail</th>
+                <td>{{ user.email }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="container spaced-headers">
     <h3 class="title is-4">Gear</h3>
     <p class="content">{{ aircraft_list|length }} gliders registered so far.</p>
     <table class="table is-hoverable">
@@ -33,5 +49,5 @@
             {% endfor %}
         </tbody>
     </table>
-</section>
+</div>
 {% endblock %}

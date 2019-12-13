@@ -71,6 +71,7 @@ table! {
         username -> Varchar,
         password -> Text,
         last_aircraft_id -> Nullable<Int4>,
+        email -> Text,
     }
 }
 

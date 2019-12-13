@@ -66,8 +66,8 @@ impl<'a> DbTestContext<'a> {
         diesel_migrations::run_pending_migrations(&conn).expect("Could not run database migrations");
 
         // Create test user
-        let testuser1 = create_user(&conn, "testuser1", "testpass");
-        let testuser2 = create_user(&conn, "testuser2", "testpass");
+        let testuser1 = create_user(&conn, "testuser1", "testpass", "user1@example.com");
+        let testuser2 = create_user(&conn, "testuser2", "testpass", "user2@example.com");
 
         DbTestContext {
             conn: Mutex::new(conn),

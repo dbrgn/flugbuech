@@ -74,11 +74,17 @@ pub fn get_user_count(conn: &PgConnection) -> i64 {
 }
 
 /// Create a user in the database. The password will be hashed.
-pub fn create_user(conn: &PgConnection, username: impl Into<String>, password: impl Into<String>) -> User {
+pub fn create_user(
+    conn: &PgConnection,
+    username: impl Into<String>,
+    password: impl Into<String>,
+    email: impl Into<String>,
+) -> User {
     diesel::insert_into(users::table)
         .values(&(
             users::username.eq(username.into()),
             users::password.eq(crypt(password.into(), gen_salt("bf", PW_SALT_ITERATIONS))),
+            users::email.eq(email.into()),
         ))
         .get_result(conn)
         .expect("Could not create user")

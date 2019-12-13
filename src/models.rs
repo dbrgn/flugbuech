@@ -17,6 +17,8 @@ pub struct User {
     pub password: String,
     /// Last used aircraft
     pub last_aircraft_id: Option<i32>,
+    /// E-mail address
+    pub email: String,
 }
 
 #[derive(Identifiable, Queryable, Associations, Serialize, PartialEq, Debug, Clone)]
