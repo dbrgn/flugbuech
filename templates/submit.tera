@@ -66,19 +66,19 @@ Currently locations cannot be created automatically.</p>
     </div>
 </div>
 
-<label class="label" for="aircraft">Aircraft</label>
+<label class="label" for="glider">Glider</label>
 <div class="field">
     <div class="control is-expanded has-icons-left">
         <div class="select is-fullwidth">
-            <select name="aircraft" id="aircraft">
+            <select name="glider" id="glider">
                 <option value=""></option>
-                {% for aircraft in aircraft_list %}
+                {% for glider in gliders %}
                 <option
-                    value="{{ aircraft.id }}"
-                    {% if flight and flight.aircraft_id == aircraft.id %}selected{% endif %}
-                    {% if not flight and user.last_aircraft_id == aircraft.id %}selected{% endif %}
+                    value="{{ glider.id }}"
+                    {% if flight and flight.glider_id == glider.id %}selected{% endif %}
+                    {% if not flight and user.last_glider_id == glider.id %}selected{% endif %}
                 >
-                    {{ aircraft.manufacturer }} {{ aircraft.model }}
+                    {{ glider.manufacturer }} {{ glider.model }}
                 </option>
                 {% endfor %}
             </select>
@@ -264,29 +264,29 @@ Currently locations cannot be created automatically.</p>
 </div>
 
 <script>
-    const aircraftList = [
-        {%- for aircraft in aircraft_list %}
+    const gliders = [
+        {%- for glider in gliders %}
         {
-            "id": {{ aircraft.id }},
-            "model": {{ aircraft.model | safe | json_encode() }},
-            "manufacturer": {{ aircraft.manufacturer | safe | json_encode() }},
+            "id": {{ glider.id }},
+            "model": {{ glider.model | safe | json_encode() }},
+            "manufacturer": {{ glider.manufacturer | safe | json_encode() }},
         },
         {%- endfor %}
     ];
 
     /**
-     * Match an aircraft name against the list of aircraft.
+     * Match an glider name against the list of gliders.
      * If the model or the manufacturer + model match, return the corresponding id.
      * Otherwise, return null.
      */
-    aircraftList.match = function(value) {
+    gliders.match = function(value) {
         if (value) {
-            for (aircraft of this) {
-                if (value === aircraft.model) {
-                    return aircraft.id;
+            for (glider of this) {
+                if (value === glider.model) {
+                    return glider.id;
                 }
-                if (value === `${aircraft.manufacturer} ${aircraft.model}`) {
-                    return aircraft.id;
+                if (value === `${glider.manufacturer} ${glider.model}`) {
+                    return glider.id;
                 }
             }
         }
@@ -331,13 +331,13 @@ Currently locations cannot be created automatically.</p>
     }
 
     function processData(data) {
-        // Determine aircraft
-        const aircraftId = aircraftList.match(data.glidertype);
-        if (aircraftId !== null) {
-            const options = document.querySelector('select#aircraft');
+        // Determine glider
+        const gliderId = gliders.match(data.glidertype);
+        if (gliderId !== null) {
+            const options = document.querySelector('select#glider');
             if (options.value === '') {
                 for (const option of options.children) {
-                    if (option.value === aircraftId.toString()) {
+                    if (option.value === gliderId.toString()) {
                         option.selected = true;
                         break;
                     }

@@ -22,7 +22,7 @@
             <tr>
                 <th>#</th>
                 <th>Date</th>
-                <th>Aircraft</th>
+                <th>Glider</th>
                 <th>Launch</th>
                 <th>Landing</th>
                 <th>Duration</th>
@@ -34,14 +34,14 @@
         <tbody>
             {% for info in flights %}
             {% set flight = info.flight %}
-            {% set aircraft = info.aircraft %}
+            {% set glider = info.glider %}
             {% set launch_at = info.launch_at %}
             {% set landing_at = info.landing_at %}
             {% set duration_seconds = info.duration_seconds %}
             <tr>
                 <td>{{ flight.number }}</td>
                 <td>{% if flight.launch_time %}{{ flight.launch_time | date }}{% endif %}</td>
-                <td>{% if aircraft %}{{ aircraft.manufacturer }} {{ aircraft.model }}{% endif %}</td>
+                <td>{% if glider %}{{ glider.manufacturer }} {{ glider.model }}{% endif %}</td>
                 <td title="{% if launch_at %}{{ launch_at.elevation }} mASL{% endif %}">
                     {% if launch_at %}{{ macros::flag(country_code=launch_at.country) }} {{ launch_at.name }}{% endif %}
                 </td>

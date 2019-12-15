@@ -14,14 +14,14 @@ use rocket_contrib::templates::Template;
 use serde::Serialize;
 
 use crate::base64::Base64Data;
-use crate::models::{Aircraft, Flight, Location, NewFlight, User};
+use crate::models::{Flight, Glider, Location, NewFlight, User};
 use crate::optionresult::OptionResult;
 use crate::{auth, data};
 
 #[derive(Serialize)]
 struct FlightWithDetails<'a> {
     flight: Flight,
-    aircraft: Option<&'a Aircraft>,
+    glider: Option<&'a Glider>,
     launch_at: Option<&'a Location>,
     landing_at: Option<&'a Location>,
     duration_seconds: Option<u64>,
@@ -40,11 +40,11 @@ pub(crate) fn list(db: data::Database, user: auth::AuthUser) -> Template {
     // Get all flights
     let flights = data::get_flights_for_user(&db, &user);
 
-    // Get all aircraft for user
-    let aircraft_map = data::get_aircraft_for_user(&db, &user)
+    // Get all gliders for user
+    let glider_map = data::get_gliders_for_user(&db, &user)
         .into_iter()
-        .map(|aircraft| (aircraft.id, aircraft))
-        .collect::<HashMap<i32, Aircraft>>();
+        .map(|glider| (glider.id, glider))
+        .collect::<HashMap<i32, Glider>>();
 
     // Get all locations used
     let mut location_ids = flights
@@ -63,8 +63,8 @@ pub(crate) fn list(db: data::Database, user: auth::AuthUser) -> Template {
     let flights_with_details = flights
         .into_iter()
         .map(|flight| {
-            // Look up aircraft
-            let aircraft = flight.aircraft_id.and_then(|id| aircraft_map.get(&id));
+            // Look up glider
+            let glider = flight.glider_id.and_then(|id| glider_map.get(&id));
 
             // Look up launch and landing
             let launch_at = flight.launch_at.and_then(|id| location_map.get(&id));
@@ -84,7 +84,7 @@ pub(crate) fn list(db: data::Database, user: auth::AuthUser) -> Template {
             };
             FlightWithDetails {
                 flight,
-                aircraft,
+                glider,
                 launch_at,
                 landing_at,
                 duration_seconds,
@@ -109,7 +109,7 @@ pub(crate) fn list_nologin() -> Redirect {
 struct FlightContext<'a> {
     user: User,
     flight: Flight,
-    aircraft: Option<&'a Aircraft>,
+    glider: Option<&'a Glider>,
     launch_at: Option<&'a Location>,
     landing_at: Option<&'a Location>,
     duration_seconds: Option<u64>,
@@ -137,9 +137,7 @@ pub(crate) fn flight(id: i32, db: data::Database, user: auth::AuthUser) -> Resul
     let landing_at = flight
         .landing_at
         .and_then(|id| data::get_location_with_id(&db, id));
-    let aircraft = flight
-        .aircraft_id
-        .and_then(|id| data::get_aircraft_with_id(&db, id));
+    let glider = flight.glider_id.and_then(|id| data::get_glider_with_id(&db, id));
 
     // Calculate duration
     let duration_seconds = match (flight.launch_time, flight.landing_time) {
@@ -158,7 +156,7 @@ pub(crate) fn flight(id: i32, db: data::Database, user: auth::AuthUser) -> Resul
     let context = FlightContext {
         user,
         flight,
-        aircraft: aircraft.as_ref(),
+        glider: glider.as_ref(),
         launch_at: launch_at.as_ref(),
         landing_at: landing_at.as_ref(),
         duration_seconds,
@@ -206,7 +204,7 @@ pub(crate) fn igc_download(
 pub(crate) struct FlightForm {
     igc_data: OptionResult<Base64Data>,
     number: OptionResult<i32>,
-    aircraft: Option<i32>,
+    glider: Option<i32>,
     launch_site: Option<i32>,
     landing_site: Option<i32>,
     launch_date: OptionResult<NaiveDate>,
@@ -247,18 +245,18 @@ impl FlightForm {
         };
         let user_id = user.id;
 
-        // Extract and validate aircraft
-        let aircraft = match self.aircraft {
+        // Extract and validate glider
+        let glider = match self.glider {
             Some(id) => {
-                match data::get_aircraft_with_id(&db, id) {
-                    Some(aircraft) => {
+                match data::get_glider_with_id(&db, id) {
+                    Some(glider) => {
                         // Validate ownership
-                        if aircraft.user_id != user.id {
-                            return Err("Invalid aircraft".into());
+                        if glider.user_id != user.id {
+                            return Err("Invalid glider".into());
                         }
-                        Some(aircraft)
+                        Some(glider)
                     },
-                    None => return Err("Invalid aircraft".into()),
+                    None => return Err("Invalid glider".into()),
                 }
             },
             None => None,
@@ -322,11 +320,11 @@ impl FlightForm {
         let video_url = none_if_empty!(self.video_url);
 
         // Create model
-        let aircraft_id = aircraft.as_ref().map(|a| a.id);
+        let glider_id = glider.as_ref().map(|a| a.id);
         Ok(NewFlight {
             number,
             user_id,
-            aircraft_id,
+            glider_id,
             launch_at,
             landing_at,
             launch_time,
@@ -347,7 +345,7 @@ struct SubmitContext {
     user: User,
     flight: Option<Flight>,
     max_flight_number: Option<i32>,
-    aircraft_list: Vec<Aircraft>,
+    gliders: Vec<Glider>,
     locations: Vec<Location>,
     error_msg: Option<String>,
 }
@@ -355,14 +353,14 @@ struct SubmitContext {
 #[get("/flights/add")]
 pub(crate) fn submit_form(user: auth::AuthUser, db: data::Database) -> Template {
     let user = user.into_inner();
-    let aircraft_list = data::get_aircraft_for_user(&db, &user);
+    let gliders = data::get_gliders_for_user(&db, &user);
     let locations = data::get_locations_for_user(&db, &user);
     let max_flight_number = data::get_max_flight_number_for_user(&db, &user);
     let context = SubmitContext {
         user,
         flight: None,
         max_flight_number,
-        aircraft_list,
+        gliders,
         locations,
         error_msg: None,
     };
@@ -381,7 +379,7 @@ pub(crate) fn submit(
     data: Option<Form<FlightForm>>,
 ) -> Result<Redirect, Template> {
     let user = user.into_inner();
-    let aircraft_list = data::get_aircraft_for_user(&db, &user);
+    let gliders = data::get_gliders_for_user(&db, &user);
     let locations = data::get_locations_for_user(&db, &user);
     let max_flight_number = data::get_max_flight_number_for_user(&db, &user);
 
@@ -392,7 +390,7 @@ pub(crate) fn submit(
                 user,
                 flight: None,
                 max_flight_number,
-                aircraft_list,
+                gliders,
                 locations,
                 error_msg,
             };
@@ -407,8 +405,8 @@ pub(crate) fn submit(
         };
         // TODO: Error handling
         data::create_flight(&db, &new_flight);
-        if let Some(aircraft_id) = new_flight.aircraft_id {
-            data::update_user_last_aircraft(&db, &user, aircraft_id);
+        if let Some(glider_id) = new_flight.glider_id {
+            data::update_user_last_glider(&db, &user, glider_id);
         }
 
         Ok(Redirect::to("/flights/"))
@@ -427,7 +425,7 @@ pub(crate) fn edit_form(
     let user = user.into_inner();
 
     // Get data
-    let aircraft_list = data::get_aircraft_for_user(&db, &user);
+    let gliders = data::get_gliders_for_user(&db, &user);
     let locations = data::get_locations_for_user(&db, &user);
     let flight = match data::get_flight_with_id(&db, id) {
         Some(flight) => flight,
@@ -444,7 +442,7 @@ pub(crate) fn edit_form(
         user,
         flight: Some(flight),
         max_flight_number: None,
-        aircraft_list,
+        gliders,
         locations,
         error_msg: flash.map(|f: FlashMessage| f.msg().to_owned()),
     };
@@ -498,7 +496,7 @@ pub(crate) fn edit(
     // Update existing flight
     flight.number = new_flight.number;
     flight.user_id = new_flight.user_id;
-    flight.aircraft_id = new_flight.aircraft_id;
+    flight.glider_id = new_flight.glider_id;
     flight.launch_at = new_flight.launch_at;
     flight.landing_at = new_flight.landing_at;
     flight.launch_time = new_flight.launch_time;

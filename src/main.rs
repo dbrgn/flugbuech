@@ -35,7 +35,7 @@ pub(crate) const DESCRIPTION: &str = "Paragliding flight book.";
 struct IndexContext {
     user: Option<models::User>,
     user_count: i64,
-    aircraft_count: i64,
+    glider_count: i64,
     flight_count: i64,
 }
 
@@ -44,7 +44,7 @@ fn index(db: data::Database, user: Option<auth::AuthUser>) -> Template {
     let context = IndexContext {
         user: user.map(|u| u.into_inner()),
         user_count: data::get_user_count(&db),
-        aircraft_count: data::get_aircraft_count(&db),
+        glider_count: data::get_glider_count(&db),
         flight_count: data::get_flight_count(&db),
     };
     Template::render("index", &context)
@@ -55,14 +55,14 @@ fn index(db: data::Database, user: Option<auth::AuthUser>) -> Template {
 #[derive(Serialize)]
 struct ProfileContext {
     user: models::User,
-    aircraft_list: Vec<models::Aircraft>,
+    gliders: Vec<models::Glider>,
 }
 
 #[get("/profile")]
 fn profile(user: auth::AuthUser, db: data::Database) -> Template {
     let user = user.into_inner();
-    let aircraft_list = data::get_aircraft_for_user(&db, &user);
-    let context = ProfileContext { user, aircraft_list };
+    let gliders = data::get_gliders_for_user(&db, &user);
+    let context = ProfileContext { user, gliders };
     Template::render("profile", context)
 }
 
@@ -112,7 +112,7 @@ fn main() {
         .unwrap_or(concat!(env!("CARGO_MANIFEST_DIR"), "/static"))
         .to_string();
 
-    // Attach fairings
+    // Attach fairuings
     let app = app
         .attach(data::Database::fairing())
         .attach(Template::custom(|engines| {

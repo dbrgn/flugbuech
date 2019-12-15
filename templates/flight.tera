@@ -24,8 +24,8 @@
             <td>{% if flight.number %}{{ flight.number }}{% else %}-{% endif %}</td>
         </tr>
         <tr>
-            <th><span class="icon is-small"><i class="fas fa-parachute-box"></i></span>&nbsp;&nbsp;Aircraft</th>
-            <td>{% if aircraft %}{{ aircraft.manufacturer }} {{ aircraft.model }}{% else %}-{% endif %}</td>
+            <th><span class="icon is-small"><i class="fas fa-parachute-box"></i></span>&nbsp;&nbsp;Glider</th>
+            <td>{% if glider %}{{ glider.manufacturer }} {{ glider.model }}{% else %}-{% endif %}</td>
         </tr>
         <tr>
             <th><span class="icon is-small"><i class="fas fa-calendar-alt"></i></span>&nbsp;&nbsp;Date</th>
