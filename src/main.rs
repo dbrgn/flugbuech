@@ -14,6 +14,7 @@ mod models;
 mod optionresult;
 mod process_igc;
 mod schema;
+mod templates;
 #[cfg(test)] mod test_utils;
 
 use clap::{App, Arg};
@@ -114,14 +115,7 @@ fn main() {
         .to_string();
 
     // Attach fairings
-    let app = app
-        .attach(data::Database::fairing())
-        .attach(Template::custom(|engines| {
-            engines.tera.register_filter("duration", filters::duration);
-            engines
-                .tera
-                .register_filter("xcontest_icon", filters::xcontest_icon);
-        }));
+    let app = app.attach(data::Database::fairing()).attach(templates::fairing());
 
     // Register custom error catchers
     let app = app.register(catchers![service_not_available]);

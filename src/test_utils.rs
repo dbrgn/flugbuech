@@ -93,9 +93,18 @@ impl<'a> DbTestContext<'a> {
         }
     }
 
+    fn auth_cookie(&self, user: &TestUser) -> Cookie<'static> {
+        Cookie::new(crate::auth::USER_COOKIE_ID, user.user.id.to_string())
+    }
+
     /// Create an auth cookie for testuser1.
-    pub fn make_auth_cookie(&self) -> Cookie<'static> {
-        Cookie::new(crate::auth::USER_COOKIE_ID, self.testuser1.user.id.to_string()) 
+    pub fn auth_cookie_user1(&self) -> Cookie<'static> {
+        self.auth_cookie(&self.testuser1)
+    }
+
+    /// Create an auth cookie for testuser2.
+    pub fn auth_cookie_user2(&self) -> Cookie<'static> {
+        self.auth_cookie(&self.testuser2)
     }
 }
 

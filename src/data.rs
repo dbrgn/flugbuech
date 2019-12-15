@@ -3,6 +3,7 @@ use std::io;
 
 use diesel::dsl::{count, max};
 use diesel::prelude::*;
+use diesel::result::QueryResult;
 use diesel::sql_types::{Double, Integer, Text};
 use diesel::{sql_function, sql_query, PgConnection};
 use diesel_geography::sql_types::Geography;
@@ -241,11 +242,10 @@ pub fn update_location(conn: &PgConnection, location: &Location) {
 }
 
 /// Create a new glider.
-pub fn create_glider(conn: &PgConnection, glider: NewGlider) -> Glider {
+pub fn create_glider(conn: &PgConnection, glider: NewGlider) -> QueryResult<Glider> {
     diesel::insert_into(gliders::table)
         .values(glider)
         .get_result(conn)
-        .expect("Could not create glider")
 }
 
 /// Save an updated glider in the database.

@@ -5,6 +5,10 @@
 {% block content %}
 <h2 class="title is-2">Your Gliders</h2>
 
+{% if error_msg %}
+<div class="notification is-danger">Error: {{ error_msg }}</div>
+{% endif %}
+
 <section>
     <p class="content">You flew {{ gliders|length }} glider{{ gliders|length|pluralize }} so far!</p>
     <p class="content">
