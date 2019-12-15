@@ -14,7 +14,7 @@ use serde::Serialize;
 use crate::data::{self, Database};
 use crate::models::User;
 
-const USER_COOKIE_ID: &str = "user_id";
+pub const USER_COOKIE_ID: &str = "user_id";
 
 #[derive(FromForm)]
 pub struct Login {

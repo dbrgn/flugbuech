@@ -113,7 +113,7 @@ fn main() {
         .unwrap_or(concat!(env!("CARGO_MANIFEST_DIR"), "/static"))
         .to_string();
 
-    // Attach fairuings
+    // Attach fairings
     let app = app
         .attach(data::Database::fairing())
         .attach(Template::custom(|engines| {

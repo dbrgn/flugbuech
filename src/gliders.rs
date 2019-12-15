@@ -82,3 +82,53 @@ pub(crate) fn add(user: auth::AuthUser, db: data::Database, data: Form<GliderFor
     // Redirect to glider list
     Redirect::to(uri!(list))
 }
+
+#[cfg(test)]
+mod tests {
+    use rocket::{self, routes};
+    use rocket::http::{ContentType, Status};
+    use rocket::local::Client;
+
+    use crate::test_utils::{DbTestContext, make_test_config};
+
+    use super::*;
+
+    /// Create a new test client. Cookie tracking is disabled.
+    fn make_client() -> Client {
+        let app = rocket::custom(make_test_config())
+            .attach(data::Database::fairing())
+            .mount("/", routes![add]);
+        Client::untracked(app).expect("valid rocket instance")
+    }
+
+    #[test]
+    fn add_glider() {
+        let ctx = DbTestContext::new();
+        let client = make_client();
+
+        // No gliders
+        let g = data::get_gliders_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        assert_eq!(g.len(), 0);
+
+        macro_rules! add_glider {
+            ($body:expr) => {
+                client
+                    .post("/gliders/add")
+                    .header(ContentType::Form)
+                    .body($body)
+                    .private_cookie(ctx.make_auth_cookie())
+                    .dispatch()
+            }
+        }
+
+        // Add glider
+        let resp = add_glider!("manufacturer=Advance&model=Epsilon%208");
+        assert_eq!(resp.status(), Status::SeeOther);
+
+        // Verify database
+        let g = data::get_gliders_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        assert_eq!(g.len(), 1);
+        assert_eq!(g[0].manufacturer, "Advance");
+        assert_eq!(g[0].model, "Epsilon 8");
+    }
+}

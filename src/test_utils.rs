@@ -8,6 +8,7 @@ use diesel_migrations;
 use dotenv;
 use lazy_static::lazy_static;
 use log::debug;
+use rocket::http::Cookie;
 
 use crate::data::create_user;
 use crate::models::User;
@@ -91,4 +92,26 @@ impl<'a> DbTestContext<'a> {
             Err(poisoned) => poisoned.into_inner(),
         }
     }
+
+    /// Create an auth cookie for testuser1.
+    pub fn make_auth_cookie(&self) -> Cookie<'static> {
+        Cookie::new(crate::auth::USER_COOKIE_ID, self.testuser1.user.id.to_string()) 
+    }
+}
+
+pub fn make_test_config() -> rocket::config::Config {
+    // Load env
+    let _ = dotenv::dotenv();
+
+    // Database config
+    let database_url = env::var("TEST_DATABASE_URL").expect("TEST_DATABASE_URL must be set");
+    let mut database_flugbuech = std::collections::BTreeMap::new();
+    database_flugbuech.insert("url", database_url);
+    let mut databases = std::collections::BTreeMap::new();
+    databases.insert("flugbuech", database_flugbuech);
+
+    rocket::config::Config::build(rocket::config::Environment::Development)
+        .extra("databases", databases)
+        .finalize()
+        .expect("a valid config")
 }
