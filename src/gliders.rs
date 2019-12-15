@@ -132,6 +132,14 @@ pub(crate) fn add(user: auth::AuthUser, db: data::Database, data: Form<GliderFor
     }
 }
 
+#[get("/gliders/<id>/edit")]
+pub(crate) fn edit_form(user: auth::AuthUser, _db: data::Database, id: i32) -> &'static str {
+    let _user = user.into_inner();
+    let _id = id;
+
+    "Not yet implemented, will be added soon! :)"
+}
+
 #[cfg(test)]
 mod tests {
     use rocket::http::ContentType;
