@@ -21,7 +21,7 @@ pub struct User {
     pub email: String,
 }
 
-#[derive(Identifiable, Queryable, Associations, Serialize, PartialEq, Debug, Clone)]
+#[derive(Identifiable, Queryable, Associations, AsChangeset, Serialize, PartialEq, Debug, Clone)]
 #[belongs_to(User, foreign_key = "user_id")]
 #[table_name = "gliders"]
 pub struct Glider {

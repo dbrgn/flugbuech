@@ -8,6 +8,7 @@ mod base64;
 mod data;
 mod filters;
 mod flights;
+mod gliders;
 mod locations;
 mod models;
 mod optionresult;
@@ -141,6 +142,11 @@ fn main() {
                 flights::submit_form,
                 flights::submit_form_nologin,
                 flights::submit,
+                gliders::list,
+                gliders::list_nologin,
+                gliders::add_form,
+                gliders::add_form_nologin,
+                gliders::add,
                 locations::list,
                 locations::list_nologin,
                 locations::add_form,

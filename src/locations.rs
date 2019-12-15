@@ -57,10 +57,7 @@ pub(crate) fn list_nologin() -> Redirect {
 
 #[get("/locations/add")]
 pub(crate) fn add_form(user: auth::AuthUser) -> Template {
-    let user = user.into_inner();
-
-    // Render template
-    let context = auth::UserContext::new(user);
+    let context = auth::UserContext::new(user.into_inner());
     Template::render("location", &context)
 }
 

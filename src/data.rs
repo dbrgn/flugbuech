@@ -10,7 +10,8 @@ use diesel_geography::types::GeogPoint;
 use log::error;
 use rocket_contrib::database;
 
-use crate::models::{Flight, Glider, Location, LocationWithDistance, NewFlight, NewLocation, User};
+use crate::models::{Flight, Glider, Location, LocationWithDistance, User};
+use crate::models::{NewFlight, NewGlider, NewLocation};
 use crate::schema::{flights, gliders, locations, users};
 
 sql_function! {
@@ -237,6 +238,22 @@ pub fn update_location(conn: &PgConnection, location: &Location) {
         .set(location)
         .execute(conn)
         .expect("Could not update location");
+}
+
+/// Create a new glider.
+pub fn create_glider(conn: &PgConnection, glider: NewGlider) -> Glider {
+    diesel::insert_into(gliders::table)
+        .values(glider)
+        .get_result(conn)
+        .expect("Could not create glider")
+}
+
+/// Save an updated glider in the database.
+pub fn update_glider(conn: &PgConnection, glider: &Glider) {
+    diesel::update(glider)
+        .set(glider)
+        .execute(conn)
+        .expect("Could not update glider");
 }
 
 /// Update the "last glider" of a user.
