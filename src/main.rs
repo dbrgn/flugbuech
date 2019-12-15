@@ -54,17 +54,9 @@ fn index(db: data::Database, user: Option<auth::AuthUser>) -> Template {
 
 // Profile
 
-#[derive(Serialize)]
-struct ProfileContext {
-    user: models::User,
-    gliders: Vec<models::Glider>,
-}
-
 #[get("/profile")]
-fn profile(user: auth::AuthUser, db: data::Database) -> Template {
-    let user = user.into_inner();
-    let gliders = data::get_gliders_for_user(&db, &user);
-    let context = ProfileContext { user, gliders };
+fn profile(user: auth::AuthUser) -> Template {
+    let context = auth::UserContext::new(user.into_inner());
     Template::render("profile", context)
 }
 

@@ -3,7 +3,7 @@
 {% block content %}
 <h2 class="title is-2">Profile</h2>
 
-<p class="content">Welcome, {{ user.username }}! Here you can update your profile and gear.</p>
+<p class="content">Welcome, {{ user.username }}! Here you can view and update your user profile.</p>
 
 <div class="container spaced-headers">
     <h3 class="title is-4">User Info</h3>
@@ -17,36 +17,6 @@
                 <th>E-Mail</th>
                 <td>{{ user.email }}</td>
             </tr>
-        </tbody>
-    </table>
-</div>
-
-<div class="container spaced-headers">
-    <h3 class="title is-4">Gear</h3>
-    <p class="content">{{ gliders|length }} gliders registered so far.</p>
-    <table class="table is-hoverable">
-        <thead>
-            <tr>
-                <th>Manufacturer</th>
-                <th>Model</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for glider in gliders %}
-            <tr>
-                <td>{{ glider.manufacturer }}</td>
-                <td>{{ glider.model }}</td>
-                <td>
-                    <a href="#">
-                        <span class="icon"><i class="fas fa-pen-square"></i></span>
-                    </a>
-                    <a href="#">
-                        <span class="icon has-text-danger"><i class="fas fa-trash-alt"></i></span>
-                    </a>
-                </td>
-            </tr>
-            {% endfor %}
         </tbody>
     </table>
 </div>

@@ -31,6 +31,9 @@
                     <a href="/gliders/{{ glider.id }}/edit/">
                         <span class="icon"><i class="fas fa-pen-square"></i></span>
                     </a>
+                    <a href="/gliders/{{ glider.id }}/edit/">
+                        <span class="icon has-text-danger"><i class="fas fa-trash-alt"></i></span>
+                    </a>
                 </td>
             </tr>
             {% endfor %}
