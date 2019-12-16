@@ -43,8 +43,8 @@ href="mailto:flugbuech@bargen.dev">flugbuech@bargen.dev</a>.</p>
         <td>{{ user_count }}</td>
     </tr>
     <tr>
-        <th>Registered Aircraft</th>
-        <td>{{ aircraft_count }}</td>
+        <th>Registered Gliders</th>
+        <td>{{ glider_count }}</td>
     </tr>
     <tr>
         <th>Total Flights</th>

@@ -8,11 +8,13 @@ mod base64;
 mod data;
 mod filters;
 mod flights;
+mod gliders;
 mod locations;
 mod models;
 mod optionresult;
 mod process_igc;
 mod schema;
+mod templates;
 #[cfg(test)] mod test_utils;
 
 use clap::{App, Arg};
@@ -35,7 +37,7 @@ pub(crate) const DESCRIPTION: &str = "Paragliding flight book.";
 struct IndexContext {
     user: Option<models::User>,
     user_count: i64,
-    aircraft_count: i64,
+    glider_count: i64,
     flight_count: i64,
 }
 
@@ -44,7 +46,7 @@ fn index(db: data::Database, user: Option<auth::AuthUser>) -> Template {
     let context = IndexContext {
         user: user.map(|u| u.into_inner()),
         user_count: data::get_user_count(&db),
-        aircraft_count: data::get_aircraft_count(&db),
+        glider_count: data::get_glider_count(&db),
         flight_count: data::get_flight_count(&db),
     };
     Template::render("index", &context)
@@ -52,17 +54,9 @@ fn index(db: data::Database, user: Option<auth::AuthUser>) -> Template {
 
 // Profile
 
-#[derive(Serialize)]
-struct ProfileContext {
-    user: models::User,
-    aircraft_list: Vec<models::Aircraft>,
-}
-
 #[get("/profile")]
-fn profile(user: auth::AuthUser, db: data::Database) -> Template {
-    let user = user.into_inner();
-    let aircraft_list = data::get_aircraft_for_user(&db, &user);
-    let context = ProfileContext { user, aircraft_list };
+fn profile(user: auth::AuthUser) -> Template {
+    let context = auth::UserContext::new(user.into_inner());
     Template::render("profile", context)
 }
 
@@ -113,14 +107,7 @@ fn main() {
         .to_string();
 
     // Attach fairings
-    let app = app
-        .attach(data::Database::fairing())
-        .attach(Template::custom(|engines| {
-            engines.tera.register_filter("duration", filters::duration);
-            engines
-                .tera
-                .register_filter("xcontest_icon", filters::xcontest_icon);
-        }));
+    let app = app.attach(data::Database::fairing()).attach(templates::fairing());
 
     // Register custom error catchers
     let app = app.register(catchers![service_not_available]);
@@ -141,6 +128,12 @@ fn main() {
                 flights::submit_form,
                 flights::submit_form_nologin,
                 flights::submit,
+                gliders::list,
+                gliders::list_nologin,
+                gliders::add_form,
+                gliders::add_form_nologin,
+                gliders::add,
+                gliders::edit_form,
                 locations::list,
                 locations::list_nologin,
                 locations::add_form,

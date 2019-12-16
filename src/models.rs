@@ -5,7 +5,7 @@ use diesel_geography::sql_types::Geography;
 use diesel_geography::types::GeogPoint;
 use serde::Serialize;
 
-use crate::schema::{aircraft, flights, locations, users};
+use crate::schema::{flights, gliders, locations, users};
 
 #[derive(Identifiable, Queryable, Serialize, PartialEq, Debug, Clone)]
 #[table_name = "users"]
@@ -15,16 +15,16 @@ pub struct User {
     /// Password is automatically hashed on insert or update
     /// by a PostgreSQL trigger.
     pub password: String,
-    /// Last used aircraft
-    pub last_aircraft_id: Option<i32>,
+    /// Last used glider
+    pub last_glider_id: Option<i32>,
     /// E-mail address
     pub email: String,
 }
 
-#[derive(Identifiable, Queryable, Associations, Serialize, PartialEq, Debug, Clone)]
+#[derive(Identifiable, Queryable, Associations, AsChangeset, Serialize, PartialEq, Debug, Clone)]
 #[belongs_to(User, foreign_key = "user_id")]
-#[table_name = "aircraft"]
-pub struct Aircraft {
+#[table_name = "gliders"]
+pub struct Glider {
     pub id: i32,
     pub user_id: i32,
     pub model: String,
@@ -32,8 +32,8 @@ pub struct Aircraft {
 }
 
 #[derive(Insertable, Default)]
-#[table_name = "aircraft"]
-pub struct NewAircraft {
+#[table_name = "gliders"]
+pub struct NewGlider {
     pub user_id: i32,
     pub model: String,
     pub manufacturer: String,
@@ -81,7 +81,7 @@ pub struct LocationWithDistance {
 
 #[derive(Identifiable, Queryable, Associations, AsChangeset, Serialize, PartialEq, Debug, Clone)]
 #[belongs_to(User, foreign_key = "user_id")]
-#[belongs_to(Aircraft, foreign_key = "aircraft_id")]
+#[belongs_to(Glider, foreign_key = "glider_id")]
 #[table_name = "flights"]
 pub struct Flight {
     /// Primary key
@@ -90,8 +90,8 @@ pub struct Flight {
     pub number: Option<i32>,
     /// The pilot
     pub user_id: i32,
-    /// The aircraft
-    pub aircraft_id: Option<i32>,
+    /// The glider
+    pub glider_id: Option<i32>,
     /// Launch location
     pub launch_at: Option<i32>,
     /// Landing location
@@ -125,8 +125,8 @@ pub struct NewFlight {
     pub number: Option<i32>,
     /// The pilot
     pub user_id: i32,
-    /// The aircraft
-    pub aircraft_id: Option<i32>,
+    /// The glider
+    pub glider_id: Option<i32>,
     /// Launch location
     pub launch_at: Option<i32>,
     /// Landing location

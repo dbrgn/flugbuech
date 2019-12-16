@@ -3,6 +3,7 @@ use std::io;
 
 use diesel::dsl::{count, max};
 use diesel::prelude::*;
+use diesel::result::QueryResult;
 use diesel::sql_types::{Double, Integer, Text};
 use diesel::{sql_function, sql_query, PgConnection};
 use diesel_geography::sql_types::Geography;
@@ -10,8 +11,9 @@ use diesel_geography::types::GeogPoint;
 use log::error;
 use rocket_contrib::database;
 
-use crate::models::{Aircraft, Flight, Location, LocationWithDistance, NewFlight, NewLocation, User};
-use crate::schema::{aircraft, flights, locations, users};
+use crate::models::{Flight, Glider, Location, LocationWithDistance, User};
+use crate::models::{NewFlight, NewGlider, NewLocation};
+use crate::schema::{flights, gliders, locations, users};
 
 sql_function! {
     /// The pgcrypto "crypt" function.
@@ -90,29 +92,29 @@ pub fn create_user(
         .expect("Could not create user")
 }
 
-pub fn get_aircraft(conn: &PgConnection) -> Vec<Aircraft> {
-    aircraft::table.load(conn).expect("Error loading aircraft")
+pub fn get_gliders(conn: &PgConnection) -> Vec<Glider> {
+    gliders::table.load(conn).expect("Error loading gliders")
 }
 
-pub fn get_aircraft_count(conn: &PgConnection) -> i64 {
-    aircraft::table
-        .select(count(aircraft::id))
+pub fn get_glider_count(conn: &PgConnection) -> i64 {
+    gliders::table
+        .select(count(gliders::id))
         .first(conn)
-        .expect("Error loading aircraft count")
+        .expect("Error loading glider count")
 }
 
-pub fn get_aircraft_for_user(conn: &PgConnection, user: &User) -> Vec<Aircraft> {
-    Aircraft::belonging_to(user)
+pub fn get_gliders_for_user(conn: &PgConnection, user: &User) -> Vec<Glider> {
+    Glider::belonging_to(user)
         .load(conn)
-        .expect("Error loading aircraft")
+        .expect("Error loading gliders")
 }
 
-pub fn get_aircraft_with_id(conn: &PgConnection, id: i32) -> Option<Aircraft> {
-    aircraft::table
+pub fn get_glider_with_id(conn: &PgConnection, id: i32) -> Option<Glider> {
+    gliders::table
         .find(id)
         .first(conn)
         .optional()
-        .expect("Error loading aircraft by id")
+        .expect("Error loading glider by id")
 }
 
 pub fn get_latest_flight_number(conn: &PgConnection, user: &User) -> Option<i32> {
@@ -239,17 +241,32 @@ pub fn update_location(conn: &PgConnection, location: &Location) {
         .expect("Could not update location");
 }
 
-/// Create a new flight.
-pub fn update_user_last_aircraft(conn: &PgConnection, user: &User, aircraft_id: i32) {
-    diesel::update(user)
-        .set(users::last_aircraft_id.eq(aircraft_id))
+/// Create a new glider.
+pub fn create_glider(conn: &PgConnection, glider: NewGlider) -> QueryResult<Glider> {
+    diesel::insert_into(gliders::table)
+        .values(glider)
+        .get_result(conn)
+}
+
+/// Save an updated glider in the database.
+pub fn update_glider(conn: &PgConnection, glider: &Glider) {
+    diesel::update(glider)
+        .set(glider)
         .execute(conn)
-        .expect("Could not set user last aircraft id");
+        .expect("Could not update glider");
+}
+
+/// Update the "last glider" of a user.
+pub fn update_user_last_glider(conn: &PgConnection, user: &User, glider_id: i32) {
+    diesel::update(user)
+        .set(users::last_glider_id.eq(glider_id))
+        .execute(conn)
+        .expect("Could not set user last glider id");
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::models::NewAircraft;
+    use crate::models::NewGlider;
     use crate::test_utils;
 
     use super::*;
@@ -314,37 +331,37 @@ mod tests {
     }
 
     #[test]
-    fn test_get_aircraft_for_user() {
+    fn test_get_gliders_for_user() {
         let ctx = test_utils::DbTestContext::new();
 
-        // No aircraft
-        let a = get_aircraft_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        // No gliders
+        let a = get_gliders_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
         assert_eq!(a.len(), 0);
 
-        // Create some aircraft
-        diesel::insert_into(aircraft::table)
+        // Create some gliders
+        diesel::insert_into(gliders::table)
             .values(vec![
-                NewAircraft {
+                NewGlider {
                     user_id: ctx.testuser1.user.id,
                     model: "Epsilon 8 23".into(),
                     manufacturer: "Advance".into(),
                 },
-                NewAircraft {
+                NewGlider {
                     user_id: ctx.testuser1.user.id,
                     model: "Green S".into(),
                     manufacturer: "Team5".into(),
                 },
-                NewAircraft {
+                NewGlider {
                     user_id: ctx.testuser2.user.id,
                     model: "Pi 2".into(),
                     manufacturer: "Advance".into(),
                 },
             ])
             .execute(&*ctx.force_get_conn())
-            .expect("Could not create aircraft");
+            .expect("Could not create gliders");
 
-        let a1 = get_aircraft_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
-        let a2 = get_aircraft_for_user(&*ctx.force_get_conn(), &ctx.testuser2.user);
+        let a1 = get_gliders_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        let a2 = get_gliders_for_user(&*ctx.force_get_conn(), &ctx.testuser2.user);
         assert_eq!(
             a1.iter().map(|a| a.model.clone()).collect::<Vec<_>>(),
             vec!["Epsilon 8 23".to_string(), "Green S".to_string()],
