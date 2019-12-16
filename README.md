@@ -1,7 +1,7 @@
 # Flugbuech
 
-![Build status](https://img.shields.io/github/workflow/status/dbrgn/flugbuech/CI/master)
-![Docker image](https://img.shields.io/badge/docker%20image-dbrgn%2Fflugbuech-blue)
+[![Build status](https://img.shields.io/github/workflow/status/dbrgn/flugbuech/CI/master)](https://github.com/dbrgn/flugbuech/actions?query=workflow%3ACI)
+[![Docker image](https://img.shields.io/badge/docker%20image-dbrgn%2Fflugbuech-blue)](https://hub.docker.com/r/dbrgn/flugbuech/)
 
 Personal flight log for paragliding pilots. Written with
 [Rust](https://www.rust-lang.org/) / [Rocket](https://rocket.rs/) in
