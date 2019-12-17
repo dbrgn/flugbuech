@@ -2,6 +2,7 @@
 
 use std::io::{self, BufRead, BufReader, Read};
 
+use diesel;
 use flat_projection::{FlatPoint, FlatProjection};
 use igc::records::{HRecord, Record};
 use igc::util::RawPosition;
@@ -74,12 +75,9 @@ impl<T: Float> FlatPointString<T> {
     }
 }
 
-fn parse_igc(reader: impl BufRead, user: &models::User, db: &data::Database) -> FlightInfoResult {
+fn parse_igc(reader: impl BufRead, user: &models::User, db: &diesel::PgConnection) -> FlightInfoResult {
     // Split lines in IGC file
-    let lines = match reader
-        .split(b'\n')
-        .collect::<Result<Vec<Vec<u8>>, io::Error>>()
-    {
+    let lines = match reader.split(b'\n').collect::<Result<Vec<Vec<u8>>, io::Error>>() {
         Ok(res) => res,
         Err(e) => {
             return FlightInfoResult::Error {
@@ -207,4 +205,62 @@ pub(crate) fn process_igc(data: Data, user: auth::AuthUser, db: data::Database) 
 
     // Process data
     Json(parse_igc(buf_reader, &user, &db))
+}
+
+#[cfg(test)]
+mod tests {
+    use std::io::Cursor;
+
+    use crate::test_utils::DbTestContext;
+
+    use super::*;
+
+    #[test]
+    fn parse_simple_igc() {
+        // Initialize test database
+        let ctx = DbTestContext::new();
+
+        // Read data
+        let data = include_str!("../testdata/skytraxx.igc");
+        let reader = BufReader::new(Cursor::new(data));
+
+        // Process data
+        let result = parse_igc(reader, &ctx.testuser1.user, &*ctx.force_get_conn());
+        let info = match result {
+            FlightInfoResult::Success(info) => info,
+            FlightInfoResult::Error { msg } => panic!("Expected success, got error: {}", msg),
+        };
+
+        // Verify result
+        assert_eq!(info.pilot, Some("Danilo".to_string()));
+        assert_eq!(info.glidertype, Some("Epsilon 8".to_string()));
+        assert_eq!(info.site, Some("Hitzeggen".to_string()));
+        assert_eq!(info.date_ymd, Some((2019, 7, 22)));
+        assert_eq!(
+            info.launch,
+            Some(LaunchLandingInfo {
+                pos: LatLon {
+                    lat: 46.71985,
+                    lon: 9.149533333333334
+                },
+                alt: 1568,
+                time_hms: (13, 42, 26),
+                location_id: None
+            })
+        );
+        assert_eq!(
+            info.landing,
+            Some(LaunchLandingInfo {
+                pos: LatLon {
+                    lat: 46.70665,
+                    lon: 9.153933333333333,
+                },
+                alt: 1300,
+                time_hms: (13, 46, 7),
+                location_id: None,
+            })
+        );
+        assert!(info.track_distance > 1.98989);
+        assert!(info.track_distance < 1.98990);
+    }
 }
