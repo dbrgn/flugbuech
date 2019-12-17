@@ -11,7 +11,7 @@ use rocket::post;
 use rocket_contrib::json::Json;
 use serde::Serialize;
 
-use crate::{auth, data};
+use crate::{auth, data, models};
 
 #[derive(Debug, PartialEq, Serialize)]
 struct LatLon {
@@ -74,29 +74,17 @@ impl<T: Float> FlatPointString<T> {
     }
 }
 
-/// Process IGC file, return parsed data.
-///
-/// This endpoint is meant to be called from a XmlHttpRequest.
-#[post(
-    "/flights/add/process_igc",
-    format = "application/octet-stream",
-    data = "<data>"
-)]
-pub(crate) fn process_igc(data: Data, user: auth::AuthUser, db: data::Database) -> Json<FlightInfoResult> {
-    let user = user.into_inner();
-
-    // Open IGC file
-    let reader = data.open().take(crate::MAX_UPLOAD_BYTES);
-    let buf_reader = BufReader::new(reader);
-    let lines = match buf_reader
+fn parse_igc(reader: impl BufRead, user: &models::User, db: &data::Database) -> FlightInfoResult {
+    // Split lines in IGC file
+    let lines = match reader
         .split(b'\n')
         .collect::<Result<Vec<Vec<u8>>, io::Error>>()
     {
         Ok(res) => res,
         Err(e) => {
-            return Json(FlightInfoResult::Error {
+            return FlightInfoResult::Error {
                 msg: format!("I/O Error: {}", e),
-            })
+            }
         },
     };
 
@@ -174,9 +162,9 @@ pub(crate) fn process_igc(data: Data, user: auth::AuthUser, db: data::Database) 
             },
             Ok(_rec) => {},
             Err(e) => {
-                return Json(FlightInfoResult::Error {
+                return FlightInfoResult::Error {
                     msg: format!("Error parsing lines: {:?}", e),
-                })
+                }
             },
         }
     }
@@ -199,5 +187,24 @@ pub(crate) fn process_igc(data: Data, user: auth::AuthUser, db: data::Database) 
                 .map(|location| location.id);
     }
 
-    Json(FlightInfoResult::Success(info))
+    FlightInfoResult::Success(info)
+}
+
+/// Process IGC file, return parsed data.
+///
+/// This endpoint is meant to be called from a XmlHttpRequest.
+#[post(
+    "/flights/add/process_igc",
+    format = "application/octet-stream",
+    data = "<data>"
+)]
+pub(crate) fn process_igc(data: Data, user: auth::AuthUser, db: data::Database) -> Json<FlightInfoResult> {
+    let user = user.into_inner();
+
+    // Open IGC file
+    let reader = data.open().take(crate::MAX_UPLOAD_BYTES);
+    let buf_reader = BufReader::new(reader);
+
+    // Process data
+    Json(parse_igc(buf_reader, &user, &db))
 }
