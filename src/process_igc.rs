@@ -2,6 +2,7 @@
 
 use std::io::{self, BufRead, BufReader, Read};
 
+use diesel;
 use flat_projection::{FlatPoint, FlatProjection};
 use igc::records::{HRecord, Record};
 use igc::util::RawPosition;
@@ -11,7 +12,7 @@ use rocket::post;
 use rocket_contrib::json::Json;
 use serde::Serialize;
 
-use crate::{auth, data};
+use crate::{auth, data, models};
 
 #[derive(Debug, PartialEq, Serialize)]
 struct LatLon {
@@ -25,15 +26,6 @@ struct LaunchLandingInfo {
     alt: i16,
     time_hms: (u8, u8, u8),
     location_id: Option<i32>,
-}
-
-impl LaunchLandingInfo {
-    fn seconds_since_midnight(&self) -> u32 {
-        let hs = u32::from(self.time_hms.0) * 24 * 60;
-        let ms = u32::from(self.time_hms.1) * 60;
-        let ss = u32::from(self.time_hms.2);
-        hs + ms + ss
-    }
 }
 
 #[derive(Default, Debug, PartialEq, Serialize)]
@@ -52,22 +44,6 @@ pub(crate) struct FlightInfo {
     landing: Option<LaunchLandingInfo>,
     /// Track length in kilometers.
     track_distance: f64,
-}
-
-impl FlightInfo {
-    fn duration(&self) -> Option<u32> {
-        if let (Some(launch), Some(landing)) = (&self.launch, &self.landing) {
-            let launch_seconds = launch.seconds_since_midnight();
-            let landing_seconds = landing.seconds_since_midnight();
-            if landing_seconds > launch_seconds {
-                Some(landing_seconds - launch_seconds)
-            } else {
-                Some(86400 - launch_seconds + landing_seconds)
-            }
-        } else {
-            None
-        }
-    }
 }
 
 #[derive(Debug, Serialize)]
@@ -99,29 +75,20 @@ impl<T: Float> FlatPointString<T> {
     }
 }
 
-/// Process IGC file, return parsed data.
-///
-/// This endpoint is meant to be called from a XmlHttpRequest.
-#[post(
-    "/flights/add/process_igc",
-    format = "application/octet-stream",
-    data = "<data>"
-)]
-pub(crate) fn process_igc(data: Data, user: auth::AuthUser, db: data::Database) -> Json<FlightInfoResult> {
-    let user = user.into_inner();
-
-    // Open IGC file
-    let reader = data.open().take(crate::MAX_UPLOAD_BYTES);
-    let buf_reader = BufReader::new(reader);
-    let lines = match buf_reader
-        .split(b'\n')
-        .collect::<Result<Vec<Vec<u8>>, io::Error>>()
-    {
+fn parse_igc(reader: impl BufRead, user: &models::User, db: &diesel::PgConnection) -> FlightInfoResult {
+    // Split lines in IGC file
+    //
+    // NOTE: This will yield a vector of Vec<u8>. We cannot use `.lines()`
+    //       directly since that will fail if the data is invalid UTF8, and we
+    //       want to parse leniently in case of invalid UTF8 data.
+    //       Unfortunately when splitting by '\n' there can still be remaining
+    //       '\r' characters that must be trimmed later.
+    let lines = match reader.split(b'\n').collect::<Result<Vec<Vec<u8>>, io::Error>>() {
         Ok(res) => res,
         Err(e) => {
-            return Json(FlightInfoResult::Error {
+            return FlightInfoResult::Error {
                 msg: format!("I/O Error: {}", e),
-            })
+            }
         },
     };
 
@@ -135,7 +102,7 @@ pub(crate) fn process_igc(data: Data, user: auth::AuthUser, db: data::Database) 
 
     for line_bytes in &lines {
         let line = String::from_utf8_lossy(line_bytes);
-        match Record::parse_line(&line) {
+        match Record::parse_line(&line.trim()) {
             Ok(Record::H(h @ HRecord { mnemonic: "PLT", .. })) => {
                 info.pilot = Some(h.data.trim().into());
             },
@@ -199,9 +166,9 @@ pub(crate) fn process_igc(data: Data, user: auth::AuthUser, db: data::Database) 
             },
             Ok(_rec) => {},
             Err(e) => {
-                return Json(FlightInfoResult::Error {
+                return FlightInfoResult::Error {
                     msg: format!("Error parsing lines: {:?}", e),
-                })
+                }
             },
         }
     }
@@ -224,15 +191,108 @@ pub(crate) fn process_igc(data: Data, user: auth::AuthUser, db: data::Database) 
                 .map(|location| location.id);
     }
 
-    println!("Info: {:#?}", info);
-    println!("Flight duration: {:?} seconds", info.duration());
+    FlightInfoResult::Success(info)
+}
 
-    // Create a flight
-    //let flight = data::create_flight(&db, models::NewFlight {
-    //    user_id: 0,
-    //    ..Default::default()
-    //});
-    //println!("{:?}", flight);
+/// Process IGC file, return parsed data.
+///
+/// This endpoint is meant to be called from a XmlHttpRequest.
+#[post(
+    "/flights/add/process_igc",
+    format = "application/octet-stream",
+    data = "<data>"
+)]
+pub(crate) fn process_igc(data: Data, user: auth::AuthUser, db: data::Database) -> Json<FlightInfoResult> {
+    let user = user.into_inner();
 
-    Json(FlightInfoResult::Success(info))
+    // Open IGC file
+    let reader = data.open().take(crate::MAX_UPLOAD_BYTES);
+    let buf_reader = BufReader::new(reader);
+
+    // Process data
+    Json(parse_igc(buf_reader, &user, &db))
+}
+
+#[cfg(test)]
+mod tests {
+    use std::io::Cursor;
+
+    use crate::test_utils::DbTestContext;
+
+    use super::*;
+
+    fn process(data: &str) -> Result<FlightInfo, String> {
+        let ctx = DbTestContext::new();
+        let reader = BufReader::new(Cursor::new(data));
+        let result = parse_igc(reader, &ctx.testuser1.user, &*ctx.force_get_conn());
+        match result {
+            FlightInfoResult::Success(info) => Ok(info),
+            FlightInfoResult::Error { msg } => Err(msg),
+        }
+    }
+
+    #[test]
+    fn parse_simple_igc() {
+        let data = include_str!("../testdata/skytraxx.igc");
+        let info = process(data).unwrap();
+        assert_eq!(info.pilot, Some("Danilo".to_string()));
+        assert_eq!(info.glidertype, Some("Epsilon 8".to_string()));
+        assert_eq!(info.site, Some("Hitzeggen".to_string()));
+        assert_eq!(info.date_ymd, Some((2019, 7, 22)));
+        assert_eq!(
+            info.launch,
+            Some(LaunchLandingInfo {
+                pos: LatLon {
+                    lat: 46.71985,
+                    lon: 9.149533333333334
+                },
+                alt: 1568,
+                time_hms: (13, 42, 26),
+                location_id: None
+            })
+        );
+        assert_eq!(
+            info.landing,
+            Some(LaunchLandingInfo {
+                pos: LatLon {
+                    lat: 46.70665,
+                    lon: 9.153933333333333,
+                },
+                alt: 1300,
+                time_hms: (13, 46, 7),
+                location_id: None,
+            })
+        );
+        assert!(info.track_distance > 1.98989);
+        assert!(info.track_distance < 1.98990);
+    }
+
+    /// Parse IGC data with only two lines: pilot name and site.
+    #[test]
+    fn parse_minimal() {
+        let data = "HFPLTPILOT: Chrigel Maurer\nHPSITSITE: Interlaken";
+        let info = process(data).unwrap();
+        assert_eq!(
+            info,
+            FlightInfo {
+                pilot: Some("Chrigel Maurer".to_string()),
+                site: Some("Interlaken".to_string()),
+                ..Default::default()
+            }
+        );
+    }
+
+    /// Parse IGC data with windows line endings.
+    #[test]
+    fn regression_27_cr_endings() {
+        let data = "HFPLTPILOT: Chrigel Maurer\r\nI023636LAD3737LOD\r\n";
+        let info = process(data).unwrap();
+        assert_eq!(
+            info,
+            FlightInfo {
+                pilot: Some("Chrigel Maurer".to_string()),
+                ..Default::default()
+            }
+        );
+    }
 }
