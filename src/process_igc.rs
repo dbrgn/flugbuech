@@ -114,7 +114,10 @@ fn parse_igc(reader: impl BufRead, user: &models::User, db: &diesel::PgConnectio
             },
             Ok(Record::H(h @ HRecord { mnemonic: "DTE", .. })) => {
                 let string_val = h.data.trim();
-                if string_val.len() == 6 {
+                // Date formats:
+                // - Skytraxx: DDMMYY
+                // - XCTrack:  DDMMYY,[??]
+                if string_val.len() == 6 || (string_val.len() == 9 && &string_val[6..7] == ",") {
                     if let (Ok(day), Ok(month), Ok(year)) = (
                         string_val.get(0..2).unwrap().parse::<u8>(),
                         string_val.get(2..4).unwrap().parse::<u8>(),
@@ -123,6 +126,8 @@ fn parse_igc(reader: impl BufRead, user: &models::User, db: &diesel::PgConnectio
                         let year = if year > 85 { 1900 + year } else { 2000 + year };
                         info.date_ymd = Some((year, month, day));
                     }
+                } else {
+                    println!("Unexpected H record DTE format: {:?}", h);
                 }
             },
             Ok(Record::B(b)) => {
@@ -291,6 +296,20 @@ mod tests {
             info,
             FlightInfo {
                 pilot: Some("Chrigel Maurer".to_string()),
+                ..Default::default()
+            }
+        );
+    }
+
+    /// Handle XCTrack date format.
+    #[test]
+    fn regression_30_xctrack_date_format() {
+        let data = "HFDTEDATE:280719,02";
+        let info = process(data).unwrap();
+        assert_eq!(
+            info,
+            FlightInfo {
+                date_ymd: Some((2019, 7, 28)),
                 ..Default::default()
             }
         );
