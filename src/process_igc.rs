@@ -77,6 +77,12 @@ impl<T: Float> FlatPointString<T> {
 
 fn parse_igc(reader: impl BufRead, user: &models::User, db: &diesel::PgConnection) -> FlightInfoResult {
     // Split lines in IGC file
+    //
+    // NOTE: This will yield a vector of Vec<u8>. We cannot use `.lines()`
+    //       directly since that will fail if the data is invalid UTF8, and we
+    //       want to parse leniently in case of invalid UTF8 data.
+    //       Unfortunately when splitting by '\n' there can still be remaining
+    //       '\r' characters that must be trimmed later.
     let lines = match reader.split(b'\n').collect::<Result<Vec<Vec<u8>>, io::Error>>() {
         Ok(res) => res,
         Err(e) => {
@@ -96,7 +102,7 @@ fn parse_igc(reader: impl BufRead, user: &models::User, db: &diesel::PgConnectio
 
     for line_bytes in &lines {
         let line = String::from_utf8_lossy(line_bytes);
-        match Record::parse_line(&line) {
+        match Record::parse_line(&line.trim()) {
             Ok(Record::H(h @ HRecord { mnemonic: "PLT", .. })) => {
                 info.pilot = Some(h.data.trim().into());
             },
@@ -215,23 +221,20 @@ mod tests {
 
     use super::*;
 
+    fn process(data: &str) -> Result<FlightInfo, String> {
+        let ctx = DbTestContext::new();
+        let reader = BufReader::new(Cursor::new(data));
+        let result = parse_igc(reader, &ctx.testuser1.user, &*ctx.force_get_conn());
+        match result {
+            FlightInfoResult::Success(info) => Ok(info),
+            FlightInfoResult::Error { msg } => Err(msg),
+        }
+    }
+
     #[test]
     fn parse_simple_igc() {
-        // Initialize test database
-        let ctx = DbTestContext::new();
-
-        // Read data
         let data = include_str!("../testdata/skytraxx.igc");
-        let reader = BufReader::new(Cursor::new(data));
-
-        // Process data
-        let result = parse_igc(reader, &ctx.testuser1.user, &*ctx.force_get_conn());
-        let info = match result {
-            FlightInfoResult::Success(info) => info,
-            FlightInfoResult::Error { msg } => panic!("Expected success, got error: {}", msg),
-        };
-
-        // Verify result
+        let info = process(data).unwrap();
         assert_eq!(info.pilot, Some("Danilo".to_string()));
         assert_eq!(info.glidertype, Some("Epsilon 8".to_string()));
         assert_eq!(info.site, Some("Hitzeggen".to_string()));
@@ -262,5 +265,34 @@ mod tests {
         );
         assert!(info.track_distance > 1.98989);
         assert!(info.track_distance < 1.98990);
+    }
+
+    /// Parse IGC data with only two lines: pilot name and site.
+    #[test]
+    fn parse_minimal() {
+        let data = "HFPLTPILOT: Chrigel Maurer\nHPSITSITE: Interlaken";
+        let info = process(data).unwrap();
+        assert_eq!(
+            info,
+            FlightInfo {
+                pilot: Some("Chrigel Maurer".to_string()),
+                site: Some("Interlaken".to_string()),
+                ..Default::default()
+            }
+        );
+    }
+
+    /// Parse IGC data with windows line endings.
+    #[test]
+    fn regression_27_cr_endings() {
+        let data = "HFPLTPILOT: Chrigel Maurer\r\nI023636LAD3737LOD\r\n";
+        let info = process(data).unwrap();
+        assert_eq!(
+            info,
+            FlightInfo {
+                pilot: Some("Chrigel Maurer".to_string()),
+                ..Default::default()
+            }
+        );
     }
 }
