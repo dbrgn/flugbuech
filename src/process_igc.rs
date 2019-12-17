@@ -27,15 +27,6 @@ struct LaunchLandingInfo {
     location_id: Option<i32>,
 }
 
-impl LaunchLandingInfo {
-    fn seconds_since_midnight(&self) -> u32 {
-        let hs = u32::from(self.time_hms.0) * 24 * 60;
-        let ms = u32::from(self.time_hms.1) * 60;
-        let ss = u32::from(self.time_hms.2);
-        hs + ms + ss
-    }
-}
-
 #[derive(Default, Debug, PartialEq, Serialize)]
 pub(crate) struct FlightInfo {
     /// Name of the pilot, as configured in the flight instrument.
@@ -52,22 +43,6 @@ pub(crate) struct FlightInfo {
     landing: Option<LaunchLandingInfo>,
     /// Track length in kilometers.
     track_distance: f64,
-}
-
-impl FlightInfo {
-    fn duration(&self) -> Option<u32> {
-        if let (Some(launch), Some(landing)) = (&self.launch, &self.landing) {
-            let launch_seconds = launch.seconds_since_midnight();
-            let landing_seconds = landing.seconds_since_midnight();
-            if landing_seconds > launch_seconds {
-                Some(landing_seconds - launch_seconds)
-            } else {
-                Some(86400 - launch_seconds + landing_seconds)
-            }
-        } else {
-            None
-        }
-    }
 }
 
 #[derive(Debug, Serialize)]
@@ -223,16 +198,6 @@ pub(crate) fn process_igc(data: Data, user: auth::AuthUser, db: data::Database) 
                 .next()
                 .map(|location| location.id);
     }
-
-    println!("Info: {:#?}", info);
-    println!("Flight duration: {:?} seconds", info.duration());
-
-    // Create a flight
-    //let flight = data::create_flight(&db, models::NewFlight {
-    //    user_id: 0,
-    //    ..Default::default()
-    //});
-    //println!("{:?}", flight);
 
     Json(FlightInfoResult::Success(info))
 }
