@@ -33,6 +33,11 @@ table! {
         user_id -> Int4,
         model -> Varchar,
         manufacturer -> Varchar,
+        since -> Nullable<Date>,
+        until -> Nullable<Date>,
+        source -> Text,
+        cost -> Nullable<Int4>,
+        comments -> Text,
     }
 }
 

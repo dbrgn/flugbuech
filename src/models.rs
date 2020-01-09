@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use diesel::sql_types::{Double, Integer, Text};
 use diesel::{Associations, Identifiable, Queryable};
 use diesel_geography::sql_types::Geography;
@@ -29,6 +29,16 @@ pub struct Glider {
     pub user_id: i32,
     pub model: String,
     pub manufacturer: String,
+    /// When was the glider acquired?
+    pub since: Option<NaiveDate>,
+    /// When was the glider sold / given away / thrown away?
+    pub until: Option<NaiveDate>,
+    /// Where did you get the glider from? (e.g. a shop, or a website)
+    pub source: String,
+    /// How much did the glider cost, in your currency?
+    pub cost: Option<i32>,
+    /// Add arbitrary comments about this glider
+    pub comments: String,
 }
 
 #[derive(Insertable, Default)]
