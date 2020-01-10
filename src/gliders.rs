@@ -1,5 +1,6 @@
 //! Glider views.
 
+use chrono::NaiveDate;
 use diesel::result::{DatabaseErrorKind, Error as DieselError};
 use rocket::http::Status;
 use rocket::request::{Form, FromForm, Request};
@@ -17,6 +18,11 @@ use crate::{auth, data};
 pub(crate) struct GliderForm {
     manufacturer: String,
     model: String,
+    since: Option<String>,
+    until: Option<String>,
+    source: Option<String>,
+    cost: Option<i32>,
+    comment: Option<String>,
 }
 
 // Contexts
@@ -100,13 +106,26 @@ pub(crate) fn add(user: auth::AuthUser, db: data::Database, data: Form<GliderFor
     let user = user.into_inner();
 
     // Destructure data
-    let GliderForm { manufacturer, model } = data.into_inner();
+    let GliderForm {
+        manufacturer,
+        model,
+        since,
+        until,
+        source,
+        cost,
+        comment,
+    } = data.into_inner();
 
     // Create model
     let glider = NewGlider {
         user_id: user.id,
         manufacturer,
         model,
+        since: since.and_then(|strval| NaiveDate::parse_from_str(&strval, "%Y-%m-%d").ok()),
+        until: until.and_then(|strval| NaiveDate::parse_from_str(&strval, "%Y-%m-%d").ok()),
+        source,
+        cost,
+        comment,
     };
 
     // Create database entry
@@ -142,6 +161,7 @@ pub(crate) fn edit_form(user: auth::AuthUser, _db: data::Database, id: i32) -> &
 
 #[cfg(test)]
 mod tests {
+    use chrono::NaiveDate;
     use rocket::http::ContentType;
     use rocket::local::Client;
     use rocket::{self, routes};
@@ -161,7 +181,7 @@ mod tests {
     }
 
     #[test]
-    fn add_glider() {
+    fn add_glider_constraints() {
         let ctx = DbTestContext::new();
         let client = make_client();
 
@@ -209,5 +229,44 @@ mod tests {
             data::get_gliders_for_user(&*ctx.force_get_conn(), &ctx.testuser2.user).len(),
             1,
         );
+    }
+
+    #[test]
+    fn add_glider_data() {
+        let ctx = DbTestContext::new();
+        let client = make_client();
+
+        // No gliders
+        let g = data::get_gliders_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        assert_eq!(g.len(), 0);
+
+        macro_rules! add_glider {
+            ($body:expr, $cookie:expr) => {
+                client
+                    .post("/gliders/add")
+                    .header(ContentType::Form)
+                    .body($body)
+                    .private_cookie($cookie)
+                    .dispatch()
+            };
+        }
+
+        // Add glider
+        let resp = add_glider!(
+            "manufacturer=Ozone&model=Enzo%202&since=2019-02-03&until=2019-11-20&source=Flycenter&cost=3344&comment=Sold%20it%20to%20Joe.",
+            ctx.auth_cookie_user1()
+        );
+        assert_eq!(resp.status(), Status::SeeOther);
+
+        // Verify database
+        let g = data::get_gliders_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        assert_eq!(g.len(), 1);
+        assert_eq!(g[0].manufacturer, "Ozone");
+        assert_eq!(g[0].model, "Enzo 2");
+        assert_eq!(g[0].since, Some(NaiveDate::from_ymd(2019, 2, 3)));
+        assert_eq!(g[0].until, Some(NaiveDate::from_ymd(2019, 11, 20)));
+        assert_eq!(g[0].source, Some("Flycenter".into()));
+        assert_eq!(g[0].cost, Some(3344));
+        assert_eq!(g[0].comment, Some("Sold it to Joe.".into()));
     }
 }

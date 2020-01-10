@@ -345,16 +345,19 @@ mod tests {
                     user_id: ctx.testuser1.user.id,
                     model: "Epsilon 8 23".into(),
                     manufacturer: "Advance".into(),
+                    ..Default::default()
                 },
                 NewGlider {
                     user_id: ctx.testuser1.user.id,
                     model: "Green S".into(),
                     manufacturer: "Team5".into(),
+                    ..Default::default()
                 },
                 NewGlider {
                     user_id: ctx.testuser2.user.id,
                     model: "Pi 2".into(),
                     manufacturer: "Advance".into(),
+                    ..Default::default()
                 },
             ])
             .execute(&*ctx.force_get_conn())
