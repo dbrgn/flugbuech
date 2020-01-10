@@ -3,4 +3,4 @@ ALTER TABLE gliders
     DROP COLUMN until,
     DROP COLUMN source,
     DROP COLUMN cost,
-    DROP COLUMN comments;
+    DROP COLUMN comment;

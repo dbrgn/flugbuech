@@ -35,9 +35,9 @@ table! {
         manufacturer -> Varchar,
         since -> Nullable<Date>,
         until -> Nullable<Date>,
-        source -> Text,
+        source -> Nullable<Text>,
         cost -> Nullable<Int4>,
-        comments -> Text,
+        comment -> Nullable<Text>,
     }
 }
 

@@ -24,6 +24,7 @@
         <div class="icon is-small is-left">
             <i class="fas fa-industry"></i>
         </div>
+        <p class="formhint">The glider manufacturer, e.g. "Advance"</p>
     </div>
 </div>
 
@@ -34,6 +35,70 @@
         <div class="icon is-small is-left">
             <i class="fas fa-parachute-box"></i>
         </div>
+        <p class="formhint">The glider model, e.g. "Epsilon 8"</p>
+    </div>
+</div>
+
+<div class="columns">
+    <div class="column">
+        <label class="label" for="since">Since</label>
+        <div class="field">
+            <div class="control has-icons-left">
+                <input class="input" type="date" id="since" name="since" value="{% if glider %}{{ glider.since }}{% endif %}">
+                <div class="icon is-small is-left">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <p class="formhint">When did you acquire this glider?</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="column">
+        <label class="label" for="until">Until</label>
+        <div class="field">
+            <div class="control has-icons-left">
+                <input class="input" type="date" id="until" name="until" value="{% if glider %}{{ glider.until }}{% endif %}">
+                <div class="icon is-small is-left">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <p class="formhint">Until when did you own this glider?</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="columns">
+    <div class="column">
+        <label class="label" for="source">Source</label>
+        <div class="field">
+            <div class="control has-icons-left">
+                <input class="input" type="text" id="source" name="source" value="{% if glider %}{{ glider.source }}{% endif %}">
+                <div class="icon is-small is-left">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <p class="formhint">Where did you get this glider from? (e.g. "Flybubble Shop")</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="column">
+        <label class="label" for="cost">Cost</label>
+        <div class="field">
+            <div class="control has-icons-left">
+                <input class="input" type="number" min="0" step="1" id="cost" name="cost" value="{% if glider %}{{ glider.cost }}{% endif %}">
+                <div class="icon is-small is-left">
+                    <i class="fas fa-euro-sign"></i>
+                </div>
+                <p class="formhint">How much did you pay for this glider, in your own currency?</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<label class="label" for="comment">Comment</label>
+<div class="field">
+    <div class="control">
+        <textarea class="textarea" id="comment" name="comment">{% if glider %}{{ glider.comment }}{% endif %}</textarea>
     </div>
 </div>
 

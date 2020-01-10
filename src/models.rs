@@ -27,18 +27,20 @@ pub struct User {
 pub struct Glider {
     pub id: i32,
     pub user_id: i32,
+    /// The model name, e.g. "Epsilon 8"
     pub model: String,
+    /// The manufacturer name, e.g. "Advance"
     pub manufacturer: String,
     /// When was the glider acquired?
     pub since: Option<NaiveDate>,
     /// When was the glider sold / given away / thrown away?
     pub until: Option<NaiveDate>,
     /// Where did you get the glider from? (e.g. a shop, or a website)
-    pub source: String,
+    pub source: Option<String>,
     /// How much did the glider cost, in your currency?
     pub cost: Option<i32>,
     /// Add arbitrary comments about this glider
-    pub comments: String,
+    pub comment: Option<String>,
 }
 
 #[derive(Insertable, Default)]
@@ -47,6 +49,11 @@ pub struct NewGlider {
     pub user_id: i32,
     pub model: String,
     pub manufacturer: String,
+    pub since: Option<NaiveDate>,
+    pub until: Option<NaiveDate>,
+    pub source: Option<String>,
+    pub cost: Option<i32>,
+    pub comment: Option<String>,
 }
 
 #[derive(Identifiable, Queryable, Associations, AsChangeset, Serialize, PartialEq, Debug, Clone)]

@@ -19,6 +19,8 @@
             <tr>
                 <th>Manufacturer</th>
                 <th>Model</th>
+                <th>Since</th>
+                <th>Until</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -27,6 +29,8 @@
             <tr>
                 <td>{{ glider.manufacturer }}</td>
                 <td>{{ glider.model }}</td>
+                <td>{% if glider.since %}{{ glider.since | date() }}{% else %}-{% endif %}</td>
+                <td>{% if glider.until %}{{ glider.until | date() }}{% else %}-{% endif %}</td>
                 <td>
                     <a href="/gliders/{{ glider.id }}/edit/">
                         <span class="icon"><i class="fas fa-pen-square"></i></span>
