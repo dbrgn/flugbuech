@@ -115,7 +115,7 @@ configuring your deployment!
 
 Licensed under the AGPL version 3 or later. See `LICENSE.md` file.
 
-    Copyright (C) 2019 Danilo Bargen
+    Copyright (C) 2019–2020 Danilo Bargen
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as
