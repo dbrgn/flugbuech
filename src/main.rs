@@ -1,4 +1,4 @@
-#![feature(proc_macro_hygiene, decl_macro, never_type, bind_by_move_pattern_guards)]
+#![feature(proc_macro_hygiene, decl_macro, never_type)]
 
 #[macro_use] extern crate diesel;
 #[macro_use] extern crate diesel_migrations;
