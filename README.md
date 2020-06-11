@@ -36,12 +36,12 @@ release so far.
   relevant flight data like launch time/location, landing time/location,
   duration, distance, etc can be extracted from that file)
 - [x] Manage locations
+- [x] Show stats about the past flights
 
 ### What's not yet implemented
 
 - [ ] User registration, password recovery
 - [ ] Map with all your flights
-- [ ] Show stats about the past flights
 - [ ] Make it easy to self-host
 - [ ] Import launch / landing locations from a public database
 - [ ] Adding links to other XC platforms like [XCR](https://xc-paragliding.com/)
