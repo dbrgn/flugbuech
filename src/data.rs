@@ -1,19 +1,24 @@
 use std::env;
 use std::io;
 
-use diesel::dsl::{count, max};
-use diesel::prelude::*;
-use diesel::result::QueryResult;
-use diesel::sql_types::{Double, Integer, Text};
-use diesel::{sql_function, sql_query, PgConnection};
-use diesel_geography::sql_types::Geography;
-use diesel_geography::types::GeogPoint;
+use diesel::{
+    dsl::{count, max},
+    prelude::*,
+    result::QueryResult,
+    sql_types::{Double, Integer, Text},
+    {sql_function, sql_query, PgConnection},
+};
+use diesel_geography::{sql_types::Geography, types::GeogPoint};
 use log::error;
 use rocket_contrib::database;
 
-use crate::models::{Flight, Glider, Location, LocationWithDistance, User};
-use crate::models::{NewFlight, NewGlider, NewLocation};
-use crate::schema::{flights, gliders, locations, users};
+use crate::{
+    models::{
+        Flight, Glider, Location, LocationWithCount, LocationWithDistance, NewFlight, NewGlider, NewLocation,
+        User,
+    },
+    schema::{flights, gliders, locations, users},
+};
 
 sql_function! {
     /// The pgcrypto "crypt" function.
@@ -186,6 +191,40 @@ pub fn get_locations_for_user(conn: &PgConnection, user: &User) -> Vec<Location>
         .order(locations::name)
         .load(conn)
         .expect("Error loading locations")
+}
+
+#[derive(Debug, PartialEq)]
+pub enum LocationOrderBy {
+    Launches,
+    Landings,
+}
+
+/// Retrieve all visited locations for the specified user, including launch or landing count.
+///
+/// Entries with a count of 0 will not be included.
+pub fn get_locations_with_stats_for_user(
+    conn: &PgConnection,
+    user: &User,
+    order_by: LocationOrderBy,
+    limit: i32,
+) -> Vec<LocationWithCount> {
+    sql_query(&format!(
+        "SELECT l.*, count(f.*) as count
+           FROM locations l
+                LEFT JOIN flights f on f.{} = l.id
+          WHERE f.user_id = $1 AND l.user_id = $1
+          GROUP BY l.id
+          ORDER BY count DESC
+          LIMIT $2",
+        match order_by {
+            LocationOrderBy::Launches => "launch_at",
+            LocationOrderBy::Landings => "landing_at",
+        },
+    ))
+    .bind::<Integer, _>(user.id)
+    .bind::<Integer, _>(limit)
+    .load(conn)
+    .expect("Error loading locations")
 }
 
 /// Retrieve all locations for the specified user within a specified radius
@@ -402,5 +441,132 @@ mod tests {
         );
         assert!(user.is_some());
         assert_eq!(user.unwrap().id, ctx.testuser1.user.id);
+    }
+
+    #[test]
+    fn test_get_locations_with_stats_for_user() {
+        let ctx = test_utils::DbTestContext::new();
+
+        // No locations
+        let l = get_locations_with_stats_for_user(
+            &*ctx.force_get_conn(),
+            &ctx.testuser1.user,
+            LocationOrderBy::Launches,
+            99,
+        );
+        assert_eq!(l.len(), 0);
+
+        // Locations, but no associated flights
+        let locations = diesel::insert_into(locations::table)
+            .values(vec![
+                NewLocation {
+                    name: "Selun".into(),
+                    user_id: ctx.testuser1.user.id,
+                    ..Default::default()
+                },
+                NewLocation {
+                    name: "Etzel".into(),
+                    user_id: ctx.testuser1.user.id,
+                    ..Default::default()
+                },
+                NewLocation {
+                    name: "Altendorf".into(),
+                    user_id: ctx.testuser1.user.id,
+                    ..Default::default()
+                },
+                NewLocation {
+                    name: "Hummel".into(),
+                    user_id: ctx.testuser1.user.id,
+                    ..Default::default()
+                },
+                NewLocation {
+                    name: "Stöcklichrüz".into(),
+                    user_id: ctx.testuser2.user.id,
+                    ..Default::default()
+                },
+                NewLocation {
+                    name: "Pfäffikon".into(),
+                    user_id: ctx.testuser2.user.id,
+                    ..Default::default()
+                },
+            ])
+            .get_results::<Location>(&*ctx.force_get_conn())
+            .expect("Could not create flight");
+        let l = get_locations_with_stats_for_user(
+            &*ctx.force_get_conn(),
+            &ctx.testuser1.user,
+            LocationOrderBy::Launches,
+            99,
+        );
+        assert_eq!(l.len(), 0);
+
+        // Add some flights
+        diesel::insert_into(flights::table)
+            .values(vec![
+                NewFlight {
+                    // Selun - Unknown
+                    user_id: ctx.testuser1.user.id,
+                    launch_at: Some(locations[0].id),
+                    landing_at: None,
+                    ..Default::default()
+                },
+                NewFlight {
+                    // Selun - Altendorf
+                    user_id: ctx.testuser1.user.id,
+                    launch_at: Some(locations[0].id),
+                    landing_at: Some(locations[2].id),
+                    ..Default::default()
+                },
+                NewFlight {
+                    // Selun - Altendorf
+                    user_id: ctx.testuser1.user.id,
+                    launch_at: Some(locations[0].id),
+                    landing_at: Some(locations[2].id),
+                    ..Default::default()
+                },
+                NewFlight {
+                    // Etzel - Altendorf
+                    user_id: ctx.testuser1.user.id,
+                    launch_at: Some(locations[1].id),
+                    landing_at: Some(locations[2].id),
+                    ..Default::default()
+                },
+                NewFlight {
+                    // Etzel - Etzel (toplanding)
+                    user_id: ctx.testuser1.user.id,
+                    launch_at: Some(locations[1].id),
+                    landing_at: Some(locations[1].id),
+                    ..Default::default()
+                },
+                NewFlight {
+                    // Stöcklichrüz - Pfäffikon (other user)
+                    user_id: ctx.testuser2.user.id,
+                    launch_at: Some(locations[4].id),
+                    landing_at: Some(locations[5].id),
+                    ..Default::default()
+                },
+            ])
+            .execute(&*ctx.force_get_conn())
+            .expect("Could not create flight");
+        let l_launches = get_locations_with_stats_for_user(
+            &*ctx.force_get_conn(),
+            &ctx.testuser1.user,
+            LocationOrderBy::Launches,
+            99,
+        )
+        .into_iter()
+        .map(|l| (l.name, l.count))
+        .collect::<Vec<_>>();
+        assert_eq!(l_launches, vec![("Selun".into(), 3), ("Etzel".into(), 2)]);
+        let l_landings = get_locations_with_stats_for_user(
+            &*ctx.force_get_conn(),
+            &ctx.testuser1.user,
+            LocationOrderBy::Landings,
+            99,
+        )
+        .into_iter()
+        .map(|l| (l.name, l.count))
+        .collect::<Vec<_>>();
+        assert_eq!(l_landings, vec![("Altendorf".into(), 3), ("Etzel".into(), 1)]);
     }
 }
