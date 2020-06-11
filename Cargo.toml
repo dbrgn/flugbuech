@@ -6,7 +6,7 @@ edition = "2018"
 license = "AGPL-3.0"
 
 [dependencies]
-base64 = "0.11"
+base64 = "0.12"
 chrono = { version = "0.4", features = ["serde"] }
 clap = "2"
 diesel = { version = "1.4", features = ["postgres", "chrono"] }

@@ -1,16 +1,16 @@
-use std::env;
-use std::io;
+use std::{env, io};
 
 use diesel::{
     dsl::{count, max},
     prelude::*,
     result::QueryResult,
-    sql_types::{Double, Integer, Text},
+    sql_types::{BigInt, Bool, Double, Integer, Nullable, SmallInt, Text},
     {sql_function, sql_query, PgConnection},
 };
 use diesel_geography::{sql_types::Geography, types::GeogPoint};
 use log::error;
 use rocket_contrib::database;
+use serde::Serialize;
 
 use crate::{
     models::{
@@ -301,6 +301,72 @@ pub fn update_user_last_glider(conn: &PgConnection, user: &User, glider_id: i32)
         .set(users::last_glider_id.eq(glider_id))
         .execute(conn)
         .expect("Could not set user last glider id");
+}
+
+#[derive(Debug, QueryableByName)]
+pub struct FlightTime {
+    #[sql_type = "SmallInt"]
+    pub year: i16,
+    #[sql_type = "BigInt"]
+    pub seconds: i64,
+}
+
+/// Get flight hours per year for the specified user.
+pub fn get_flight_time_per_year_for_user(conn: &PgConnection, user: &User) -> Vec<FlightTime> {
+    sql_query(
+        "SELECT date_part('year', launch_time)::smallint as year,
+                extract(epoch from sum(landing_time - launch_time))::bigint as seconds
+           FROM flights
+          WHERE user_id = $1
+            AND launch_time IS NOT NULL
+          GROUP BY year
+          ORDER BY year DESC",
+    )
+    .bind::<Integer, _>(user.id)
+    .load::<FlightTime>(conn)
+    .expect("Error loading flight time stats")
+}
+
+pub fn get_flight_count_without_launch_time(conn: &PgConnection, user: &User) -> i64 {
+    let incomplete_count = Flight::belonging_to(user)
+        .filter(flights::launch_time.is_null())
+        .select(count(flights::id))
+        .first::<i64>(conn)
+        .expect("Error loading flight count without launch time");
+    incomplete_count
+}
+
+#[derive(Debug, QueryableByName, Serialize)]
+pub struct FlightDistance {
+    #[sql_type = "SmallInt"]
+    pub year: i16,
+    #[sql_type = "Nullable<Integer>"]
+    pub track: Option<i32>,
+    #[sql_type = "Bool"]
+    pub track_incomplete: bool,
+    #[sql_type = "Nullable<Integer>"]
+    pub scored: Option<i32>,
+    #[sql_type = "Bool"]
+    pub scored_incomplete: bool,
+}
+
+/// Get flight distance per year for the specified user.
+pub fn get_flight_distance_per_year_for_user(conn: &PgConnection, user: &User) -> Vec<FlightDistance> {
+    sql_query(
+        "SELECT date_part('year', launch_time)::smallint as year,
+                sum(track_distance)::int as track,
+                count(*) - count(track_distance) > 0 as track_incomplete,
+                sum(xcontest_distance)::int as scored,
+                count(*) - count(xcontest_distance) > 0 as scored_incomplete
+           FROM flights
+          WHERE user_id = $1
+            AND launch_time IS NOT NULL
+          GROUP BY year
+          ORDER BY year DESC",
+    )
+    .bind::<Integer, _>(user.id)
+    .load::<FlightDistance>(conn)
+    .expect("Error loading flight distance stats")
 }
 
 #[cfg(test)]
