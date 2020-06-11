@@ -4,12 +4,13 @@ use diesel::{
     dsl::{count, max},
     prelude::*,
     result::QueryResult,
-    sql_types::{BigInt, Double, Integer, SmallInt, Text},
+    sql_types::{BigInt, Double, Integer, Nullable, SmallInt, Text},
     {sql_function, sql_query, PgConnection},
 };
 use diesel_geography::{sql_types::Geography, types::GeogPoint};
 use log::error;
 use rocket_contrib::database;
+use serde::Serialize;
 
 use crate::{
     models::{
@@ -328,11 +329,35 @@ pub fn get_flight_time_per_year_for_user(conn: &PgConnection, user: &User) -> Ve
     .expect("Error loading flight time stats");
     times
         .into_iter()
-        .map(|ft| {
-            println!("Item: {:?}", ft);
-            (ft.year as u16, ft.seconds as u64)
-        })
+        .map(|ft| (ft.year as u16, ft.seconds as u64))
         .collect()
+}
+
+#[derive(Debug, QueryableByName, Serialize)]
+pub struct FlightDistance {
+    #[sql_type = "SmallInt"]
+    pub year: i16,
+    #[sql_type = "Nullable<Integer>"]
+    pub track: Option<i32>,
+    #[sql_type = "Nullable<Integer>"]
+    pub scored: Option<i32>,
+}
+
+/// Get flight distance per year for the specified user.
+pub fn get_flight_distance_per_year_for_user(conn: &PgConnection, user: &User) -> Vec<FlightDistance> {
+    sql_query(
+        "SELECT date_part('year', launch_time)::smallint as year,
+                sum(track_distance)::int as track,
+                sum(xcontest_distance)::int as scored
+           FROM flights
+          WHERE user_id = $1
+            AND launch_time IS NOT NULL
+          GROUP BY year
+          ORDER BY year DESC",
+    )
+    .bind::<Integer, _>(user.id)
+    .load::<FlightDistance>(conn)
+    .expect("Error loading flight distance stats")
 }
 
 #[cfg(test)]

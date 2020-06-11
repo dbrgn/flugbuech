@@ -7,9 +7,40 @@
 
 <section>
     <div class="columns">
+
+        <div class="column is-half">
+            <h3 class="title is-4">Yearly Stats</h3>
+            <table class="table is-fullwidth is-striped is-hoverable is-narrow">
+                <thead>
+                    <tr>
+                        <th>Year</th>
+                        <th>Hours</th>
+                        <th>Track dist</th>
+                        <th>Scored dist</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for year, stats in yearly_stats %}
+                    <tr>
+                        <td>{{ year }}</td>
+                        <td>{% if stats.flight_seconds %}{{ stats.flight_seconds | duration }} h{% else %}?{% endif %}</td>
+                        <td>{% if stats.distance_track %}{{ stats.distance_track }}{% else %}0{% endif %} km</td>
+                        <td>{% if stats.distance_scored %}{{ stats.distance_scored }}{% else %}0{% endif %} km</td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="has-text-weight-medium">
+                        <td>Total</td>
+                        <td>{{ flight_time_total | duration }}</td>
+                        <td>{% if flight_distance_total.0 %}{{ flight_distance_total.0 }}{% else %}0{% endif %} km</td>
+                        <td>{% if flight_distance_total.1 %}{{ flight_distance_total.1 }}{% else %}0{% endif %} km</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
         <div class="column">
             <h3 class="title is-4">Top Launch Sites</h3>
-            <table class="table is-striped is-hoverable is-narrow">
+            <table class="table is-fullwidth is-striped is-hoverable is-narrow">
                 <thead>
                     <tr>
                         <th>Location</th>
@@ -26,9 +57,10 @@
                 </tbody>
             </table>
         </div>
+
         <div class="column">
             <h3 class="title is-4">Top Landing Sites</h3>
-            <table class="table is-striped is-hoverable is-narrow">
+            <table class="table is-fullwidth is-striped is-hoverable is-narrow">
                 <thead>
                     <tr>
                         <th>Location</th>
@@ -45,29 +77,7 @@
                 </tbody>
             </table>
         </div>
-        <div class="column">
-            <h3 class="title is-4">Flight Time</h3>
-            <table class="table is-striped is-hoverable is-narrow">
-                <thead>
-                    <tr>
-                        <th>Year</th>
-                        <th>Hours</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for year in flight_time_per_year %}
-                    <tr>
-                        <td>{{ year.0 }}</td>
-                        <td>{{ year.1 | duration }}</td>
-                    </tr>
-                    {% endfor %}
-                    <tr>
-                        <td>Total</td>
-                        <td>{{ flight_time_total | duration }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+
     </div>
 </section>
 {% endblock %}
