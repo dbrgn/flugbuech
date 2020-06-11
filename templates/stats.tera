@@ -10,13 +10,14 @@
 
         <div class="column is-half">
             <h3 class="title is-4">Yearly Stats</h3>
+
             <table class="table is-fullwidth is-striped is-hoverable is-narrow">
                 <thead>
                     <tr>
                         <th>Year</th>
                         <th>Hours</th>
-                        <th>Track dist</th>
-                        <th>Scored dist</th>
+                        <th>Track Distance</th>
+                        <th>Scored Distance</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -24,18 +25,26 @@
                     <tr>
                         <td>{{ year }}</td>
                         <td>{% if stats.flight_seconds %}{{ stats.flight_seconds | duration }} h{% else %}?{% endif %}</td>
-                        <td>{% if stats.distance_track %}{{ stats.distance_track }}{% else %}0{% endif %} km</td>
-                        <td>{% if stats.distance_scored %}{{ stats.distance_scored }}{% else %}0{% endif %} km</td>
+                        <td>{% if stats.distance_track %}{{ stats.distance_track }}{% else %}0{% endif %} km{% if stats.distance_track_incomplete %}&nbsp;<sup>{% if flights_without_launch_time > 0 %}2{% else %}1{% endif %}</sup>{% endif %}</td>
+                        <td>{% if stats.distance_scored %}{{ stats.distance_scored }}{% else %}0{% endif %} km{% if stats.distance_scored_incomplete %}&nbsp;<sup>{% if flights_without_launch_time > 0 %}2{% else %}1{% endif %}</sup>{% endif %}</td>
                     </tr>
                     {% endfor %}
                     <tr class="has-text-weight-medium">
-                        <td>Total</td>
+                        <td>Total{% if flights_without_launch_time > 0 %}<sup>1</sup>{% endif %}</td>
                         <td>{{ flight_time_total | duration }}</td>
                         <td>{% if flight_distance_total.0 %}{{ flight_distance_total.0 }}{% else %}0{% endif %} km</td>
                         <td>{% if flight_distance_total.1 %}{{ flight_distance_total.1 }}{% else %}0{% endif %} km</td>
                     </tr>
                 </tbody>
             </table>
+
+            {% if flights_without_launch_time > 0 %}
+            <p><small><sup>1</sup> Warning: There are {{ flights_without_launch_time }} flights
+            without launch date/time in your flight book, these will not
+            contribute towards the yearly stats.</small></p>
+            {% endif %}
+
+            <p><small><sup>{% if flights_without_launch_time > 0 %}2{% else %}1{% endif %}</sup> Data is incomplete (some flights don't contain this information)</small></p>
         </div>
 
         <div class="column">

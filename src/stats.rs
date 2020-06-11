@@ -18,7 +18,9 @@ use crate::{
 struct YearStats {
     flight_seconds: Option<u64>,
     distance_track: Option<i32>,
+    distance_track_incomplete: bool,
     distance_scored: Option<i32>,
+    distance_scored_incomplete: bool,
 }
 
 #[derive(Serialize)]
@@ -29,6 +31,7 @@ struct StatsContext {
     yearly_stats: BTreeMap<u16, YearStats>,
     flight_time_total: u64,
     flight_distance_total: (i32, i32), // (track, scored)
+    flights_without_launch_time: u64,
 }
 
 // Views
@@ -45,9 +48,12 @@ pub(crate) fn stats(db: data::Database, user: auth::AuthUser) -> Template {
     // Yearly stats map
     let mut yearly_stats: BTreeMap<u16, YearStats> = BTreeMap::new();
 
+    // Determine data completeness
+    let flights_without_launch_time = data::get_flight_count_without_launch_time(&db, &user) as u64;
+
     // Get hours per year
-    for (year, seconds) in data::get_flight_time_per_year_for_user(&db, &user) {
-        yearly_stats.entry(year).or_default().flight_seconds = Some(seconds);
+    for time in data::get_flight_time_per_year_for_user(&db, &user) {
+        yearly_stats.entry(time.year as u16).or_default().flight_seconds = Some(time.seconds as u64);
     }
     let flight_time_total = yearly_stats.values().filter_map(|s| s.flight_seconds).sum();
 
@@ -55,7 +61,9 @@ pub(crate) fn stats(db: data::Database, user: auth::AuthUser) -> Template {
     for distance in data::get_flight_distance_per_year_for_user(&db, &user) {
         let mut stats = yearly_stats.entry(distance.year as u16).or_default();
         stats.distance_track = distance.track;
+        stats.distance_track_incomplete = distance.track_incomplete;
         stats.distance_scored = distance.scored;
+        stats.distance_scored_incomplete = distance.scored_incomplete;
     }
     let flight_distance_total = (
         yearly_stats.values().filter_map(|s| s.distance_track).sum(),
@@ -70,6 +78,7 @@ pub(crate) fn stats(db: data::Database, user: auth::AuthUser) -> Template {
         yearly_stats,
         flight_time_total,
         flight_distance_total,
+        flights_without_launch_time,
     };
     Template::render("stats", &context)
 }
