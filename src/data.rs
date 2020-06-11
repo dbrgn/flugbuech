@@ -1,11 +1,10 @@
-use std::env;
-use std::io;
+use std::{env, io};
 
 use diesel::{
     dsl::{count, max},
     prelude::*,
     result::QueryResult,
-    sql_types::{Double, Integer, Text},
+    sql_types::{BigInt, Double, Integer, SmallInt, Text},
     {sql_function, sql_query, PgConnection},
 };
 use diesel_geography::{sql_types::Geography, types::GeogPoint};
@@ -301,6 +300,39 @@ pub fn update_user_last_glider(conn: &PgConnection, user: &User, glider_id: i32)
         .set(users::last_glider_id.eq(glider_id))
         .execute(conn)
         .expect("Could not set user last glider id");
+}
+
+#[derive(Debug, QueryableByName)]
+struct FlightTime {
+    #[sql_type = "SmallInt"]
+    year: i16,
+    #[sql_type = "BigInt"]
+    seconds: i64,
+}
+
+/// Get flight hours per year for the specified user.
+///
+/// Returns vector of tuple (year, seconds).
+pub fn get_flight_time_per_year_for_user(conn: &PgConnection, user: &User) -> Vec<(u16, u64)> {
+    let times = sql_query(
+        "SELECT date_part('year', launch_time)::smallint as year,
+                extract(epoch from sum(landing_time - launch_time))::bigint as seconds
+           FROM flights
+          WHERE user_id = $1
+            AND launch_time IS NOT NULL
+          GROUP BY year
+          ORDER BY year DESC",
+    )
+    .bind::<Integer, _>(user.id)
+    .load::<FlightTime>(conn)
+    .expect("Error loading flight time stats");
+    times
+        .into_iter()
+        .map(|ft| {
+            println!("Item: {:?}", ft);
+            (ft.year as u16, ft.seconds as u64)
+        })
+        .collect()
 }
 
 #[cfg(test)]

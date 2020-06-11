@@ -17,6 +17,8 @@ struct StatsContext {
     user: User,
     launch_locations: Vec<LocationWithCount>,
     landing_locations: Vec<LocationWithCount>,
+    flight_time_per_year: Vec<(u16, u64)>, // (year, seconds)
+    flight_time_total: u64,
 }
 
 // Views
@@ -30,11 +32,17 @@ pub(crate) fn stats(db: data::Database, user: auth::AuthUser) -> Template {
     let landing_locations =
         data::get_locations_with_stats_for_user(&db, &user, LocationOrderBy::Landings, 10);
 
+    // Get hours per year
+    let flight_time_per_year = data::get_flight_time_per_year_for_user(&db, &user);
+    let flight_time_total = flight_time_per_year.iter().map(|(_, seconds)| seconds).sum();
+
     // Render template
     let context = StatsContext {
         user,
         launch_locations,
         landing_locations,
+        flight_time_per_year,
+        flight_time_total,
     };
     Template::render("stats", &context)
 }
