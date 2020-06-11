@@ -14,6 +14,7 @@ mod models;
 mod optionresult;
 mod process_igc;
 mod schema;
+mod stats;
 mod templates;
 #[cfg(test)] mod test_utils;
 
@@ -142,6 +143,8 @@ fn main() {
                 locations::edit_form,
                 locations::edit,
                 process_igc::process_igc,
+                stats::stats,
+                stats::stats_nologin,
             ],
         )
         // Profile
