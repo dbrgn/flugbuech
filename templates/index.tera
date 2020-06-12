@@ -34,7 +34,15 @@ href="mailto:flugbuech@bargen.dev">flugbuech@bargen.dev</a>.</p>
 <p class="content">On <a href="https://github.com/dbrgn/flugbuech">GitHub</a>.</p>
 
 <h4 class="title is-size-5">What does &laquo;Flugbuech&raquo; mean?</h4>
-<p class="content">It's <a href="https://en.wikipedia.org/wiki/Swiss_German">Swiss German</a> for &laquo;Flight Log&raquo;. Sorry for not being more creative.</p>
+<p class="content">It's <a href="https://en.wikipedia.org/wiki/Swiss_German">Swiss German</a> for
+&laquo;Flight Log&raquo;. Sorry for not being more creative.</p>
+
+<h3 class="title is-size-3">News</h3>
+<ul class="content">
+    <li><strong>2020-06-12:</strong> Statistics about your flights have been added!
+    Check out <a href="/stats/">/stats/</a>.</li>
+    <li><strong>2019-12-18:</strong> IGC files from XContest can now be parsed properly.</li>
+</ul>
 
 <h3 class="title is-size-3">Stats</h3>
 <table class="table is-bordered is-hoverable">
