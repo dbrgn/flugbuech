@@ -1,0 +1,35 @@
+{
+  "name": "flugbuech",
+  "version": "0.1.0",
+  "description": "Web based flight log for paragliding pilots",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "cross-env NODE_ENV=production webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dbrgn/flugbuech.git"
+  },
+  "keywords": [
+    "flugbuech",
+    "flight log",
+    "paragliding"
+  ],
+  "author": "Danilo Bargen <mail@dbrgn.ch> (https://dbrgn.ch/)",
+  "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/dbrgn/flugbuech/issues"
+  },
+  "homepage": "https://github.com/dbrgn/flugbuech#readme",
+  "devDependencies": {
+    "copy-webpack-plugin": "^6.0.2",
+    "cross-env": "^7.0.2",
+    "eslint": "^7.2.0",
+    "eslint-plugin-svelte3": "^2.7.3",
+    "mapbox-gl": "^1.11.0",
+    "svelte": "^3.23.2",
+    "svelte-loader": "^2.13.6",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.11"
+  }
+}

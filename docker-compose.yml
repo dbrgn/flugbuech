@@ -21,13 +21,13 @@ services:
     links:
       - db
     volumes:
-      - "/flugbuech/static"
+      - "/static"
     environment:
       ROCKET_ENV: production
       ROCKET_HOST: "0.0.0.0"
       ROCKET_PORT: 8000
       ROCKET_TEMPLATE_DIR: /flugbuech/templates
-      ROCKET_STATIC_FILES_DIR: /flugbuech/static
+      ROCKET_STATIC_FILES_DIR: /static
       # IMPORTANT: Change the secret key below in production!
       # You can generate it with `openssl rand -base64 32`.
       ROCKET_SECRET_KEY: "2WMWUpOjLnmn39PIAifL4QXxGOsyyf1U17YTpOfoLJ4="

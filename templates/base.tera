@@ -8,11 +8,8 @@
         <link rel="stylesheet" href="/static/css/flugbuech.css">
         <link rel="stylesheet" href="/static/css/mapbox-gl.css">
         <script defer src="https://use.fontawesome.com/releases/v5.10.1/js/all.js"></script>
+        <script src="/static/js/common.js"></script>
         <script src="/static/js/elements.flagmeister.min.js"></script>
-        <script src="/static/js/mapbox-gl.js"></script>
-        <script>
-            mapboxgl.accessToken = 'pk.eyJ1IjoiZGFuaWxvIiwiYSI6ImNrMHk4bHcyaTA0OGMzcHA2aXloems2MnQifQ.YovfgNgeajD4aORTUE5aFw';
-        </script>
     </head>
     <body>
         <!-- Navbar -->
@@ -89,5 +86,7 @@
                 &copy; 2019&ndash;2020 Danilo Bargen | <a href="https://github.com/dbrgn/flugbuech">Source Code</a> | <a href="https://github.com/dbrgn/flugbuech/issues">Bug reports and feature requests</a> | <a href="mailto:flugbuech@bargen.dev">Contact</a>
             </div>
         </footer>
+
+        {% block postfooter %}{% endblock %}
     </body>
 </html>

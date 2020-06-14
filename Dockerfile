@@ -1,29 +1,50 @@
+# Build frontend resources in node container
+FROM node:12-slim AS frontend-build
+
+# Build with npm
+COPY . /build/flugbuech/
+RUN cd /build/flugbuech && npm install && npm run build
+
+# Build server resources in rust container
 FROM rustlang/rust:nightly-buster
 
+# Install dependencies
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update -q \
+ && apt-get -y -q install --no-install-recommends dumb-init \
+ && rm -rf /var/lib/apt/lists/*
+
 # Create users and directories
+RUN adduser --disabled-password --gecos "" flugbuech
 RUN mkdir /flugbuech \
- && adduser --disabled-password --gecos "" flugbuech \
  && chown flugbuech:flugbuech /flugbuech/ \
  && chmod 0700 /flugbuech/
-
-# Create volumes
-VOLUME ["/flugbuech/static"]
+RUN mkdir /static \
+ && chown flugbuech:flugbuech /static/ \
+ && chmod 0700 /static/
 
 # Copy required files
 COPY --chown=flugbuech:flugbuech static /flugbuech/static/
 COPY --chown=flugbuech:flugbuech templates /flugbuech/templates/
 COPY --chown=flugbuech:flugbuech Rocket.toml /flugbuech/
 
+# Copy generated frontend files
+COPY --from=frontend-build --chown=flugbuech:flugbuech /build/flugbuech/static/js/*.component.js /flugbuech/static/js/
+
 # Build binary
-COPY . /tmp/flugbuech/
-RUN cd /tmp/flugbuech \
+COPY . /build/flugbuech/
+RUN cd /build/flugbuech \
  && cargo build --release \
- && cp /tmp/flugbuech/target/release/flugbuech /flugbuech/flugbuech \
- && rm -r /tmp/flugbuech
+ && cp /build/flugbuech/target/release/flugbuech /flugbuech/flugbuech \
+ && rm -r /build/flugbuech
 
 # Specify workdir and user
 WORKDIR /flugbuech
 USER flugbuech
 
+# Create volumes
+VOLUME ["/static"]
+
 ENV RUST_BACKTRACE=1
-CMD [ "./flugbuech", "--migrate" ]
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+CMD ["bash", "-c", "rm -rf /static/{js,img,css,svelte}/ && cp -Rv /flugbuech/static/* /static/ && exec ./flugbuech --migrate"]
