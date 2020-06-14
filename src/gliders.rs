@@ -18,8 +18,8 @@ use crate::{auth, data};
 pub(crate) struct GliderForm {
     manufacturer: String,
     model: String,
-    since: Option<String>,
-    until: Option<String>,
+    since: Option<String>, // ISO date (e.g. 2010-11-30)
+    until: Option<String>, // ISO date (e.g. 2010-11-30)
     source: Option<String>,
     cost: Option<i32>,
     comment: Option<String>,
@@ -152,11 +152,68 @@ pub(crate) fn add(user: auth::AuthUser, db: data::Database, data: Form<GliderFor
 }
 
 #[get("/gliders/<id>/edit")]
-pub(crate) fn edit_form(user: auth::AuthUser, _db: data::Database, id: i32) -> &'static str {
-    let _user = user.into_inner();
-    let _id = id;
+pub(crate) fn edit_form(user: auth::AuthUser, db: data::Database, id: i32) -> Result<Template, Status> {
+    let user = user.into_inner();
 
-    "Not yet implemented, will be added soon! :)"
+    // Get glider
+    let glider = data::get_glider_with_id(&db, id).ok_or(Status::NotFound)?;
+
+    // Ownership check
+    if glider.user_id != user.id {
+        return Err(Status::Forbidden);
+    }
+
+    // Render template
+    let context = GliderContext {
+        user,
+        glider: Some(glider),
+        error_msg: None,
+    };
+    Ok(Template::render("glider", &context))
+}
+
+#[post("/gliders/<id>/edit", data = "<data>")]
+pub(crate) fn edit(
+    user: auth::AuthUser,
+    db: data::Database,
+    id: i32,
+    data: Form<GliderForm>,
+) -> Result<Redirect, Status> {
+    let user = user.into_inner();
+
+    // Get glider
+    let mut glider = data::get_glider_with_id(&db, id).ok_or(Status::NotFound)?;
+
+    // Ownership check
+    if glider.user_id != user.id {
+        return Err(Status::Forbidden);
+    }
+
+    // Update model
+    let GliderForm {
+        manufacturer,
+        model,
+        since,
+        until,
+        source,
+        cost,
+        comment,
+    } = data.into_inner();
+
+    glider.manufacturer = manufacturer;
+    glider.model = model;
+    glider.since = since.and_then(|strval| NaiveDate::parse_from_str(&strval, "%Y-%m-%d").ok());
+    glider.until = until.and_then(|strval| NaiveDate::parse_from_str(&strval, "%Y-%m-%d").ok());
+    glider.source = source;
+    glider.cost = cost;
+    glider.comment = comment;
+
+    // Update database
+    // TODO: Error handling
+    data::update_glider(&db, &glider);
+
+    // Render template
+    Ok(Redirect::to(uri!(list)))
 }
 
 #[cfg(test)]

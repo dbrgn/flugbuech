@@ -135,6 +135,7 @@ fn main() {
                 gliders::add_form_nologin,
                 gliders::add,
                 gliders::edit_form,
+                gliders::edit,
                 locations::list,
                 locations::list_nologin,
                 locations::add_form,
