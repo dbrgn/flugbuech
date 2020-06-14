@@ -1,23 +1,23 @@
-<script>
-    import mapboxgl from 'mapbox-gl';
+<script lang="typescript">
+    import { Map, NavigationControl, Marker, LngLatLike } from 'mapbox-gl';
     import { onMount } from 'svelte';
 
     // Props
-    export let lngInput;
-    export let latInput;
-    export let position = {lng: 10, lat: 47};
-    export let zoom = 6;
+    export let lngInput: HTMLInputElement;
+    export let latInput: HTMLInputElement;
+    export let position: LngLatLike = {lng: 10, lat: 47};
+    export let zoom: number = 6;
 
     // Style
     const STYLE_DEFAULT = 'outdoors-v11';
     const STYLE_SATELLITE = 'satellite-v9';
     let style = STYLE_DEFAULT;
 
-    // Configure map token
-    mapboxgl.accessToken = 'pk.eyJ1IjoiZGFuaWxvIiwiYSI6ImNrMHk4bHcyaTA0OGMzcHA2aXloems2MnQifQ.YovfgNgeajD4aORTUE5aFw';
+    // Access token
+    const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiZGFuaWxvIiwiYSI6ImNrMHk4bHcyaTA0OGMzcHA2aXloems2MnQifQ.YovfgNgeajD4aORTUE5aFw';
 
     // Map variable
-    let map = null;
+    let map: Map | null = null;
 
     // Update map style whenever variable above changes
     $: if (map !== null) {
@@ -26,19 +26,20 @@
 
     onMount(() => {
         // Create map
-        map = new mapboxgl.Map({
+        map = new Map({
             container: 'map',
             style: `mapbox://styles/mapbox/${style}`,
             doubleClickZoom: false,
             center: position,
             zoom: zoom,
+            accessToken: MAPBOX_ACCESS_TOKEN,
         });
 
         // Add navigation controls
-        map.addControl(new mapboxgl.NavigationControl());
+        map.addControl(new NavigationControl());
 
         // Add draggable marker
-        const marker = new mapboxgl.Marker({draggable: true})
+        const marker = new Marker({draggable: true})
             .setLngLat(position)
             .addTo(map);
 

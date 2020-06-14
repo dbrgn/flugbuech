@@ -1,8 +1,13 @@
 const path = require('path');
 const CopyPlugin = require('copy-webpack-plugin');
+const sveltePreprocess = require('svelte-preprocess');
 
 const mode = process.env.NODE_ENV || 'development';
 const prod = mode === 'production';
+
+const sveltePreprocessOptions = {
+    typescript: {},
+};
 
 module.exports = {
     entry: {
@@ -29,9 +34,12 @@ module.exports = {
         rules: [
             {
                 test: /\.svelte$/,
+                exclude: /node_modules/,
                 use: {
                     loader: 'svelte-loader',
-                    options: {}
+                    options: {
+                        preprocess: sveltePreprocess(sveltePreprocessOptions),
+                    }
                 }
             }
         ]
