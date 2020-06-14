@@ -51,14 +51,9 @@ release so far.
 
 Requirements:
 
-- Rust nightly
+- Rust nightly (see `rust-toolchain` file)
 - PostgreSQL + PostGIS
 - For production environments: A reverse proxy like Nginx
-
-Use Rust nightly:
-
-    rustup update nightly
-    rustup override add nightly
 
 Install `diesel_cli`:
 
@@ -68,6 +63,12 @@ Set up PostgreSQL database:
 
     createdb flugbuech
     diesel setup
+
+Run database migrations:
+
+    diesel migration run
+
+(Note: You can also apply migrations by starting with the `--migrate` flag)
 
 Start server:
 
