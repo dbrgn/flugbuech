@@ -25,4 +25,5 @@ RUN cd /tmp/flugbuech \
 WORKDIR /flugbuech
 USER flugbuech
 
+ENV RUST_BACKTRACE=1
 CMD [ "./flugbuech", "--migrate" ]
