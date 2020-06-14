@@ -5,7 +5,7 @@
 
 Personal flight log for paragliding pilots. Written with
 [Rust](https://www.rust-lang.org/) / [Rocket](https://rocket.rs/) in
-the backend and Bulma CSS / Vanilla JavaScript in the frontend.
+the backend and Bulma CSS / Svelte in the frontend.
 
 ![Screenshot](screenshot.png)
 
@@ -53,6 +53,7 @@ Requirements:
 
 - Rust nightly (see `rust-toolchain` file)
 - PostgreSQL + PostGIS
+- For building the frontend components: nodejs / npm
 - For production environments: A reverse proxy like Nginx
 
 Install `diesel_cli`:
@@ -70,6 +71,14 @@ Run database migrations:
 
 (Note: You can also apply migrations by starting with the `--migrate` flag)
 
+Install frontend dependencies:
+
+    npm install
+
+Build frontend components:
+
+    npm run build
+
 Start server:
 
     cargo run
@@ -80,8 +89,8 @@ Start server:
 Right now users have to be added to the database manually.
 
 ```sql
-INSERT INTO users(username, password)
-VALUES ('user', crypt('password', gen_salt('bf', 10)));
+INSERT INTO users(username, password, email)
+VALUES ('user', crypt('password', gen_salt('bf', 10)), 'user@example.com');
 ```
 
 
@@ -105,8 +114,8 @@ Hub](https://hub.docker.com/r/dbrgn/flugbuech/), images are re-built at least
 weekly.
 
 Note that while the default server is able to serve static files, it's probably
-a good idea to put an Nginx instance in front of the `/flugbuech/static` volume
-inside the Docker container.
+a good idea to put an Nginx instance in front of the `/static` volume inside
+the Docker container.
 
 **IMPORTANT**: Make sure to change the `ROCKET_SECRET_KEY` variable when
 configuring your deployment!

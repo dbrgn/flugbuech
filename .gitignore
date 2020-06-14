@@ -1,3 +1,12 @@
+# General
 *.swp
+
+# Rust
 /target
 **/*.rs.bk
+
+# JS
+static/js/*.component.js
+static/js/*.map
+static/js/mapbox-gl.*
+node_modules/
