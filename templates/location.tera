@@ -17,7 +17,7 @@
 
 <form action="" method="post">
 
-<label class="label" for="name">Name</label>
+<label class="label" for="name">Name *</label>
 <div class="field">
     <div class="control has-icons-left">
         <input class="input" type="text" id="name" name="name" value="{% if location %}{{ location.name }}{% endif %}" required>
@@ -27,7 +27,7 @@
     </div>
 </div>
 
-<label class="label" for="country">Country Code (2 Letters)</label>
+<label class="label" for="country">Country Code (2 Letters) *</label>
 <div class="field">
     <div class="control has-icons-left">
         <input class="input" type="text" id="country" name="country" minlength="2" maxlength="2" value="{% if location %}{{ location.country }}{% endif %}" required>
@@ -37,7 +37,7 @@
     </div>
 </div>
 
-<label class="label" for="elevation">Elevation (m ASL)</label>
+<label class="label" for="elevation">Elevation (m ASL) *</label>
 <div class="field">
     <div class="control has-icons-left">
         <input class="input" type="number" id="elevation" name="elevation" min="-200" max="8000" step="1" value="{% if location %}{{ location.elevation }}{% endif %}" required>
@@ -155,9 +155,11 @@
     });
 </script>
 
-<div class="control submitcontrols">
+<div class="content control submitcontrols">
     <button type="submit" class="button is-info">Submit</button>
 </div>
+
+<p class="content"><small><em>* Required fields</em></small></p>
 
 </form>
 
