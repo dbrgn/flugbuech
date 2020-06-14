@@ -8,19 +8,16 @@
     export let position = {lng: 10, lat: 47};
     export let zoom = 6;
 
+    // Style
     const STYLE_DEFAULT = 'outdoors-v11';
     const STYLE_SATELLITE = 'satellite-v9';
-    const ICON_MAP = 'fa-map';
-    const ICON_SATELLITE = 'fa-satellite';
+    let style = STYLE_DEFAULT;
 
     // Configure map token
     mapboxgl.accessToken = 'pk.eyJ1IjoiZGFuaWxvIiwiYSI6ImNrMHk4bHcyaTA0OGMzcHA2aXloems2MnQifQ.YovfgNgeajD4aORTUE5aFw';
 
     // Map variable
     let map = null;
-
-    // Current style
-    let style = STYLE_DEFAULT;
 
     // Update map style whenever variable above changes
     $: if (map !== null) {
@@ -57,7 +54,7 @@
 
         // Update marker and coordinates on double click
         map.on('dblclick', (e) => {
-            marker.setLngLat(e.lngLat)
+            marker.setLngLat(e.lngLat);
             updateCoordinatesFromMarker();
         });
     });

@@ -4,7 +4,8 @@
   "description": "Web based flight log for paragliding pilots",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "cross-env NODE_ENV=production webpack"
+    "build": "cross-env NODE_ENV=production webpack",
+    "lint": "eslint --ext .js,.svelte static/svelte/ static/js/common.js"
   },
   "repository": {
     "type": "git",
