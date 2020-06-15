@@ -30,6 +30,8 @@ COPY --chown=flugbuech:flugbuech Rocket.toml /flugbuech/
 
 # Copy generated frontend files
 COPY --from=frontend-build --chown=flugbuech:flugbuech /build/flugbuech/static/js/*.component.js /flugbuech/static/js/
+COPY --from=frontend-build --chown=flugbuech:flugbuech /build/flugbuech/static/js/mapbox-gl.* /flugbuech/static/js/
+COPY --from=frontend-build --chown=flugbuech:flugbuech /build/flugbuech/static/css/mapbox-gl.* /flugbuech/static/css/
 
 # Build binary
 COPY . /build/flugbuech/
