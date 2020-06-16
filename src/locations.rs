@@ -68,6 +68,8 @@ pub(crate) fn add_form_nologin() -> Redirect {
 
 #[post("/locations/add", data = "<data>")]
 pub(crate) fn add(user: auth::AuthUser, db: data::Database, data: Form<LocationForm>) -> Redirect {
+    log::debug!("locations::add");
+
     let user = user.into_inner();
 
     let LocationForm {
@@ -98,6 +100,7 @@ pub(crate) fn add(user: auth::AuthUser, db: data::Database, data: Form<LocationF
     // Create database entry
     // TODO: Error handling
     data::create_location(&db, location);
+    log::info!("Created location for user {}", user.id);
 
     // Redirect to location list
     Redirect::to(uri!(list))
