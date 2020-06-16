@@ -233,11 +233,11 @@ pub fn get_locations_around_point(
     conn: &PgConnection,
     user: &User,
     lat: f64,
-    lon: f64,
+    lng: f64,
     max_distance_meters: f64,
 ) -> Vec<LocationWithDistance> {
     let point = GeogPoint {
-        x: lon,
+        x: lng,
         y: lat,
         srid: None,
     };
