@@ -9,6 +9,7 @@
         <link rel="stylesheet" href="/static/css/mapbox-gl.css">
         <script defer src="https://use.fontawesome.com/releases/v5.10.1/js/all.js"></script>
         <script src="/static/js/common.js"></script>
+        <script src="/static/js/navbar.js"></script>
         <script src="/static/js/elements.flagmeister.min.js"></script>
     </head>
     <body>
@@ -19,13 +20,13 @@
                     <span class="icon is-small fas fa-parachute-box"></span>
                 </div>
 
-                <a role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="navbarStuff">
+                <a role="button" id="burger-menu-button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="navbar-contents">
                     <span aria-hidden="true"></span>
                     <span aria-hidden="true"></span>
                     <span aria-hidden="true"></span>
                 </a>
             </div>
-            <div id="navbarStuff" class="navbar-menu">
+            <div id="navbar-contents" class="navbar-menu">
                 <div class="navbar-start">
                     <a class="navbar-item" href="/">Home</a>
                     {% if user %}
