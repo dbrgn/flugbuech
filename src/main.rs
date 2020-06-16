@@ -13,6 +13,7 @@ mod locations;
 mod models;
 mod optionresult;
 mod process_igc;
+mod profile;
 mod schema;
 mod stats;
 mod templates;
@@ -21,7 +22,6 @@ mod templates;
 use clap::{App, Arg};
 use dotenv;
 use rocket::request::Request;
-use rocket::response::Redirect;
 use rocket::{catch, catchers, get, routes};
 use rocket_contrib::serve::StaticFiles;
 use rocket_contrib::templates::Template;
@@ -51,19 +51,6 @@ fn index(db: data::Database, user: Option<auth::AuthUser>) -> Template {
         flight_count: data::get_flight_count(&db),
     };
     Template::render("index", &context)
-}
-
-// Profile
-
-#[get("/profile")]
-fn profile(user: auth::AuthUser) -> Template {
-    let context = auth::UserContext::new(user.into_inner());
-    Template::render("profile", context)
-}
-
-#[get("/profile", rank = 2)]
-fn profile_nologin() -> Redirect {
-    Redirect::to("/auth/login")
 }
 
 // Handle missing DB
@@ -144,12 +131,12 @@ fn main() {
                 locations::edit_form,
                 locations::edit,
                 process_igc::process_igc,
+                profile::view,
+                profile::view_nologin,
                 stats::stats,
                 stats::stats_nologin,
             ],
         )
-        // Profile
-        .mount("/", routes![profile, profile_nologin,])
         // Auth routes
         .mount("/", auth::get_routes())
         // Static files

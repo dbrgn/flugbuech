@@ -5,6 +5,9 @@
 
 <p class="content">Welcome, {{ user.username }}! Here you can view and update your user profile.</p>
 
+<p class="content">If you want to change your login password,
+<a href="/profile/password/change/">click here</a>.</p>
+
 <div class="container spaced-headers">
     <h3 class="title is-4">User Info</h3>
     <table class="table is-hoverable">
