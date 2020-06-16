@@ -103,6 +103,8 @@ impl<'r> response::Responder<'r> for ValidationResult {
 
 #[post("/gliders/add", data = "<data>")]
 pub(crate) fn add(user: auth::AuthUser, db: data::Database, data: Form<GliderForm>) -> ValidationResult {
+    log::debug!("gliders::add");
+
     let user = user.into_inner();
 
     // Destructure data
@@ -132,6 +134,7 @@ pub(crate) fn add(user: auth::AuthUser, db: data::Database, data: Form<GliderFor
     match data::create_glider(&db, glider) {
         Ok(_) => {
             // Glider created, redirect to glider list
+            log::info!("Created glider for user {}", user.id);
             ValidationResult::Success(Redirect::to(uri!(list)))
         },
         Err(DieselError::DatabaseError(DatabaseErrorKind::UniqueViolation, _info)) => {

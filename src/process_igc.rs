@@ -76,6 +76,8 @@ impl<T: Float> FlatPointString<T> {
 }
 
 fn parse_igc(reader: impl BufRead, user: &models::User, db: &diesel::PgConnection) -> FlightInfoResult {
+    log::info!("Parsing IGC file for user {}", user.id);
+
     // Split lines in IGC file
     //
     // NOTE: This will yield a vector of Vec<u8>. We cannot use `.lines()`
@@ -127,12 +129,10 @@ fn parse_igc(reader: impl BufRead, user: &models::User, db: &diesel::PgConnectio
                         info.date_ymd = Some((year, month, day));
                     }
                 } else {
-                    println!("Unexpected H record DTE format: {:?}", h);
+                    log::warn!("Unexpected H record DTE format: {:?}", h);
                 }
             },
             Ok(Record::B(b)) => {
-                println!("{}: {} (GPS) / {} (Baro)", b.timestamp, b.gps_alt, b.pressure_alt);
-
                 // Extract raw float coordinates
                 let RawPosition {
                     lat: raw_lat,

@@ -378,6 +378,8 @@ pub(crate) fn submit(
     db: data::Database,
     data: Option<Form<FlightForm>>,
 ) -> Result<Redirect, Template> {
+    log::debug!("flights::submit");
+
     let user = user.into_inner();
     let gliders = data::get_gliders_for_user(&db, &user);
     let locations = data::get_locations_for_user(&db, &user);
@@ -385,14 +387,15 @@ pub(crate) fn submit(
 
     macro_rules! fail {
         ($msg:expr) => {{
-            let error_msg = Some($msg.into());
+            let error_msg = $msg.into();
+            log::error!("Could not submit flight for user {}: {}", user.id, error_msg);
             let ctx = SubmitContext {
                 user,
                 flight: None,
                 max_flight_number,
                 gliders,
                 locations,
-                error_msg,
+                error_msg: Some(error_msg),
             };
             return Err(Template::render("submit", ctx));
         }};
@@ -405,6 +408,7 @@ pub(crate) fn submit(
         };
         // TODO: Error handling
         data::create_flight(&db, &new_flight);
+        log::info!("Created flight for user {}", user.id);
         if let Some(glider_id) = new_flight.glider_id {
             data::update_user_last_glider(&db, &user, glider_id);
         }
