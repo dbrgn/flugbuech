@@ -19,7 +19,7 @@ pub(crate) struct LocationForm {
     country: String,
     elevation: i32,
     lat: Option<f64>,
-    lon: Option<f64>,
+    lng: Option<f64>,
 }
 
 // Contexts
@@ -75,7 +75,7 @@ pub(crate) fn add(user: auth::AuthUser, db: data::Database, data: Form<LocationF
         country,
         elevation,
         lat,
-        lon,
+        lng,
     } = data.into_inner();
 
     // Create model
@@ -84,9 +84,9 @@ pub(crate) fn add(user: auth::AuthUser, db: data::Database, data: Form<LocationF
         country,
         elevation,
         user_id: user.id,
-        geog: if let (Some(lat), Some(lon)) = (lat, lon) {
+        geog: if let (Some(lat), Some(lng)) = (lat, lng) {
             Some(GeogPoint {
-                x: lon,
+                x: lng,
                 y: lat,
                 srid: None,
             })
@@ -149,14 +149,14 @@ pub(crate) fn edit(
         country,
         elevation,
         lat,
-        lon,
+        lng,
     } = data.into_inner();
     location.name = name;
     location.country = country;
     location.elevation = elevation;
-    if let (Some(lat), Some(lon)) = (lat, lon) {
+    if let (Some(lat), Some(lng)) = (lat, lng) {
         location.geog = Some(GeogPoint {
-            x: lon,
+            x: lng,
             y: lat,
             srid: None,
         });

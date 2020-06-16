@@ -15,14 +15,14 @@ use serde::Serialize;
 use crate::{auth, data, models};
 
 #[derive(Debug, PartialEq, Serialize)]
-struct LatLon {
+struct LatLng {
     lat: f64,
-    lon: f64,
+    lng: f64,
 }
 
 #[derive(Debug, PartialEq, Serialize)]
 struct LaunchLandingInfo {
-    pos: LatLon,
+    pos: LatLng,
     alt: i16,
     time_hms: (u8, u8, u8),
     location_id: Option<i32>,
@@ -136,19 +136,19 @@ fn parse_igc(reader: impl BufRead, user: &models::User, db: &diesel::PgConnectio
                 // Extract raw float coordinates
                 let RawPosition {
                     lat: raw_lat,
-                    lon: raw_lon,
+                    lon: raw_lng,
                 } = b.pos;
                 let lat = raw_lat.into();
-                let lon = raw_lon.into();
-                let pos = LatLon { lat, lon };
+                let lng = raw_lng.into();
+                let pos = LatLng { lat, lng };
 
                 // Initialize projection with the first coordinate in the track
                 if projection.is_none() {
-                    projection = Some(FlatProjection::new(lon, lat));
+                    projection = Some(FlatProjection::new(lng, lat));
                 }
 
                 // Project the coordinate onto a flat coordinate system
-                let flat_point = projection.unwrap().project(lon, lat);
+                let flat_point = projection.unwrap().project(lng, lat);
                 flight_path.add_point(flat_point);
 
                 // TODO: More elaborate launch detection using altitude
@@ -183,14 +183,14 @@ fn parse_igc(reader: impl BufRead, user: &models::User, db: &diesel::PgConnectio
     let max_distance = 1000.0;
     if let Some(ref mut launch) = info.launch {
         launch.location_id =
-            data::get_locations_around_point(&db, &user, launch.pos.lat, launch.pos.lon, max_distance)
+            data::get_locations_around_point(&db, &user, launch.pos.lat, launch.pos.lng, max_distance)
                 .iter()
                 .next()
                 .map(|location| location.id);
     }
     if let Some(ref mut landing) = info.landing {
         landing.location_id =
-            data::get_locations_around_point(&db, &user, landing.pos.lat, landing.pos.lon, max_distance)
+            data::get_locations_around_point(&db, &user, landing.pos.lat, landing.pos.lng, max_distance)
                 .iter()
                 .next()
                 .map(|location| location.id);
@@ -247,9 +247,9 @@ mod tests {
         assert_eq!(
             info.launch,
             Some(LaunchLandingInfo {
-                pos: LatLon {
+                pos: LatLng {
                     lat: 46.71985,
-                    lon: 9.149533333333334
+                    lng: 9.149533333333334
                 },
                 alt: 1568,
                 time_hms: (13, 42, 26),
@@ -259,9 +259,9 @@ mod tests {
         assert_eq!(
             info.landing,
             Some(LaunchLandingInfo {
-                pos: LatLon {
+                pos: LatLng {
                     lat: 46.70665,
-                    lon: 9.153933333333333,
+                    lng: 9.153933333333333,
                 },
                 alt: 1300,
                 time_hms: (13, 46, 7),
