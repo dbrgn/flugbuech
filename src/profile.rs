@@ -1,14 +1,13 @@
 //! Profile views.
 
-use rocket::get;
-use rocket::response::Redirect;
+use rocket::{get, request::FlashMessage, response::Redirect};
 use rocket_contrib::templates::Template;
 
 use crate::auth;
 
 #[get("/profile")]
-pub fn view(user: auth::AuthUser) -> Template {
-    let context = auth::UserContext::new(user.into_inner());
+pub fn view(user: auth::AuthUser, flash: Option<FlashMessage>) -> Template {
+    let context = auth::UserContext::with_flash(user.into_inner(), flash);
     Template::render("profile", context)
 }
 

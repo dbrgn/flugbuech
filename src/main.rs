@@ -7,6 +7,7 @@ mod auth;
 mod base64;
 mod data;
 mod filters;
+mod flash;
 mod flights;
 mod gliders;
 mod locations;

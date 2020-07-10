@@ -86,3 +86,7 @@ footer {
     color: #777;
     font-size: 0.8em;
 }
+
+.flash-container {
+    margin-bottom: 24px;
+}
