@@ -97,6 +97,14 @@ pub fn create_user(
         .expect("Could not create user")
 }
 
+/// Update a user password, return the updated user model.
+pub fn update_password(conn: &PgConnection, user: &User, password: impl Into<String>) -> User {
+    diesel::update(user)
+        .set(users::password.eq(crypt(password.into(), gen_salt("bf", PW_SALT_ITERATIONS))))
+        .get_result(conn)
+        .expect("Could not update user password")
+}
+
 pub fn get_gliders(conn: &PgConnection) -> Vec<Glider> {
     gliders::table.load(conn).expect("Error loading gliders")
 }
@@ -507,6 +515,30 @@ mod tests {
         );
         assert!(user.is_some());
         assert_eq!(user.unwrap().id, ctx.testuser1.user.id);
+    }
+
+    #[test]
+    fn update_login_password() {
+        let ctx = test_utils::DbTestContext::new();
+
+        let oldpass = ctx.testuser1.password.clone();
+        let newpass = "aabbccdd".to_string();
+        assert_ne!(oldpass, newpass);
+
+        // Correct password, this should succeed
+        let user = validate_login(&*ctx.force_get_conn(), &ctx.testuser1.user.username, &oldpass);
+        assert!(user.is_some());
+
+        // Change password
+        update_password(&*ctx.force_get_conn(), &user.unwrap(), &newpass);
+
+        // Old password should not work anymore
+        let user2 = validate_login(&*ctx.force_get_conn(), &ctx.testuser1.user.username, &oldpass);
+        assert!(user2.is_none());
+
+        // New password should work
+        let user3 = validate_login(&*ctx.force_get_conn(), &ctx.testuser1.user.username, &newpass);
+        assert!(user3.is_some());
     }
 
     #[test]
