@@ -413,7 +413,7 @@ pub(crate) fn submit(
             data::update_user_last_glider(&db, &user, glider_id);
         }
 
-        Ok(Redirect::to("/flights/"))
+        Ok(Redirect::to(uri!(list)))
     } else {
         fail!("Invalid form, could not parse data. Note: Only IGC files up to ~2 MiB can be uploaded.");
     }

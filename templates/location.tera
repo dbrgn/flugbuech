@@ -5,6 +5,24 @@
 {% block postfooter %}
 <script src="/static/js/mapbox-gl.js"></script>
 <script src="/static/js/map.component.js"></script>
+<script>
+    ready(() => {
+        const map = new LocationMap({
+            target: document.getElementById('mapContainer'),
+            props: {
+                lngInput: document.getElementById('lng'),
+                latInput: document.getElementById('lat'),
+                {% if location and location.geog %}
+                position: {
+                    lng: {{ location.geog.x }},
+                    lat: {{ location.geog.y }},
+                },
+                zoom: 13,
+                {% endif %}
+            },
+        });
+    });
+</script>
 {% endblock %}
 
 {% block content %}
@@ -73,25 +91,6 @@
 </div>
 
 <div id="mapContainer"></div>
-
-<script>
-    ready(() => {
-        const map = new LocationMap({
-            target: document.getElementById('mapContainer'),
-            props: {
-                lngInput: document.getElementById('lng'),
-                latInput: document.getElementById('lat'),
-                {% if location and location.geog %}
-                position: {
-                    lng: {{ location.geog.x }},
-                    lat: {{ location.geog.y }},
-                },
-                zoom: 13,
-                {% endif %}
-            },
-        });
-    });
-</script>
 
 <div class="content control submitcontrols">
     <button type="submit" class="button is-info">Submit</button>

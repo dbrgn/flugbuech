@@ -1,9 +1,21 @@
 {% extends 'base' %}
 
 {% block content %}
+<nav class="breadcrumb" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="/">Home</a></li>
+    <li class="is-active"><a href="#" aria-current="page">Profile</a></li>
+  </ul>
+</nav>
+
 <h2 class="title is-2">Profile</h2>
 
+{% include 'flash' %}
+
 <p class="content">Welcome, {{ user.username }}! Here you can view and update your user profile.</p>
+
+<p class="content">If you want to change your login password,
+<a href="/auth/password/change">click here</a>.</p>
 
 <div class="container spaced-headers">
     <h3 class="title is-4">User Info</h3>

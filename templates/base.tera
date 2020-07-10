@@ -30,7 +30,6 @@
                 <div class="navbar-start">
                     <a class="navbar-item" href="/">Home</a>
                     {% if user %}
-                    <a class="navbar-item" href="/profile/">Profile</a>
                     <a class="navbar-item" href="/gliders/">My Gliders</a>
                     <a class="navbar-item" href="/locations/">My Locations</a>
                     <a class="navbar-item" href="/flights/">My Flights</a>
@@ -42,6 +41,7 @@
                     <div class="navbar-item">
                         <div class="buttons">
                             {% if user %}
+                            <a class="button" href="/profile/">Profile</a>
                             <a class="button" href="/auth/logout/">Logout</a>
                             {% else %}
                             <a class="button is-light" href="/auth/login/">Login</a>
@@ -68,14 +68,6 @@
 
         <!-- Content -->
         <div class="section {% block sectionclass %}{% endblock %}">
-            {% if flash %}
-            <div class="container">
-                <div class="notification is-danger">
-                    <p class="flash">Error: {{ flash }}</p>
-                </div>
-            </div>
-            {% endif %}
-
             <div class="container">
                 {% block content %}{% endblock %}
             </div>

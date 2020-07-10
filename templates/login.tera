@@ -1,34 +1,33 @@
 {% extends 'base' %}
 
 {% block content %}
-<section class="section">
-    <div class="container">
-        <h2 class="title is-2">Login</h2>
-        <form action="/auth/login" method="post" accept-charset="utf-8">
-            <div class="field">
-                <label class="label" for="username">Username</label>
-                <div class="control has-icons-left">
-                    <input class="input" type="text" name="username" id="username" value="" required />
-                    <span class="icon is-small is-left">
-                        <i class="fas fa-user"></i>
-                    </span>
-                </div>
-            </div>
-            <div class="field">
-                <label class="label" for="password">Password</label>
-                <div class="control has-icons-left">
-                    <input class="input" type="password" name="password" id="password" value="" required />
-                    <span class="icon is-small is-left">
-                        <i class="fas fa-lock"></i>
-                    </span>
-                </div>
-            </div>
-            <div class="field">
-                <div class="control">
-                    <button class="button is-primary" type="submit">Login</button>
-                </div>
-            </div>
-        </form>
+<h2 class="title is-2">Login</h2>
+
+{% include 'flash' %}
+
+<form action="/auth/login" method="post" accept-charset="utf-8">
+    <div class="field">
+        <label class="label" for="username">Username</label>
+        <div class="control has-icons-left">
+            <input class="input" type="text" name="username" id="username" value="" required />
+            <span class="icon is-small is-left">
+                <i class="fas fa-user"></i>
+            </span>
+        </div>
     </div>
-</section>
+    <div class="field">
+        <label class="label" for="password">Password</label>
+        <div class="control has-icons-left">
+            <input class="input" type="password" name="password" id="password" value="" required />
+            <span class="icon is-small is-left">
+                <i class="fas fa-lock"></i>
+            </span>
+        </div>
+    </div>
+    <div class="field">
+        <div class="control">
+            <button class="button is-primary" type="submit">Login</button>
+        </div>
+    </div>
+</form>
 {% endblock %}

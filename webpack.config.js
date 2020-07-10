@@ -11,7 +11,8 @@ const sveltePreprocessOptions = {
 
 module.exports = {
     entry: {
-        map: ['./static/svelte/map.js'],
+        'map': ['./static/svelte/map.js'],
+        'password-change-form': ['./static/svelte/password-change-form.js'],
     },
     externals: {
         'mapbox-gl': 'mapboxgl',
