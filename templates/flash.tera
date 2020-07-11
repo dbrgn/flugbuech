@@ -1,4 +1,4 @@
-{% if flashes %}
+{% if flashes and flashes|length > 0 %}
 <div class="container flash-container">
     {% for flash in flashes %}
         {% if flash.name == "error" %}

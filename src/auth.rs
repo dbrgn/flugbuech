@@ -10,7 +10,7 @@ use rocket_contrib::templates::Template;
 use serde::Serialize;
 
 use crate::data::{self, Database};
-use crate::flash::context_from_flash;
+use crate::flash::context_from_flash_opt;
 use crate::models::User;
 
 pub const USER_COOKIE_ID: &str = "user_id";
@@ -89,7 +89,7 @@ pub fn login_user(_user: AuthUser) -> Redirect {
 /// Show the login page (with flash messages) if not already logged in.
 #[get("/auth/login", rank = 2)]
 pub fn login_page(flash: Option<FlashMessage>) -> Template {
-    Template::render("login", &context_from_flash(flash))
+    Template::render("login", &context_from_flash_opt(flash))
 }
 
 #[derive(FromForm)]

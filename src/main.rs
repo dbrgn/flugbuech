@@ -113,6 +113,8 @@ fn main() {
                 flights::flight,
                 flights::edit_form,
                 flights::edit,
+                flights::delete_form,
+                flights::delete,
                 flights::igc_download,
                 flights::submit_form,
                 flights::submit_form_nologin,

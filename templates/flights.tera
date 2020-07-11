@@ -12,6 +12,8 @@
 
 <h2 class="title is-2">Your Flights</h2>
 
+{% include 'flash' %}
+
 <section>
     <p class="content">You've logged {{ flights|length }} flight{{ flights|length|pluralize }} so far!</p>
     <p class="content">
@@ -52,8 +54,9 @@
                 <td>{% if flight.track_distance %}{{ flight.track_distance | round(precision=2) }} km{% endif %}</td>
                 <td>{% if flight.xcontest_tracktype %}{{ flight.xcontest_tracktype | xcontest_icon }} {% endif %}{% if flight.xcontest_distance %}{{ flight.xcontest_distance | round(precision=2) }} km{% endif %}</td>
                 <td>
-                    <a class="icon" title="View Flight" href="/flights/{{ flight.id }}/"><i class="fas fa-eye"></i></a>
-                    <a class="icon" title="Edit Flight" href="/flights/{{ flight.id }}/edit/"><i class="fas fa-pen-square"></i></a>
+                    <a class="icon" title="View Flight" href="/flights/{{ flight.id }}"><i class="fas fa-eye"></i></a>
+                    <a class="icon" title="Edit Flight" href="/flights/{{ flight.id }}/edit"><i class="fas fa-pen-square"></i></a>
+                    <a class="icon has-text-danger" title="Delete Flight" href="/flights/{{ flight.id }}/delete"><i class="fas fa-trash-alt"></i></a>
                     {% if flight.igc %}
                     <a class="icon" title="Download IGC" href="/flights/{{ flight.id }}/igc/"><i class="fas fa-download"></i></a>
                     {% endif %}

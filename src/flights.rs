@@ -14,6 +14,7 @@ use rocket_contrib::templates::Template;
 use serde::Serialize;
 
 use crate::base64::Base64Data;
+use crate::flash::flashes_from_flash_opt;
 use crate::models::{Flight, Glider, Location, NewFlight, User};
 use crate::optionresult::OptionResult;
 use crate::{auth, data};
@@ -31,10 +32,11 @@ struct FlightWithDetails<'a> {
 struct FlightsContext<'a> {
     user: User,
     flights: Vec<FlightWithDetails<'a>>,
+    flashes: Vec<crate::flash::FlashMessage>,
 }
 
 #[get("/flights")]
-pub(crate) fn list(db: data::Database, user: auth::AuthUser) -> Template {
+pub(crate) fn list(db: data::Database, user: auth::AuthUser, flash: Option<FlashMessage>) -> Template {
     let user = user.into_inner();
 
     // Get all flights
@@ -96,6 +98,7 @@ pub(crate) fn list(db: data::Database, user: auth::AuthUser) -> Template {
     let context = FlightsContext {
         user,
         flights: flights_with_details,
+        flashes: flashes_from_flash_opt(flash),
     };
     Template::render("flights", &context)
 }
@@ -526,4 +529,58 @@ pub(crate) fn edit(
 
     // Render template
     EditResponse::Success(Redirect::to(uri!(list)))
+}
+
+#[derive(Serialize)]
+struct DeleteContext {
+    user: User,
+    flight: Flight,
+}
+
+#[get("/flights/<id>/delete")]
+pub(crate) fn delete_form(user: auth::AuthUser, db: data::Database, id: i32) -> Result<Template, Status> {
+    let user = user.into_inner();
+
+    // Get data
+    let flight = match data::get_flight_with_id(&db, id) {
+        Some(flight) => flight,
+        None => return Err(Status::NotFound),
+    };
+
+    // Ownership check
+    if flight.user_id != user.id {
+        return Err(Status::Forbidden);
+    }
+
+    // Render template
+    let context = DeleteContext { user, flight };
+    Ok(Template::render("delete", context))
+}
+
+#[post("/flights/<id>/delete")]
+pub(crate) fn delete(user: auth::AuthUser, db: data::Database, id: i32) -> Result<Flash<Redirect>, Status> {
+    let user = user.into_inner();
+
+    // Get data
+    let flight = match data::get_flight_with_id(&db, id) {
+        Some(flight) => flight,
+        None => return Err(Status::NotFound),
+    };
+
+    // Ownership check
+    if flight.user_id != user.id {
+        return Err(Status::Forbidden);
+    }
+
+    // Delete database entry
+    let flight_id = flight.id;
+    data::delete_flight(&db, flight)
+        .map(|()| {
+            log::info!("Deleted flight with ID {}", flight_id);
+            Flash::success(Redirect::to(uri!(list)), "Flight deleted")
+        })
+        .or_else(|e| {
+            log::error!("Could not delete flight with ID {}: {}", flight_id, e);
+            Ok(Flash::error(Redirect::to(uri!(list)), "Could not delete flight"))
+        })
 }
