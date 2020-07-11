@@ -312,6 +312,30 @@ pub fn update_user_last_glider(conn: &PgConnection, user: &User, glider_id: i32)
 }
 
 #[derive(Debug, QueryableByName)]
+pub struct FlightCount {
+    #[sql_type = "SmallInt"]
+    pub year: i16,
+    #[sql_type = "BigInt"]
+    pub count: i64,
+}
+
+/// Get flight count per year for the specified user.
+pub fn get_flight_count_per_year_for_user(conn: &PgConnection, user: &User) -> Vec<FlightCount> {
+    sql_query(
+        "SELECT date_part('year', launch_time)::smallint as year,
+                count(*) as count
+           FROM flights
+          WHERE user_id = $1
+            AND launch_time IS NOT NULL
+          GROUP BY year
+          ORDER BY year DESC",
+    )
+    .bind::<Integer, _>(user.id)
+    .load::<FlightCount>(conn)
+    .expect("Error loading flight count stats")
+}
+
+#[derive(Debug, QueryableByName)]
 pub struct FlightTime {
     #[sql_type = "SmallInt"]
     pub year: i16,
