@@ -43,7 +43,7 @@
                 <td>{% if flight.launch_time %}{{ flight.launch_time | date }}{% endif %}</td>
                 <td>{% if glider %}{{ glider.manufacturer }} {{ glider.model }}{% endif %}</td>
                 <td title="{% if launch_at %}{{ launch_at.elevation }} mASL{% endif %}">
-                    {% if launch_at %}{{ macros::flag(country_code=launch_at.country) }} {{ launch_at.name }}{% endif %}
+                    {% if launch_at %}{{ macros::flag(country_code=launch_at.country) }} {{ launch_at.name }}{% if flight.hikeandfly %}&nbsp;<i class="fas fa-hiking" title="Hike &amp; Fly"></i>{% endif %}{% endif %}
                 </td>
                 <td title="{% if landing_at %}{{ landing_at.elevation }} mASL{% endif %}">
                     {% if landing_at %}{{ macros::flag(country_code=landing_at.country) }} {{ landing_at.name }}{% endif %}
