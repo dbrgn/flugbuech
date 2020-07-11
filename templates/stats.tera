@@ -15,6 +15,7 @@
                 <thead>
                     <tr>
                         <th>Year</th>
+                        <th>Flights</th>
                         <th>Hours</th>
                         <th>Track Distance</th>
                         <th>Scored Distance</th>
@@ -24,6 +25,7 @@
                     {% for year, stats in yearly_stats %}
                     <tr>
                         <td>{{ year }}</td>
+                        <td>{% if stats.flights %}{{ stats.flights }}{% else %}?{% endif %}</td>
                         <td>{% if stats.flight_seconds %}{{ stats.flight_seconds | duration }} h{% else %}?{% endif %}</td>
                         <td>{% if stats.distance_track %}{{ stats.distance_track }}{% else %}0{% endif %} km{% if stats.distance_track_incomplete %}&nbsp;<sup>{% if flights_without_launch_time > 0 %}2{% else %}1{% endif %}</sup>{% endif %}</td>
                         <td>{% if stats.distance_scored %}{{ stats.distance_scored }}{% else %}0{% endif %} km{% if stats.distance_scored_incomplete %}&nbsp;<sup>{% if flights_without_launch_time > 0 %}2{% else %}1{% endif %}</sup>{% endif %}</td>
@@ -31,6 +33,7 @@
                     {% endfor %}
                     <tr class="has-text-weight-medium">
                         <td>Total{% if flights_without_launch_time > 0 %}<sup>1</sup>{% endif %}</td>
+                        <td>{{ flight_count_total }}</td>
                         <td>{{ flight_time_total | duration }}</td>
                         <td>{% if flight_distance_total.0 %}{{ flight_distance_total.0 }}{% else %}0{% endif %} km</td>
                         <td>{% if flight_distance_total.1 %}{{ flight_distance_total.1 }}{% else %}0{% endif %} km</td>
