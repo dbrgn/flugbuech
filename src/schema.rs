@@ -79,6 +79,7 @@ table! {
         password -> Text,
         last_glider_id -> Nullable<Int4>,
         email -> Text,
+        signed_up -> Timestamptz,
     }
 }
 
