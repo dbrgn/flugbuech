@@ -21,6 +21,7 @@ table! {
         video_url -> Nullable<Text>,
         igc -> Nullable<Bytea>,
         created_at -> Timestamptz,
+        hikeandfly -> Bool,
     }
 }
 

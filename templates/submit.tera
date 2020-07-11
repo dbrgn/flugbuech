@@ -110,6 +110,10 @@ Currently locations cannot be created automatically.</p>
                 </div>
             </div>
         </div>
+        <label class="checkbox">
+            <input type="checkbox" id="hikeandfly" name="hikeandfly" {% if flight and flight.hikeandfly%}checked{% endif %}>
+            Hike &amp; Fly
+        </label>
     </div>
 
     <div class="column">

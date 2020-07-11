@@ -150,6 +150,8 @@ pub struct Flight {
     pub igc: Option<Vec<u8>>,
     /// When the flight was entered into Flugbuech
     pub created_at: DateTime<Utc>,
+    /// Whether you hiked up to launch
+    pub hikeandfly: bool,
 }
 
 #[derive(Insertable, Default)]
@@ -183,4 +185,6 @@ pub struct NewFlight {
     pub video_url: Option<String>,
     /// IGC file contents
     pub igc: Option<Vec<u8>>,
+    /// Whether you hiked up to launch
+    pub hikeandfly: bool,
 }

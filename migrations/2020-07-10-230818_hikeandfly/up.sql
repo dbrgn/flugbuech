@@ -1,0 +1,2 @@
+ALTER TABLE flights
+    ADD COLUMN hikeandfly BOOLEAN NOT NULL DEFAULT false;
