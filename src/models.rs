@@ -19,6 +19,8 @@ pub struct User {
     pub last_glider_id: Option<i32>,
     /// E-mail address
     pub email: String,
+    /// When the user was created
+    pub signed_up: DateTime<Utc>,
 }
 
 #[derive(Identifiable, Queryable, Associations, AsChangeset, Serialize, PartialEq, Debug, Clone)]
