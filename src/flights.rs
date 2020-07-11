@@ -370,7 +370,7 @@ pub(crate) fn submit_form(user: auth::AuthUser, db: data::Database) -> Template 
         locations,
         error_msg: None,
     };
-    Template::render("submit", context)
+    Template::render("flight_submit", context)
 }
 
 #[get("/flights/add", rank = 2)]
@@ -403,7 +403,7 @@ pub(crate) fn submit(
                 locations,
                 error_msg: Some(error_msg),
             };
-            return Err(Template::render("submit", ctx));
+            return Err(Template::render("flight_submit", ctx));
         }};
     }
 
@@ -456,7 +456,7 @@ pub(crate) fn edit_form(
         locations,
         error_msg: flash.map(|f: FlashMessage| f.msg().to_owned()),
     };
-    Ok(Template::render("submit", context))
+    Ok(Template::render("flight_submit", context))
 }
 
 #[derive(Debug, Responder)]
@@ -554,7 +554,7 @@ pub(crate) fn delete_form(user: auth::AuthUser, db: data::Database, id: i32) -> 
 
     // Render template
     let context = DeleteContext { user, flight };
-    Ok(Template::render("delete", context))
+    Ok(Template::render("flight_delete", context))
 }
 
 #[post("/flights/<id>/delete")]
