@@ -36,6 +36,7 @@
             <td>
                 {% if launch_at %}{{ macros::flag(country_code=launch_at.country) }} {{ launch_at.name }}, {{ launch_at.elevation }} mASL{% endif %}
                 {%- if flight.launch_time %}, {{ flight.launch_time | date(format="%H:%M") }} UTC{% endif %}
+                {%- if flight.hikeandfly %} <i class="fas fa-hiking" title="Hike &amp; Fly"></i>{% endif %}
             </td>
         </tr>
         <tr>

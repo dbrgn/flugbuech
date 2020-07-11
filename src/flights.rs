@@ -210,6 +210,7 @@ pub(crate) struct FlightForm {
     launch_date: OptionResult<NaiveDate>,
     launch_time: OptionResult<NaiveTime>,
     landing_time: OptionResult<NaiveTime>,
+    hikeandfly: bool,
     track_distance: OptionResult<f32>,
     xcontest_tracktype: String,
     xcontest_distance: OptionResult<f32>,
@@ -302,6 +303,7 @@ impl FlightForm {
             let ndt = NaiveDateTime::new(launch_date_naive.unwrap(), time);
             DateTime::from_utc(ndt, Utc) // TODO: Timezone
         });
+        let hikeandfly = self.hikeandfly;
 
         // Extract track information
         let track_distance = match self.track_distance.into_result() {
@@ -329,6 +331,7 @@ impl FlightForm {
             landing_at,
             launch_time,
             landing_time,
+            hikeandfly,
             track_distance,
             xcontest_tracktype,
             xcontest_distance,
@@ -505,6 +508,7 @@ pub(crate) fn edit(
     flight.landing_at = new_flight.landing_at;
     flight.launch_time = new_flight.launch_time;
     flight.landing_time = new_flight.landing_time;
+    flight.hikeandfly = new_flight.hikeandfly;
     flight.track_distance = new_flight.track_distance;
     flight.xcontest_tracktype = new_flight.xcontest_tracktype;
     flight.xcontest_distance = new_flight.xcontest_distance;

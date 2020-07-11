@@ -16,7 +16,8 @@ use crate::{
 
 #[derive(Default, Serialize)]
 struct YearStats {
-    flights: Option<u32>,
+    flight_count: Option<u32>,
+    hikeandfly_count: Option<u32>,
     flight_seconds: Option<u64>,
     distance_track: Option<i32>,
     distance_track_incomplete: bool,
@@ -31,6 +32,7 @@ struct StatsContext {
     landing_locations: Vec<LocationWithCount>,
     yearly_stats: BTreeMap<u16, YearStats>,
     flight_count_total: u32,
+    hikeandfly_count_total: u32,
     flight_time_total: u64,
     flight_distance_total: (i32, i32), // (track, scored)
     flights_without_launch_time: u64,
@@ -55,9 +57,18 @@ pub(crate) fn stats(db: data::Database, user: auth::AuthUser) -> Template {
 
     // Get flight count per year
     for count in data::get_flight_count_per_year_for_user(&db, &user) {
-        yearly_stats.entry(count.year as u16).or_default().flights = Some(count.count as u32);
+        yearly_stats.entry(count.year as u16).or_default().flight_count = Some(count.count as u32);
     }
-    let flight_count_total = yearly_stats.values().filter_map(|s| s.flights).sum();
+    let flight_count_total = yearly_stats.values().filter_map(|s| s.flight_count).sum();
+
+    // Get hike&fly count per year
+    for count in data::get_hikeandfly_count_per_year_for_user(&db, &user) {
+        yearly_stats
+            .entry(count.year as u16)
+            .or_default()
+            .hikeandfly_count = Some(count.count as u32);
+    }
+    let hikeandfly_count_total = yearly_stats.values().filter_map(|s| s.hikeandfly_count).sum();
 
     // Get hours per year
     for time in data::get_flight_time_per_year_for_user(&db, &user) {
@@ -85,6 +96,7 @@ pub(crate) fn stats(db: data::Database, user: auth::AuthUser) -> Template {
         landing_locations,
         yearly_stats,
         flight_count_total,
+        hikeandfly_count_total,
         flight_time_total,
         flight_distance_total,
         flights_without_launch_time,

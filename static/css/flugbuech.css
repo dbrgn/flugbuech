@@ -90,3 +90,7 @@ footer {
 .flash-container {
     margin-bottom: 24px;
 }
+
+div.control + label.checkbox {
+    margin-top: 8px;
+}
