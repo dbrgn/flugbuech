@@ -153,6 +153,13 @@ pub fn update_flight(conn: &PgConnection, flight: &Flight) {
         .expect("Could not update flight");
 }
 
+/// Delete a flight.
+pub fn delete_flight(conn: &PgConnection, flight: Flight) -> QueryResult<()> {
+    let delete_count = diesel::delete(&flight).execute(conn)?;
+    assert_eq!(delete_count, 1); // Sanity check
+    Ok(())
+}
+
 pub fn get_flight_count(conn: &PgConnection) -> i64 {
     flights::table
         .select(count(flights::id))
