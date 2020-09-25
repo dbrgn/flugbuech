@@ -13,7 +13,7 @@ diesel = { version = "1.4", features = ["postgres", "chrono"] }
 diesel-geography = { version = "0.2", features = ["serde"], git = "https://github.com/dbrgn/diesel-geography", branch = "geography-queryid" }
 diesel_migrations = { version = "1.4", features = ["postgres"] }
 dotenv = "0.15"
-flat_projection = "0.3"
+flat_projection = "0.4"
 igc = "0.2"
 log = "0.4"
 num-traits = "0.2"
