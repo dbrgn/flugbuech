@@ -334,6 +334,29 @@ Currently locations cannot be created automatically.</p>
         }
     }
 
+    function validateDateTimeFields() {
+        const launchDateField = document.getElementById('launchDate');
+        const launchTimeField = document.getElementById('launchTime');
+        const landingTimeField = document.getElementById('landingTime');
+
+        const launchDate = launchDateField.value;
+        const launchTime = launchTimeField.value;
+        const landingTime = landingTimeField.value;
+
+        const msg = 'Either all or no date/time fields must be filled out';
+
+        const filled = [launchDate.length > 0, launchTime.length > 0, landingTime.length > 0];
+        if (!filled.every(x => x === true) && !filled.every(x => x === false)) {
+            for (const field of [launchDateField, launchTimeField, landingTimeField]) {
+                field.setCustomValidity(msg);
+            }
+        } else {
+            for (const field of [launchDateField, launchTimeField, landingTimeField]) {
+                field.setCustomValidity('');
+            }
+        }
+    }
+
     function processData(data) {
         // Determine glider
         const gliderId = gliders.match(data.glidertype);
@@ -474,6 +497,12 @@ Currently locations cannot be created automatically.</p>
     document.getElementById('landingTime').addEventListener('change', recalculateDuration);
 
     recalculateDuration();
+
+    document.getElementById('launchDate').addEventListener('change', validateDateTimeFields);
+    document.getElementById('launchTime').addEventListener('change', validateDateTimeFields);
+    document.getElementById('landingTime').addEventListener('change', validateDateTimeFields);
+
+    validateDateTimeFields();
 </script>
 
 <script>
