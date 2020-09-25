@@ -270,26 +270,32 @@ impl FlightForm {
         let mut date_parts = 0;
         let launch_date_naive = match self.launch_date.into_result() {
             Ok(val) => {
-                date_parts += 1;
+                if val.is_some() {
+                    date_parts += 1;
+                }
                 val
             },
             Err(e) => return Err(format!("Launch date: {}", e)),
         };
         let launch_time_naive = match self.launch_time.into_result() {
             Ok(val) => {
-                date_parts += 1;
+                if val.is_some() {
+                    date_parts += 1;
+                }
                 val
             },
             Err(e) => return Err(format!("Launch time: {}", e)),
         };
         let landing_time_naive = match self.landing_time.into_result() {
             Ok(val) => {
-                date_parts += 1;
+                if val.is_some() {
+                    date_parts += 1;
+                }
                 val
             },
             Err(e) => return Err(format!("Landing time: {}", e)),
         };
-        if date_parts < 0 && date_parts < 3 {
+        if date_parts > 0 && date_parts < 3 {
             return Err("If you specify launch date, launch time or landing time, \
                         then the other two values must be provided as well"
                 .into());
