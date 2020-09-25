@@ -1,5 +1,5 @@
 use chrono::{DateTime, NaiveDate, Utc};
-use diesel::sql_types::{BigInt, Double, Integer, Text};
+use diesel::sql_types::{BigInt, Bool, Date, Double, Integer, Nullable, Text};
 use diesel::{Associations, Identifiable, Queryable};
 use diesel_geography::sql_types::Geography;
 use diesel_geography::types::GeogPoint;
@@ -43,6 +43,36 @@ pub struct Glider {
     pub cost: Option<i32>,
     /// Add arbitrary comments about this glider
     pub comment: Option<String>,
+}
+
+#[derive(Debug, QueryableByName, Serialize)]
+#[table_name = "gliders"]
+pub struct GliderWithStats {
+    // For field descriptions, see `Glider` model
+    #[sql_type = "Integer"]
+    pub id: i32,
+    #[sql_type = "Integer"]
+    pub user_id: i32,
+    #[sql_type = "Text"]
+    pub model: String,
+    #[sql_type = "Text"]
+    pub manufacturer: String,
+    #[sql_type = "Nullable<Date>"]
+    pub since: Option<NaiveDate>,
+    #[sql_type = "Nullable<Date>"]
+    pub until: Option<NaiveDate>,
+    #[sql_type = "Nullable<Text>"]
+    pub source: Option<String>,
+    #[sql_type = "Nullable<Integer>"]
+    pub cost: Option<i32>,
+    #[sql_type = "Nullable<Text>"]
+    pub comment: Option<String>,
+    #[sql_type = "BigInt"]
+    pub flights: i64,
+    #[sql_type = "BigInt"]
+    pub seconds: i64,
+    #[sql_type = "Bool"]
+    pub seconds_complete: bool,
 }
 
 #[derive(Insertable, Default)]

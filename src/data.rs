@@ -14,8 +14,8 @@ use serde::Serialize;
 
 use crate::{
     models::{
-        Flight, Glider, Location, LocationWithCount, LocationWithDistance, NewFlight, NewGlider, NewLocation,
-        User,
+        Flight, Glider, GliderWithStats, Location, LocationWithCount, LocationWithDistance, NewFlight,
+        NewGlider, NewLocation, User,
     },
     schema::{flights, gliders, locations, users},
 };
@@ -120,6 +120,23 @@ pub fn get_gliders_for_user(conn: &PgConnection, user: &User) -> Vec<Glider> {
     Glider::belonging_to(user)
         .load(conn)
         .expect("Error loading gliders")
+}
+
+pub fn get_gliders_with_stats_for_user(conn: &PgConnection, user: &User) -> Vec<GliderWithStats> {
+    sql_query(
+        "SELECT g.*,
+                count(f.id) as flights,
+                coalesce(extract(epoch from sum(f.landing_time - f.launch_time))::bigint, 0) as seconds,
+                every(f.launch_time IS NOT NULL AND f.landing_time IS NOT NULL) OR count(f.id) = 0 as seconds_complete
+           FROM gliders g
+                LEFT JOIN flights f ON g.id = f.glider_id
+          WHERE g.user_id = $1
+          GROUP BY g.id
+          ORDER BY g.id DESC",
+    )
+    .bind::<Integer, _>(user.id)
+    .load::<GliderWithStats>(conn)
+    .expect("Error loading gliders with stats")
 }
 
 pub fn get_glider_with_id(conn: &PgConnection, id: i32) -> Option<Glider> {

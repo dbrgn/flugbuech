@@ -39,6 +39,7 @@ href="mailto:flugbuech@bargen.dev">flugbuech@bargen.dev</a>.</p>
 
 <h3 class="title is-size-3">News</h3>
 <ul class="content">
+    <li><strong>2020-09-25:</strong> Show stats (flights, flight hours) for gliders</li>
     <li><strong>2020-07-11:</strong> Allow marking flights as hike&amp;fly, allow deleting flights, enhance stats</li>
     <li><strong>2020-07-10:</strong> Your own password <a href="/auth/password/change">can now be changed</a></li>
     <li><strong>2020-06-14:</strong> Allow editing your gliders</li>

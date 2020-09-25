@@ -21,6 +21,8 @@
                 <th>Model</th>
                 <th>Since</th>
                 <th>Until</th>
+                <th>Flights</th>
+                <th>Hours</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -31,6 +33,8 @@
                 <td>{{ glider.model }}</td>
                 <td>{% if glider.since %}{{ glider.since | date() }}{% else %}-{% endif %}</td>
                 <td>{% if glider.until %}{{ glider.until | date() }}{% else %}-{% endif %}</td>
+                <td>{% if glider.flights %}{{ glider.flights }}{% else %}-{% endif %}</td>
+                <td>{% if glider.seconds %}{{ glider.seconds | duration }}{% else %}-{% endif %}{% if not glider.seconds_complete %}&nbsp;<sup>1</sup>{% endif %}</td>
                 <td>
                     <a href="/gliders/{{ glider.id }}/edit/">
                         <span class="icon"><i class="fas fa-pen-square"></i></span>
@@ -44,4 +48,13 @@
         </tbody>
     </table>
 </section>
+
+{% for glider in gliders %}
+    {% if not glider.seconds_complete %}
+        <p><small><sup>1</sup> Warning: There are flights without launch date/time in
+        your flight book, these will not contribute towards the glider hour
+        stats.</small></p>
+        {% break %}
+    {% endif %}
+{% endfor %}
 {% endblock %}

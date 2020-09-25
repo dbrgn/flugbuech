@@ -9,7 +9,7 @@ use rocket::{get, post, uri};
 use rocket_contrib::templates::Template;
 use serde::Serialize;
 
-use crate::models::{Glider, NewGlider, User};
+use crate::models::{Glider, GliderWithStats, NewGlider, User};
 use crate::{auth, data};
 
 // Forms
@@ -37,7 +37,7 @@ struct GliderContext {
 #[derive(Serialize)]
 struct GlidersContext {
     user: User,
-    gliders: Vec<Glider>,
+    gliders: Vec<GliderWithStats>,
 }
 
 // Renderers
@@ -58,7 +58,7 @@ pub(crate) fn list(db: data::Database, user: auth::AuthUser) -> Template {
     let user = user.into_inner();
 
     // Get all gliders
-    let gliders = data::get_gliders_for_user(&db, &user);
+    let gliders = data::get_gliders_with_stats_for_user(&db, &user);
 
     // Render template
     let context = GlidersContext { user, gliders };
@@ -226,6 +226,7 @@ mod tests {
     use rocket::local::Client;
     use rocket::{self, routes};
 
+    use crate::flights;
     use crate::templates;
     use crate::test_utils::{make_test_config, DbTestContext};
 
@@ -236,7 +237,7 @@ mod tests {
         let app = rocket::custom(make_test_config())
             .attach(data::Database::fairing())
             .attach(templates::fairing())
-            .mount("/", routes![add]);
+            .mount("/", routes![add, flights::submit]);
         Client::untracked(app).expect("valid rocket instance")
     }
 
@@ -328,5 +329,84 @@ mod tests {
         assert_eq!(g[0].source, Some("Flycenter".into()));
         assert_eq!(g[0].cost, Some(3344));
         assert_eq!(g[0].comment, Some("Sold it to Joe.".into()));
+    }
+
+    #[test]
+    fn get_gliders_with_stats() {
+        let ctx = DbTestContext::new();
+        let client = make_client();
+
+        macro_rules! add_glider {
+            ($body:expr, $cookie:expr) => {
+                client
+                    .post("/gliders/add")
+                    .header(ContentType::Form)
+                    .body($body)
+                    .private_cookie($cookie)
+                    .dispatch()
+            };
+        }
+        macro_rules! add_flight {
+            ($glider:expr, $launch_date:expr, $launch_time:expr, $landing_time: expr, $cookie:expr) => {
+                client
+                    .post("/flights/add")
+                    .header(ContentType::Form)
+                    .body(&format!(
+                        "igc_data=&number=&glider={}&launch_site=&landing_site=&launch_date={}&launch_time={}&landing_time={}&track_distance=&xcontest_tracktype=&xcontest_distance=&xcontest_url=&comment=&video_url=",
+                        $glider, $launch_date, $launch_time, $landing_time,
+                    ))
+                    .private_cookie($cookie)
+                    .dispatch()
+            };
+        }
+
+        // No gliders
+        let g = data::get_gliders_with_stats_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        assert_eq!(g.len(), 0);
+
+        // Add gliders
+        let resp = add_glider!("manufacturer=A&model=1", ctx.auth_cookie_user1());
+        assert_eq!(resp.status(), Status::SeeOther);
+
+        // One glider, no flights
+        let g = data::get_gliders_with_stats_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        assert_eq!(1, g.len(), "No gliders found");
+        assert_eq!(g[0].manufacturer, "A");
+        assert_eq!(g[0].model, "1");
+        assert_eq!(g[0].flights, 0);
+        assert_eq!(g[0].seconds, 0);
+        assert_eq!(g[0].seconds_complete, true);
+
+        // Add a flight, without launch/landing time
+        let resp = add_flight!(g[0].id, "", "", "", ctx.auth_cookie_user1());
+        assert_eq!(resp.status(), Status::SeeOther);
+        let g = data::get_gliders_with_stats_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        assert_eq!(1, g.len(), "No gliders found");
+        assert_eq!(g[0].flights, 1);
+        assert_eq!(g[0].seconds, 0);
+        assert_eq!(g[0].seconds_complete, false);
+
+        // Add two flights with launch/landing time
+        let resp = add_flight!(
+            g[0].id,
+            "2020-09-25",
+            "12:00:00",
+            "13:00:00",
+            ctx.auth_cookie_user1()
+        );
+        assert_eq!(resp.status(), Status::SeeOther);
+        let resp = add_flight!(
+            g[0].id,
+            "2020-09-25",
+            "12:30:00",
+            "12:35:00",
+            ctx.auth_cookie_user1()
+        );
+        assert_eq!(resp.status(), Status::SeeOther);
+        let g = data::get_gliders_with_stats_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        assert_eq!(1, g.len(), "No gliders found");
+        assert_eq!(g[0].flights, 3);
+        assert_eq!(g[0].seconds, 3600 + 300);
+        assert_eq!(g[0].seconds_complete, false);
     }
 }
