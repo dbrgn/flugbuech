@@ -268,8 +268,14 @@ mod tests {
                 location_id: None,
             })
         );
-        assert!(info.track_distance > 1.98989);
-        assert!(info.track_distance < 1.98990);
+        assert!(
+            info.track_distance > 1.98988,
+            format!("Track distance is {:?}, not >1.98988", info.track_distance)
+        );
+        assert!(
+            info.track_distance < 1.98989,
+            format!("Track distance is {:?}, not <1.98989", info.track_distance)
+        );
     }
 
     /// Parse IGC data with only two lines: pilot name and site.
