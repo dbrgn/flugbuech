@@ -7,3 +7,6 @@ secret_key = "eXqSA0wz+qLlg8umREPesnkBzNlhwaNcp34BttIWLes="
 
 [development.databases]
 flugbuech = { url = "postgres://localhost/flugbuech" }
+
+[production]
+keep_alive = 0  # Disabled until Rocket 0.5 (see https://matej.laitl.cz/bench-actix-rocket/)
