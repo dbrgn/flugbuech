@@ -108,4 +108,5 @@ jobs:
       - name: Push Docker image
         run: |
           docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}" && \
-          docker push dbrgn/flugbuech
+          docker push dbrgn/flugbuech:master && \
+          docker push dbrgn/flugbuech:latest
