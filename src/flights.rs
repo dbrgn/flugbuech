@@ -26,6 +26,7 @@ struct FlightWithDetails<'a> {
     launch_at: Option<&'a Location>,
     landing_at: Option<&'a Location>,
     duration_seconds: Option<u64>,
+    has_igc: bool,
 }
 
 #[derive(Serialize)]
@@ -61,6 +62,9 @@ pub(crate) fn list(db: data::Database, user: auth::AuthUser, flash: Option<Flash
         .map(|location| (location.id, location))
         .collect::<HashMap<i32, Location>>();
 
+    // Get all flight IDs with IGC files
+    let flights_with_igc = data::get_flight_ids_with_igc_for_user(&db, &user);
+
     // Add details to flights
     let flights_with_details = flights
         .into_iter()
@@ -84,12 +88,17 @@ pub(crate) fn list(db: data::Database, user: auth::AuthUser, flash: Option<Flash
                 },
                 _ => None,
             };
+
+            // Look up whether an IGC file exists for this flight
+            let has_igc = flights_with_igc.contains(&flight.id);
+
             FlightWithDetails {
                 flight,
                 glider,
                 launch_at,
                 landing_at,
                 duration_seconds,
+                has_igc,
             }
         })
         .collect::<Vec<_>>();
@@ -116,6 +125,7 @@ struct FlightContext<'a> {
     launch_at: Option<&'a Location>,
     landing_at: Option<&'a Location>,
     duration_seconds: Option<u64>,
+    has_igc: bool,
 }
 
 #[get("/flights/<id>")]
@@ -132,6 +142,9 @@ pub(crate) fn flight(id: i32, db: data::Database, user: auth::AuthUser) -> Resul
     if flight.user_id != user.id {
         return Err(Status::Forbidden);
     }
+
+    // Check whether flight has IGC data
+    let has_igc = data::flight_has_igc(&db, &flight);
 
     // Resolve foreign keys
     let launch_at = flight
@@ -163,6 +176,7 @@ pub(crate) fn flight(id: i32, db: data::Database, user: auth::AuthUser) -> Resul
         launch_at: launch_at.as_ref(),
         landing_at: landing_at.as_ref(),
         duration_seconds,
+        has_igc,
     };
     Ok(Template::render("flight", &context))
 }
@@ -186,7 +200,8 @@ pub(crate) fn igc_download(
         return Err(Status::Forbidden);
     }
 
-    match flight.igc {
+    // Get IGC data
+    match data::get_igc_for_flight(&db, &flight) {
         Some(igc) => Ok(Response::build()
             .header(ContentType::new("application", "octet-stream"))
             .header(ContentDisposition {
@@ -197,7 +212,7 @@ pub(crate) fn igc_download(
                     format!("flight{}.igc", flight.id).into_bytes(),
                 )],
             })
-            .sized_body(Cursor::new(igc))
+            .sized_body(Cursor::new(igc.data))
             .finalize()),
         None => Err(Status::NotFound),
     }
@@ -223,8 +238,12 @@ pub(crate) struct FlightForm {
 }
 
 impl FlightForm {
-    /// Validate a `FlightForm` submission and convert it to a `NewFlight` model
-    fn into_new_flight(self, user: &User, db: &data::Database) -> Result<NewFlight, String> {
+    /// Validate a `FlightForm` submission and convert it to a `NewFlight` model (plus the IGC file data).
+    fn into_new_flight(
+        self,
+        user: &User,
+        db: &data::Database,
+    ) -> Result<(NewFlight, Option<Vec<u8>>), String> {
         macro_rules! none_if_empty {
             ($val:expr) => {
                 if $val.trim().is_empty() {
@@ -332,23 +351,25 @@ impl FlightForm {
 
         // Create model
         let glider_id = glider.as_ref().map(|a| a.id);
-        Ok(NewFlight {
-            number,
-            user_id,
-            glider_id,
-            launch_at,
-            landing_at,
-            launch_time,
-            landing_time,
-            hikeandfly,
-            track_distance,
-            xcontest_tracktype,
-            xcontest_distance,
-            xcontest_url,
-            comment,
-            video_url,
+        Ok((
+            NewFlight {
+                number,
+                user_id,
+                glider_id,
+                launch_at,
+                landing_at,
+                launch_time,
+                landing_time,
+                hikeandfly,
+                track_distance,
+                xcontest_tracktype,
+                xcontest_distance,
+                xcontest_url,
+                comment,
+                video_url,
+            },
             igc,
-        })
+        ))
     }
 }
 
@@ -414,12 +435,12 @@ pub(crate) fn submit(
     }
 
     if let Some(Form(form)) = data {
-        let new_flight = match form.into_new_flight(&user, &db) {
+        let (new_flight, igc) = match form.into_new_flight(&user, &db) {
             Ok(val) => val,
             Err(msg) => fail!(msg),
         };
         // TODO: Error handling
-        data::create_flight(&db, &new_flight);
+        data::create_flight(&db, &new_flight, igc);
         log::info!("Created flight for user {}", user.id);
         if let Some(glider_id) = new_flight.glider_id {
             data::update_user_last_glider(&db, &user, glider_id);
@@ -500,7 +521,7 @@ pub(crate) fn edit(
     }
 
     // Get `NewFlight` instance from form
-    let new_flight = if let Some(Form(form)) = data {
+    let (new_flight, igc) = if let Some(Form(form)) = data {
         match form.into_new_flight(&user, &db) {
             Ok(val) => val,
             Err(msg) => fail!(msg),
@@ -524,14 +545,14 @@ pub(crate) fn edit(
     flight.xcontest_url = new_flight.xcontest_url;
     flight.comment = new_flight.comment;
     flight.video_url = new_flight.video_url;
-    if new_flight.igc.is_some() {
-        // We don't want to overwrite IGC data with nothing.
-        flight.igc = new_flight.igc;
-    }
 
     // Save changes
     // TODO: Error handling
     data::update_flight(&db, &flight);
+    if let Some(data) = igc {
+        // We don't want to overwrite IGC data with nothing.
+        data::update_igc(&db, &flight, &data);
+    }
 
     // Render template
     EditResponse::Success(Redirect::to(uri!(list)))

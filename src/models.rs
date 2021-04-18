@@ -5,7 +5,7 @@ use diesel_geography::sql_types::Geography;
 use diesel_geography::types::GeogPoint;
 use serde::Serialize;
 
-use crate::schema::{flights, gliders, locations, users};
+use crate::schema::{flights, gliders, igcs, locations, users};
 
 #[derive(Identifiable, Queryable, Serialize, PartialEq, Debug, Clone)]
 #[table_name = "users"]
@@ -178,8 +178,6 @@ pub struct Flight {
     pub comment: Option<String>,
     /// Link to a video of your flight
     pub video_url: Option<String>,
-    /// IGC file contents
-    pub igc: Option<Vec<u8>>,
     /// When the flight was entered into Flugbuech
     pub created_at: DateTime<Utc>,
     /// Whether you hiked up to launch
@@ -215,8 +213,16 @@ pub struct NewFlight {
     pub comment: Option<String>,
     /// Link to a video of your flight
     pub video_url: Option<String>,
-    /// IGC file contents
-    pub igc: Option<Vec<u8>>,
     /// Whether you hiked up to launch
     pub hikeandfly: bool,
+}
+
+#[derive(Identifiable, Queryable, Insertable, PartialEq, Debug, Clone)]
+#[primary_key(flight_id)]
+#[table_name = "igcs"]
+pub struct Igc {
+    /// The flight
+    pub flight_id: i32,
+    /// IGC file contents
+    pub data: Vec<u8>,
 }

@@ -57,7 +57,7 @@
                     <a class="icon" title="View Flight" href="/flights/{{ flight.id }}"><i class="fas fa-eye"></i></a>
                     <a class="icon" title="Edit Flight" href="/flights/{{ flight.id }}/edit"><i class="fas fa-pen-square"></i></a>
                     <a class="icon has-text-danger" title="Delete Flight" href="/flights/{{ flight.id }}/delete"><i class="fas fa-trash-alt"></i></a>
-                    {% if flight.igc %}
+                    {% if info.has_igc %}
                     <a class="icon" title="Download IGC" href="/flights/{{ flight.id }}/igc/"><i class="fas fa-download"></i></a>
                     {% endif %}
                 </td>
