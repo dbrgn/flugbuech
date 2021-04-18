@@ -272,7 +272,7 @@ mod tests {
         let res = password_change_request(&mut client, &ctx, "a", "b", "c");
         assert_eq!(res.redirect_url, "/auth/password/change");
         assert!(
-            res.body.contains("Error: Passwords don't match"),
+            res.body.contains("Error: Passwords don&#x27;t match"),
             "Error message not found"
         );
 
