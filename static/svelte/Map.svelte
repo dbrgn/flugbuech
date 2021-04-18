@@ -8,20 +8,88 @@
     export let position: LngLatLike = {lng: 10, lat: 47};
     export let zoom: number = 6;
 
-    // Style
-    const STYLE_DEFAULT = 'outdoors-v11';
-    const STYLE_SATELLITE = 'satellite-v9';
-    let style = STYLE_DEFAULT;
-
     // Access token
     const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiZGFuaWxvIiwiYSI6ImNrMHk4bHcyaTA0OGMzcHA2aXloems2MnQifQ.YovfgNgeajD4aORTUE5aFw';
+
+    // Map type
+    //let mapType: 'mapbox-outdoors' | 'mapbox-satellite' | 'swisstopo' | 'swissimage' = 'mapbox-outdoors';
+    let mapType = 'mapbox-outdoors';
+
+    // Mapbox styles
+    const MAPBOX_STYLE_DEFAULT = 'outdoors-v11';
+    const MAPBOX_STYLE_SATELLITE = 'satellite-v9';
+    const MAPBOX_STYLE_LIGHT = 'light-v10';
+
+    // Swisstopo WMS base URL (without LAYERS)
+    const SWISSTOPO_WMS_BASE_URL = 'https://wms.geo.admin.ch/?SERVICE=WMS' +
+        '&REQUEST=GetMap' +
+        '&VERSION=1.3.0' +
+        '&STYLES=default' +
+        '&CRS=EPSG:3857' +
+        '&BBOX={bbox-epsg-3857}' +
+        '&WIDTH=256' +
+        '&HEIGHT=256' +
+        '&FORMAT=image/png';
 
     // Map variable
     let map: Map | null = null;
 
     // Update map style whenever variable above changes
+    let prevMapType = mapType;
+    function updateMapType(newMapType) {
+        // No-op if type did not change
+        if (newMapType === prevMapType) {
+            return;
+        }
+
+        // Prepare additional layers that will be added once the style is loaded
+        map.once('style.load', () => {
+            switch (newMapType) {
+                case 'swisstopo':
+                    map.addLayer({
+                        id: 'swisstopo-layer',
+                        type: 'raster',
+                        source: {
+                            type: 'raster',
+                            tiles: [SWISSTOPO_WMS_BASE_URL + '&LAYERS=ch.swisstopo.pixelkarte-farbe'],
+                            tileSize: 256,
+                        },
+                    });
+                    break;
+                case 'swissimage':
+                    map.addLayer({
+                        id: 'swissimage-layer',
+                        type: 'raster',
+                        source: {
+                            type: 'raster',
+                            tiles: [SWISSTOPO_WMS_BASE_URL + '&LAYERS=ch.swisstopo.swissimage'],
+                            tileSize: 256,
+                        },
+                    });
+                    break;
+            }
+        });
+
+        // First force-set style of the MapBox base layer.
+        // This will remove all existing styles and layers.
+        switch (newMapType) {
+            case 'mapbox-outdoors':
+                map.setStyle(`mapbox://styles/mapbox/${MAPBOX_STYLE_DEFAULT}`, {diff: false});
+                break;
+            case 'mapbox-satellite':
+                map.setStyle(`mapbox://styles/mapbox/${MAPBOX_STYLE_SATELLITE}`, {diff: false});
+                break;
+            case 'swisstopo':
+            case 'swissimage':
+                map.setStyle(`mapbox://styles/mapbox/${MAPBOX_STYLE_LIGHT}`, {diff: false});
+                break;
+        }
+
+        prevMapType = newMapType;
+    }
+
     $: if (map !== null) {
-        map.setStyle(`mapbox://styles/mapbox/${style}`);
+        updateMapType(mapType);
     }
 
     // Helper function to validate a coordinate pair
@@ -45,7 +113,7 @@
         // Create map
         map = new Map({
             container: 'map',
-            style: `mapbox://styles/mapbox/${style}`,
+            style: `mapbox://styles/mapbox/${MAPBOX_STYLE_DEFAULT}`,
             doubleClickZoom: false,
             center: position,
             zoom: zoom,
@@ -92,14 +160,12 @@
 </script>
 
 <div id="map" class="map">
-    {#if style !== STYLE_SATELLITE}
-    <div class="map-style-switcher switch-to-satellite icon" title="Switch to satellite" on:click={() => style = STYLE_SATELLITE}>
-        <i class="fas fa-satellite"></i>
+    <div class="map-style-switcher" title="Map type">
+        <select bind:value={mapType}>
+            <option value="mapbox-outdoors">Mapbox Outdoors</option>
+            <option value="mapbox-satellite">Mapbox Satellite</option>
+            <option value="swisstopo">Swisstopo</option>
+            <option value="swissimage">Swissimage</option>
+        </select>
     </div>
-    {/if}
-    {#if style !== STYLE_DEFAULT}
-    <div class="map-style-switcher switch-to-default icon" title="Switch to default map" on:click={() => style = STYLE_DEFAULT}>
-        <i class="fas fa-map"></i>
-    </div>
-    {/if}
 </div>
