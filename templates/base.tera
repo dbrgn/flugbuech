@@ -6,7 +6,7 @@
         <title>Flugbuech</title>
         <link rel="stylesheet" href="/static/css/bulma.min.css">
         <link rel="stylesheet" href="/static/css/flugbuech.css">
-        <link rel="stylesheet" href="/static/css/mapbox-gl.css">
+        <link rel="stylesheet" href="/static/css/maplibre-gl.css">
         <script defer src="https://use.fontawesome.com/releases/v5.10.1/js/all.js"></script>
         <script src="/static/js/common.js"></script>
         <script src="/static/js/navbar.js"></script>

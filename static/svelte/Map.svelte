@@ -1,5 +1,5 @@
 <script lang="typescript">
-    import { Map, NavigationControl, Marker, LngLatLike } from 'mapbox-gl';
+    import { Map, NavigationControl, Marker, LngLatLike } from 'maplibre-gl';
     import { onMount } from 'svelte';
 
     // Props
