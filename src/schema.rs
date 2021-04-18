@@ -19,7 +19,6 @@ table! {
         xcontest_url -> Nullable<Text>,
         comment -> Nullable<Text>,
         video_url -> Nullable<Text>,
-        igc -> Nullable<Bytea>,
         created_at -> Timestamptz,
         hikeandfly -> Bool,
     }
@@ -39,6 +38,16 @@ table! {
         source -> Nullable<Text>,
         cost -> Nullable<Int4>,
         comment -> Nullable<Text>,
+    }
+}
+
+table! {
+    use diesel::sql_types::*;
+    use diesel_geography::sql_types::*;
+
+    igcs (flight_id) {
+        flight_id -> Int4,
+        data -> Bytea,
     }
 }
 
@@ -85,6 +94,7 @@ table! {
 
 joinable!(flights -> gliders (glider_id));
 joinable!(flights -> users (user_id));
+joinable!(igcs -> flights (flight_id));
 joinable!(locations -> users (user_id));
 
-allow_tables_to_appear_in_same_query!(flights, gliders, locations, spatial_ref_sys, users,);
+allow_tables_to_appear_in_same_query!(flights, gliders, igcs, locations, spatial_ref_sys, users,);

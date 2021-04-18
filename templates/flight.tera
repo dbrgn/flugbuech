@@ -75,7 +75,7 @@
         </tr>
         <tr>
             <th><span class="icon is-small"><i class="fas fa-download"></i></span>&nbsp;&nbsp;IGC File</th>
-            <td>{% if flight.igc %}<a href="/flights/{{ flight.id }}/igc">Download</a>{% else %}-{% endif %}</td>
+            <td>{% if has_igc %}<a href="/flights/{{ flight.id }}/igc">Download</a>{% else %}-{% endif %}</td>
         </tr>
     </table>
 </section>

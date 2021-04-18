@@ -1,9 +1,9 @@
 use std::{env, io};
 
 use diesel::{
-    dsl::{count, max},
+    dsl::{count, exists, max, select},
     prelude::*,
-    result::QueryResult,
+    result::{Error, QueryResult},
     sql_types::{BigInt, Bool, Double, Integer, Nullable, SmallInt, Text},
     {sql_function, sql_query, PgConnection},
 };
@@ -14,10 +14,10 @@ use serde::Serialize;
 
 use crate::{
     models::{
-        Flight, Glider, GliderWithStats, Location, LocationWithCount, LocationWithDistance, NewFlight,
+        Flight, Glider, GliderWithStats, Igc, Location, LocationWithCount, LocationWithDistance, NewFlight,
         NewGlider, NewLocation, User,
     },
-    schema::{flights, gliders, locations, users},
+    schema::{flights, gliders, igcs, locations, users},
 };
 
 sql_function! {
@@ -155,11 +155,25 @@ pub fn get_latest_flight_number(conn: &PgConnection, user: &User) -> Option<i32>
 }
 
 /// Create a new flight.
-pub fn create_flight(conn: &PgConnection, flight: &NewFlight) -> Flight {
-    diesel::insert_into(flights::table)
-        .values(flight)
-        .get_result(conn)
-        .expect("Could not create flight")
+pub fn create_flight(conn: &PgConnection, flight: &NewFlight, igc: Option<Vec<u8>>) -> Flight {
+    conn.transaction::<Flight, Error, _>(|| {
+        // Create flight
+        let flight: Flight = diesel::insert_into(flights::table)
+            .values(flight)
+            .get_result(conn)?;
+
+        // Store IGC data
+        if let Some(data) = igc {
+            let val = Igc {
+                flight_id: flight.id,
+                data,
+            };
+            diesel::insert_into(igcs::table).values(val).execute(conn)?;
+        }
+
+        Ok(flight)
+    })
+    .expect("Transaction for create_flight failed")
 }
 
 /// Save an updated flight in the database.
@@ -207,6 +221,40 @@ pub fn get_flight_with_id(conn: &PgConnection, id: i32) -> Option<Flight> {
         .first(conn)
         .optional()
         .expect("Error loading flight by id")
+}
+
+/// Save an updated IGC entry in the database.
+pub fn update_igc(conn: &PgConnection, flight: &Flight, data: &[u8]) {
+    diesel::update(igcs::table.filter(igcs::flight_id.eq(flight.id)))
+        .set(igcs::data.eq(data))
+        .execute(conn)
+        .expect("Could not update IGC entry");
+}
+
+/// Retrieve IGC data for the specified flight.
+pub fn get_igc_for_flight(conn: &PgConnection, flight: &Flight) -> Option<Igc> {
+    igcs::table
+        .filter(igcs::flight_id.eq(flight.id))
+        .first(conn)
+        .optional()
+        .expect("Error loading IGC by flight id")
+}
+
+/// Return all flight IDs of flights belonging to the specified user, where IGC
+/// data is available.
+pub fn get_flight_ids_with_igc_for_user(conn: &PgConnection, user: &User) -> Vec<i32> {
+    Flight::belonging_to(user)
+        .inner_join(igcs::table)
+        .select(flights::id)
+        .load(conn)
+        .expect("Error loading flight ids with IGC for user")
+}
+
+/// Return whether or not the specified flight has associated IGC data.
+pub fn flight_has_igc(conn: &PgConnection, flight: &Flight) -> bool {
+    select(exists(igcs::table.filter(igcs::flight_id.eq(flight.id))))
+        .get_result(conn)
+        .expect("Error in flight_has_igc")
 }
 
 /// Retrieve all locations with the specified IDs.
@@ -731,5 +779,57 @@ mod tests {
         .map(|l| (l.name, l.count))
         .collect::<Vec<_>>();
         assert_eq!(l_landings, vec![("Altendorf".into(), 3), ("Etzel".into(), 1)]);
+    }
+
+    #[test]
+    fn test_get_flight_ids_with_igc_for_user() {
+        let ctx = test_utils::DbTestContext::new();
+
+        // No flights with IGC
+        let ids = get_flight_ids_with_igc_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        assert_eq!(ids.len(), 0);
+
+        // Add some flights
+        let flights = diesel::insert_into(flights::table)
+            .values(vec![
+                NewFlight {
+                    user_id: ctx.testuser1.user.id,
+                    ..Default::default()
+                },
+                NewFlight {
+                    user_id: ctx.testuser1.user.id,
+                    ..Default::default()
+                },
+                NewFlight {
+                    user_id: ctx.testuser1.user.id,
+                    ..Default::default()
+                },
+                NewFlight {
+                    user_id: ctx.testuser2.user.id,
+                    ..Default::default()
+                },
+            ])
+            .get_results::<Flight>(&*ctx.force_get_conn())
+            .expect("Could not create flights");
+
+        // Still no flights with IGC
+        let ids = get_flight_ids_with_igc_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        assert_eq!(ids.len(), 0);
+
+        // Add some IGC files
+        for i in &[0, 2, 3] {
+            diesel::insert_into(igcs::table)
+                .values(&(igcs::flight_id.eq(flights[*i].id), igcs::data.eq(vec![1, 2, 3])))
+                .execute(&*ctx.force_get_conn())
+                .expect("Could not create IGC entry");
+        }
+
+        // Two IGC files for user 1
+        let result = get_flight_ids_with_igc_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        assert_eq!(result, vec![flights[0].id, flights[2].id]);
+
+        // One IGC file for user 2
+        let result = get_flight_ids_with_igc_for_user(&*ctx.force_get_conn(), &ctx.testuser2.user);
+        assert_eq!(result, vec![flights[3].id]);
     }
 }
