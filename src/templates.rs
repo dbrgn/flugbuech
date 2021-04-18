@@ -13,5 +13,8 @@ pub fn fairing() -> impl Fairing {
         engines
             .tera
             .register_filter("xcontest_icon", filters::xcontest_icon);
+        engines
+            .tera
+            .register_filter("linebreaksbr", filters::linebreaksbr);
     })
 }

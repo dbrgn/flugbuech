@@ -35,3 +35,13 @@ pub fn xcontest_icon(value: Value, _: HashMap<String, Value>) -> tera::Result<Va
         _ => tracktype,
     }))
 }
+
+/// Convert line breaks to HTML newlines.
+pub fn linebreaksbr(value: Value, _: HashMap<String, Value>) -> tera::Result<Value> {
+    let text: String = if let Value::String(s) = value {
+        s
+    } else {
+        return Err("The linebreaksbr filter can only be applied to strings".into());
+    };
+    Ok(Value::String(text.replace("\r\n", "<br>").replace("\n", "<br>")))
+}
