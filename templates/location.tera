@@ -1,6 +1,6 @@
 {% extends 'base' %}
 
-{% block sectionclass %}location{% endblock %}
+{% import 'macros' as macros %}
 
 {% block postfooter %}
 <script src="/static/js/maplibre-gl.js"></script>
@@ -10,8 +10,8 @@
         const map = new LocationMap({
             target: document.getElementById('mapContainer'),
             props: {
-                lngInput: document.getElementById('lng'),
-                latInput: document.getElementById('lat'),
+                lngInput: null,
+                latInput: null,
                 {% if location and location.geog %}
                 position: {
                     lng: {{ location.geog.x }},
@@ -27,92 +27,43 @@
 
 {% block content %}
 <nav class="breadcrumb" aria-label="breadcrumbs">
-  <ul>
-    <li><a href="/">Home</a></li>
-    <li><a href="/locations">Locations</a></li>
-    {% if location %}
-    <li class="is-active"><a href="#" aria-current="page">{{ location.name }}</a></li>
-    {% else %}
-    <li class="is-active"><a href="#" aria-current="page">Add Location</a></li>
-    {% endif %}
-  </ul>
+    <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/locations">Locations</a></li>
+        <li class="is-active"><a href="#" aria-current="page">{{ location.name }}</a></li>
+    </ul>
 </nav>
 
-{% if location %}
-<h2 class="title is-2">Edit Location: {{ location.name }}</h2>
-<p>You have {{ location.count }} flights associated with this location.</p>
-{% else %}
-<h2 class="title is-2">Add Location</h2>
-{% endif %}
+<h2 class="title is-2">Location: {{ location.name }}</h2>
 
-{% if error_msg %}
-<div class="notification is-danger">{{ error_msg }}</div>
-{% endif %}
+<section>
+    <table class="table is-fullwidth is-striped is-hoverable">
+        <tr>
+            <th><span class="icon is-small"><i class="fas fa-map-signs"></i></span>&nbsp;&nbsp;Name</th>
+            <td>{{ location.name }}</td>
+        </tr>
+        <tr>
+            <th><span class="icon is-small"><i class="fas fa-globe"></i></span>&nbsp;&nbsp;Country</th>
+            <td>{{ macros::flag(country_code=location.country) }} {{ location.country }}</td>
+        </tr>
+        <tr>
+            <th><span class="icon is-small"><i class="fas fa-arrow-up"></i></span>&nbsp;&nbsp;Elevation</th>
+            <td>{{ location.elevation }} m ASL</td>
+        </tr>
+        <tr>
+            <th><span class="icon is-small"><i class="fas fa-map-marked-alt"></i></span>&nbsp;&nbsp;Coordinates (EPSG 3857)</th>
+            <td>{% if location.geog %}{{ location.geog.y }}, {{ location.geog.x }}{% endif %}</td>
+        </tr>
+        <tr>
+            <th><span class="icon is-small"><i class="fas fa-parachute-box"></i></span>&nbsp;&nbsp;Associated Flights</th>
+            <td>{{ location.count }}</td>
+        </tr>
+    </table>
+</section>
 
-<div class="spaced-headers">
-
-<form action="" method="post">
-
-<label class="label" for="name">Name *</label>
-<div class="field">
-    <div class="control has-icons-left">
-        <input class="input" type="text" id="name" name="name" value="{% if location %}{{ location.name }}{% endif %}" required>
-        <div class="icon is-small is-left">
-            <i class="fas fa-map-marker-alt"></i>
-        </div>
-    </div>
-</div>
-
-<label class="label" for="country">Country Code (2 Letters) *</label>
-<div class="field">
-    <div class="control has-icons-left">
-        <input class="input" type="text" id="country" name="country" minlength="2" maxlength="2" value="{% if location %}{{ location.country }}{% endif %}" required>
-        <div class="icon is-small is-left">
-            <i class="fas fa-globe-americas"></i>
-        </div>
-    </div>
-</div>
-
-<label class="label" for="elevation">Elevation (m ASL) *</label>
-<div class="field">
-    <div class="control has-icons-left">
-        <input class="input" type="number" id="elevation" name="elevation" min="-200" max="8000" step="1" value="{% if location %}{{ location.elevation }}{% endif %}" required>
-        <div class="icon is-small is-left">
-            <i class="fas fa-tachometer-alt"></i>
-        </div>
-    </div>
-</div>
-
-<label class="label" for="lat">Latitude</label>
-<div class="field">
-    <div class="control has-icons-left">
-        <input class="input" type="number" id="lat" name="lat" min="-90" max="90" step="0.000001" value="{% if location and location.geog %}{{ location.geog.y }}{% endif %}" placeholder="47.29553">
-        <div class="icon is-small is-left">
-            <i class="fas fa-map-marker-alt"></i>
-        </div>
-    </div>
-</div>
-
-<label class="label" for="lng">Longitude</label>
-<div class="field">
-    <div class="control has-icons-left">
-        <input class="input" type="number" id="lng" name="lng" min="-180" max="180" step="0.000001" value="{% if location and location.geog %}{{ location.geog.x }}{% endif %}" placeholder="8.91927">
-        <div class="icon is-small is-left">
-            <i class="fas fa-map-marker-alt"></i>
-        </div>
-    </div>
-</div>
-
+{% if location.geog %}
+<br>
 <div id="mapContainer"></div>
-<p><em>Note: Double-click on the map to update the location coordinates.</em></p>
+{% endif %}
 
-<div class="content control submitcontrols">
-    <button type="submit" class="button is-info">Submit</button>
-</div>
-
-<p class="content"><small><em>* Required fields</em></small></p>
-
-</form>
-
-</div>
 {% endblock %}

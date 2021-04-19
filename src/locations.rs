@@ -46,6 +46,26 @@ struct LocationsContext {
 
 // Views
 
+#[get("/locations/<id>")]
+pub(crate) fn view(user: auth::AuthUser, db: data::Database, id: i32) -> Result<Template, Status> {
+    let user = user.into_inner();
+
+    // Get data
+    let location = match data::get_location_with_flight_count_by_id(&db, id) {
+        Some(location) => location,
+        None => return Err(Status::NotFound),
+    };
+
+    // Ownership check
+    if location.user_id != user.id {
+        return Err(Status::Forbidden);
+    }
+
+    // Render template
+    let context = LocationContext { user, location };
+    Ok(Template::render("location", context))
+}
+
 #[get("/locations")]
 pub(crate) fn list(db: data::Database, user: auth::AuthUser, flash: Option<FlashMessage>) -> Template {
     let user = user.into_inner();
@@ -70,7 +90,7 @@ pub(crate) fn list_nologin() -> Redirect {
 #[get("/locations/add")]
 pub(crate) fn add_form(user: auth::AuthUser) -> Template {
     let context = auth::UserContext::new(user.into_inner());
-    Template::render("location", &context)
+    Template::render("location_edit", &context)
 }
 
 #[get("/locations/add", rank = 2)]
@@ -135,7 +155,7 @@ pub(crate) fn edit_form(user: auth::AuthUser, db: data::Database, id: i32) -> Re
 
     // Render template
     let context = LocationContext { user, location };
-    Ok(Template::render("location", &context))
+    Ok(Template::render("location_edit", &context))
 }
 
 #[post("/locations/<id>/edit", data = "<data>")]
@@ -187,12 +207,6 @@ pub(crate) fn edit(
     Ok(Redirect::to(uri!(list)))
 }
 
-#[derive(Serialize)]
-struct DeleteContext {
-    user: User,
-    location: LocationWithCount,
-}
-
 #[get("/locations/<id>/delete")]
 pub(crate) fn delete_form(user: auth::AuthUser, db: data::Database, id: i32) -> Result<Template, Status> {
     let user = user.into_inner();
@@ -215,7 +229,7 @@ pub(crate) fn delete_form(user: auth::AuthUser, db: data::Database, id: i32) -> 
     }
 
     // Render template
-    let context = DeleteContext { user, location };
+    let context = LocationContext { user, location };
     Ok(Template::render("location_delete", context))
 }
 

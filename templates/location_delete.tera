@@ -27,22 +27,22 @@
 
 {% block content %}
 <nav class="breadcrumb" aria-label="breadcrumbs">
-  <ul>
-    <li><a href="/">Home</a></li>
-    <li><a href="/locations">Locations</a></li>
-    <li><a href="/locations/{{ location.id }}">{{ location.name }}</a></li>
-    <li class="is-active"><a href="#" aria-current="page">Delete</a></li>
-  </ul>
+    <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/locations">Locations</a></li>
+        <li><a href="/locations/{{ location.id }}">{{ location.name }}</a></li>
+        <li class="is-active"><a href="#" aria-current="page">Delete</a></li>
+    </ul>
 </nav>
 
-<h2 class="title is-2">Delete Location "{{ location.name }}"</h2>
+<h2 class="title is-2">Delete Location: {{ location.name }}</h2>
 
 <p class="content">Are you sure that you want to delete this location?</p>
 
 <section>
     <table class="table is-fullwidth is-striped is-hoverable">
         <tr>
-            <th><span class="icon is-small"><i class="fas fa-map-marker"></i></span>&nbsp;&nbsp;Name</th>
+            <th><span class="icon is-small"><i class="fas fa-map-signs"></i></span>&nbsp;&nbsp;Name</th>
             <td>{{ location.name }}</td>
         </tr>
         <tr>

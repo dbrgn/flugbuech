@@ -37,6 +37,7 @@
                 <td>{{ location.elevation }} m ASL</td>
                 <td>{{ location.count }}</td>
                 <td>
+                    <a class="icon" title="View Location" href="/locations/{{ location.id }}"><i class="fas fa-eye"></i></a>
                     <a href="/locations/{{ location.id }}/edit/">
                         <span class="icon"><i class="fas fa-pen-square"></i></span>
                     </a>
