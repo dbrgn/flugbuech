@@ -26,6 +26,18 @@
 {% endblock %}
 
 {% block content %}
+<nav class="breadcrumb" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="/">Home</a></li>
+    <li><a href="/locations">Locations</a></li>
+    {% if location %}
+    <li class="is-active"><a href="#" aria-current="page">{{ location.name }}</a></li>
+    {% else %}
+    <li class="is-active"><a href="#" aria-current="page">Add Location</a></li>
+    {% endif %}
+  </ul>
+</nav>
+
 {% if location %}
 <h2 class="title is-2">Edit Location: {{ location.name }}</h2>
 <p>You have {{ location.count }} flights associated with this location.</p>
