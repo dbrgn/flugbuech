@@ -10,4 +10,6 @@ static/js/*.component.js
 static/js/*.map
 static/js/mapbox-gl.*
 static/css/mapbox-gl.*
+static/js/maplibre-gl.*
+static/css/maplibre-gl.*
 node_modules/

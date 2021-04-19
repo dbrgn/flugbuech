@@ -15,7 +15,7 @@ module.exports = {
         'password-change-form': ['./static/svelte/password-change-form.js'],
     },
     externals: {
-        'mapbox-gl': 'mapboxgl',
+        'maplibre-gl': 'maplibregl',
     },
     resolve: {
         alias: {
@@ -49,15 +49,15 @@ module.exports = {
         new CopyPlugin({
             patterns: [
                 {
-                    from: path.resolve('node_modules', 'mapbox-gl', 'dist', 'mapbox-gl.css'),
+                    from: path.resolve('node_modules', 'maplibre-gl', 'dist', 'maplibre-gl.css'),
                     to: __dirname + '/static/css/'
                 },
                 {
-                    from: path.resolve('node_modules', 'mapbox-gl', 'dist', 'mapbox-gl.js'),
+                    from: path.resolve('node_modules', 'maplibre-gl', 'dist', 'maplibre-gl.js'),
                     to: __dirname + '/static/js/'
                 },
                 {
-                    from: path.resolve('node_modules', 'mapbox-gl', 'dist', 'mapbox-gl.js.map'),
+                    from: path.resolve('node_modules', 'maplibre-gl', 'dist', 'maplibre-gl.js.map'),
                     to: __dirname + '/static/js/'
                 },
             ],
@@ -66,7 +66,7 @@ module.exports = {
     performance: {
         assetFilter: function(assetFilename) {
             return !(/\.map$/.test(assetFilename))
-                && !assetFilename.startsWith('mapbox-gl.');
+                && !assetFilename.startsWith('maplibre-gl.');
         },
     },
 };

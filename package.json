@@ -23,12 +23,11 @@
   },
   "homepage": "https://github.com/dbrgn/flugbuech#readme",
   "devDependencies": {
-    "@types/mapbox-gl": "^1.10.4",
     "copy-webpack-plugin": "^6.0.2",
     "cross-env": "^7.0.2",
     "eslint": "^7.2.0",
     "eslint-plugin-svelte3": "^2.7.3",
-    "mapbox-gl": "^1.11.0",
+    "maplibre-gl": "^1.14.0",
     "svelte": "^3.23.2",
     "svelte-loader": "^2.13.6",
     "svelte-preprocess": "^3.9.7",

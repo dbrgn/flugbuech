@@ -3,7 +3,7 @@
 {% block sectionclass %}location{% endblock %}
 
 {% block postfooter %}
-<script src="/static/js/mapbox-gl.js"></script>
+<script src="/static/js/maplibre-gl.js"></script>
 <script src="/static/js/map.component.js"></script>
 <script>
     ready(() => {
@@ -91,6 +91,7 @@
 </div>
 
 <div id="mapContainer"></div>
+<p><em>Note: Double-click on the map to update the location coordinates.</em></p>
 
 <div class="content control submitcontrols">
     <button type="submit" class="button is-info">Submit</button>
