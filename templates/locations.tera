@@ -12,6 +12,8 @@
 
 <h2 class="title is-2">Your Locations</h2>
 
+{% include 'flash' %}
+
 <section>
     <p class="content">You've been at {{ locations|length }} location{{ locations|length|pluralize }} so far!</p>
     <p class="content">
@@ -38,6 +40,9 @@
                     <a href="/locations/{{ location.id }}/edit/">
                         <span class="icon"><i class="fas fa-pen-square"></i></span>
                     </a>
+                    {% if location.count == 0 %}
+                        <a class="icon has-text-danger" title="Delete Location" href="/locations/{{ location.id }}/delete"><i class="fas fa-trash-alt"></i></a>
+                    {% endif %}
                     {% if location.geog %}
                     <a href="https://www.google.com/maps/place/{{ location.geog.y }},{{ location.geog.x }}/" title="View in Google Maps">
                         <span class="icon"><i class="fas fa-map-marker-alt"></i></span>

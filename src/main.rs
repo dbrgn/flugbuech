@@ -133,6 +133,8 @@ fn main() {
                 locations::add,
                 locations::edit_form,
                 locations::edit,
+                locations::delete_form,
+                locations::delete,
                 process_igc::process_igc,
                 profile::view,
                 profile::view_nologin,

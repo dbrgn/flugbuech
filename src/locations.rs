@@ -1,15 +1,22 @@
 //! Location views.
 
 use diesel_geography::types::GeogPoint;
-use rocket::http::Status;
-use rocket::request::{Form, FromForm};
-use rocket::response::Redirect;
-use rocket::{get, post, uri};
+use rocket::{
+    get,
+    http::Status,
+    post,
+    request::{FlashMessage, Form, FromForm},
+    response::{Flash, Redirect},
+    uri,
+};
 use rocket_contrib::templates::Template;
 use serde::Serialize;
 
-use crate::models::{LocationWithCount, NewLocation, User};
-use crate::{auth, data};
+use crate::{
+    auth, data,
+    flash::flashes_from_flash_opt,
+    models::{LocationWithCount, NewLocation, User},
+};
 
 // Forms
 
@@ -34,19 +41,24 @@ struct LocationContext {
 struct LocationsContext {
     user: User,
     locations: Vec<LocationWithCount>,
+    flashes: Vec<crate::flash::FlashMessage>,
 }
 
 // Views
 
 #[get("/locations")]
-pub(crate) fn list(db: data::Database, user: auth::AuthUser) -> Template {
+pub(crate) fn list(db: data::Database, user: auth::AuthUser, flash: Option<FlashMessage>) -> Template {
     let user = user.into_inner();
 
     // Get all locations
     let locations = data::get_all_locations_with_stats_for_user(&db, &user);
 
     // Render template
-    let context = LocationsContext { user, locations };
+    let context = LocationsContext {
+        user,
+        locations,
+        flashes: flashes_from_flash_opt(flash),
+    };
     Template::render("locations", &context)
 }
 
@@ -173,4 +185,75 @@ pub(crate) fn edit(
 
     // Render template
     Ok(Redirect::to(uri!(list)))
+}
+
+#[derive(Serialize)]
+struct DeleteContext {
+    user: User,
+    location: LocationWithCount,
+}
+
+#[get("/locations/<id>/delete")]
+pub(crate) fn delete_form(user: auth::AuthUser, db: data::Database, id: i32) -> Result<Template, Status> {
+    let user = user.into_inner();
+
+    // Get data
+    let location = match data::get_location_with_flight_count_by_id(&db, id) {
+        Some(location) => location,
+        None => return Err(Status::NotFound),
+    };
+
+    // Ownership check
+    if location.user_id != user.id {
+        return Err(Status::Forbidden);
+    }
+
+    // Ensure that no related flights exist (otherwise a foreign key constraint
+    // would be returned by the database when attempting to delete)
+    if location.count > 0 {
+        return Err(Status::Conflict);
+    }
+
+    // Render template
+    let context = DeleteContext { user, location };
+    Ok(Template::render("location_delete", context))
+}
+
+#[post("/locations/<id>/delete")]
+pub(crate) fn delete(user: auth::AuthUser, db: data::Database, id: i32) -> Result<Flash<Redirect>, Status> {
+    let user = user.into_inner();
+
+    // Get data
+    let location = match data::get_location_with_flight_count_by_id(&db, id) {
+        Some(location) => location,
+        None => return Err(Status::NotFound),
+    };
+
+    // Ownership check
+    if location.user_id != user.id {
+        return Err(Status::Forbidden);
+    }
+
+    // Ensure that no related flights exist (otherwise a foreign key constraint
+    // would be returned by the database when attempting to delete)
+    if location.count > 0 {
+        return Err(Status::Conflict);
+    }
+
+    // Delete database entry
+    data::delete_location_by_id(&db, location.id)
+        .map(|()| {
+            log::info!("Deleted location with ID {}", location.id);
+            Flash::success(
+                Redirect::to(uri!(list)),
+                format!("Location \"{}\" deleted", location.name),
+            )
+        })
+        .or_else(|e| {
+            log::error!("Could not delete location with ID {}: {}", location.id, e);
+            Ok(Flash::error(
+                Redirect::to(uri!(list)),
+                format!("Could not delete location \"{}\"", location.name),
+            ))
+        })
 }

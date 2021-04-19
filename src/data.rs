@@ -372,6 +372,7 @@ pub fn get_location_with_flight_count_by_id(conn: &PgConnection, id: i32) -> Opt
     )
     .bind::<Integer, _>(id)
     .get_result(conn)
+    .optional()
     .expect("Error loading location by id with flight count")
 }
 
@@ -389,6 +390,13 @@ pub fn update_location(conn: &PgConnection, location: &Location) {
         .set(location)
         .execute(conn)
         .expect("Could not update location");
+}
+
+/// Delete a location by ID.
+pub fn delete_location_by_id(conn: &PgConnection, id: i32) -> QueryResult<()> {
+    let delete_count = diesel::delete(locations::table.filter(locations::id.eq(&id))).execute(conn)?;
+    assert_eq!(delete_count, 1); // Sanity check
+    Ok(())
 }
 
 /// Create a new glider.
