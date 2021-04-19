@@ -45,10 +45,16 @@
                 <td>{% if flight.launch_time %}{{ flight.launch_time | date }}{% endif %}</td>
                 <td>{% if glider %}{{ glider.manufacturer }} {{ glider.model }}{% endif %}</td>
                 <td title="{% if launch_at %}{{ launch_at.elevation }} mASL{% endif %}">
-                    {% if launch_at %}{{ macros::flag(country_code=launch_at.country) }} {{ launch_at.name }}{% if flight.hikeandfly %}&nbsp;<i class="fas fa-hiking" title="Hike &amp; Fly"></i>{% endif %}{% endif %}
+                    {% if launch_at %}
+                    {{ macros::flag(country_code=launch_at.country) }}
+                    <a class="subtle-link" href="/locations/{{ launch_at.id }}">{{ launch_at.name }}</a>{% if flight.hikeandfly %}&nbsp;<i class="fas fa-hiking" title="Hike &amp; Fly"></i>{% endif %}
+                    {% endif %}
                 </td>
                 <td title="{% if landing_at %}{{ landing_at.elevation }} mASL{% endif %}">
-                    {% if landing_at %}{{ macros::flag(country_code=landing_at.country) }} {{ landing_at.name }}{% endif %}
+                    {% if landing_at %}
+                    {{ macros::flag(country_code=landing_at.country) }}
+                    <a class="subtle-link" href="/locations/{{ landing_at.id }}">{{ landing_at.name }}</a>
+                    {% endif %}
                 </td>
                 <td>{% if duration_seconds %}{{ duration_seconds | duration }}{% endif %}</td>
                 <td>{% if flight.track_distance %}{{ flight.track_distance | round(precision=2) }} km{% endif %}</td>
