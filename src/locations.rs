@@ -8,7 +8,7 @@ use rocket::{get, post, uri};
 use rocket_contrib::templates::Template;
 use serde::Serialize;
 
-use crate::models::{Location, NewLocation, User};
+use crate::models::{LocationWithCount, NewLocation, User};
 use crate::{auth, data};
 
 // Forms
@@ -27,13 +27,13 @@ pub(crate) struct LocationForm {
 #[derive(Serialize)]
 struct LocationContext {
     user: User,
-    location: Location,
+    location: LocationWithCount,
 }
 
 #[derive(Serialize)]
 struct LocationsContext {
     user: User,
-    locations: Vec<Location>,
+    locations: Vec<LocationWithCount>,
 }
 
 // Views
@@ -43,7 +43,7 @@ pub(crate) fn list(db: data::Database, user: auth::AuthUser) -> Template {
     let user = user.into_inner();
 
     // Get all locations
-    let locations = data::get_locations_for_user(&db, &user);
+    let locations = data::get_all_locations_with_stats_for_user(&db, &user);
 
     // Render template
     let context = LocationsContext { user, locations };
@@ -111,7 +111,7 @@ pub(crate) fn edit_form(user: auth::AuthUser, db: data::Database, id: i32) -> Re
     let user = user.into_inner();
 
     // Get location
-    let location = match data::get_location_with_id(&db, id) {
+    let location = match data::get_location_with_flight_count_by_id(&db, id) {
         Some(location) => location,
         None => return Err(Status::NotFound),
     };
@@ -136,7 +136,7 @@ pub(crate) fn edit(
     let user = user.into_inner();
 
     // Get location
-    let mut location = match data::get_location_with_id(&db, id) {
+    let mut location = match data::get_location_by_id(&db, id) {
         Some(location) => location,
         None => return Err(Status::NotFound),
     };

@@ -28,6 +28,7 @@
 {% block content %}
 {% if location %}
 <h2 class="title is-2">Edit Location: {{ location.name }}</h2>
+<p>You have {{ location.count }} flights associated with this location.</p>
 {% else %}
 <h2 class="title is-2">Add Location</h2>
 {% endif %}

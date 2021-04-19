@@ -22,6 +22,10 @@
     margin-top: 48px;
 }
 
+p + .spaced-headers {
+    margin-top: 24px;
+}
+
 .spaced-headers h3.title {
     margin-top: 48px;
 }

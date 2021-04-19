@@ -147,12 +147,8 @@ pub(crate) fn flight(id: i32, db: data::Database, user: auth::AuthUser) -> Resul
     let has_igc = data::flight_has_igc(&db, &flight);
 
     // Resolve foreign keys
-    let launch_at = flight
-        .launch_at
-        .and_then(|id| data::get_location_with_id(&db, id));
-    let landing_at = flight
-        .landing_at
-        .and_then(|id| data::get_location_with_id(&db, id));
+    let launch_at = flight.launch_at.and_then(|id| data::get_location_by_id(&db, id));
+    let landing_at = flight.landing_at.and_then(|id| data::get_location_by_id(&db, id));
     let glider = flight.glider_id.and_then(|id| data::get_glider_with_id(&db, id));
 
     // Calculate duration
