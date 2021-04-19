@@ -34,7 +34,10 @@
         <tr>
             <th><span class="icon is-small"><i class="fas fa-plane-departure"></i></span>&nbsp;&nbsp;Launch</th>
             <td>
-                {% if launch_at %}{{ macros::flag(country_code=launch_at.country) }} {{ launch_at.name }}, {{ launch_at.elevation }} mASL{% endif %}
+                {% if launch_at %}
+                    {{ macros::flag(country_code=launch_at.country) }}
+                    <a href="/locations/{{ launch_at.id }}">{{ launch_at.name }}</a>, {{ launch_at.elevation }} mASL
+                {% else %}-{% endif %}
                 {%- if flight.launch_time %}, {{ flight.launch_time | date(format="%H:%M") }} UTC{% endif %}
                 {%- if flight.hikeandfly %} <i class="fas fa-hiking" title="Hike &amp; Fly"></i>{% endif %}
             </td>
@@ -42,7 +45,10 @@
         <tr>
             <th><span class="icon is-small"><i class="fas fa-plane-arrival"></i></span>&nbsp;&nbsp;Landing</th>
             <td>
-                {% if landing_at %}{{ macros::flag(country_code=landing_at.country) }} {{ landing_at.name }}, {{ landing_at.elevation }} mASL{% else %}-{% endif %}
+                {% if landing_at %}
+                {{ macros::flag(country_code=landing_at.country) }}
+                <a href="/locations/{{ landing_at.id }}">{{ landing_at.name }}</a>, {{ landing_at.elevation }} mASL
+                {% else %}-{% endif %}
                 {%- if flight.landing_time %}, {{ flight.landing_time | date(format="%H:%M") }} UTC{% endif %}
             </td>
         </tr>
