@@ -22,6 +22,10 @@
     margin-top: 48px;
 }
 
+p + .spaced-headers {
+    margin-top: 24px;
+}
+
 .spaced-headers h3.title {
     margin-top: 48px;
 }
@@ -87,4 +91,12 @@ footer {
 
 div.control + label.checkbox {
     margin-top: 8px;
+}
+
+a.subtle-link {
+    color: #363636;
+}
+
+a.subtle-link:hover {
+    color: #777;
 }

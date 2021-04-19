@@ -65,7 +65,7 @@
                 <tbody>
                     {% for location in launch_locations %}
                     <tr>
-                        <td>{{ macros::flag(country_code=location.country) }} {{ location.name }}</td>
+                        <td>{{ macros::flag(country_code=location.country) }} <a href="/locations/{{ location.id }}">{{ location.name }}</a></td>
                         <td>{{ location.count }}</td>
                     </tr>
                     {% endfor %}
@@ -85,7 +85,7 @@
                 <tbody>
                     {% for location in landing_locations %}
                     <tr>
-                        <td>{{ macros::flag(country_code=location.country) }} {{ location.name }}</td>
+                        <td>{{ macros::flag(country_code=location.country) }} <a href="/locations/{{ location.id }}">{{ location.name }}</a></td>
                         <td>{{ location.count }}</td>
                     </tr>
                     {% endfor %}

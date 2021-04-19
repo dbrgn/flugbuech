@@ -30,11 +30,14 @@
     <ul>
         <li><a href="/">Home</a></li>
         <li><a href="/locations">Locations</a></li>
-        <li class="is-active"><a href="#" aria-current="page">{{ location.name }}</a></li>
+        <li><a href="/locations/{{ location.id }}">{{ location.name }}</a></li>
+        <li class="is-active"><a href="#" aria-current="page">Delete</a></li>
     </ul>
 </nav>
 
-<h2 class="title is-2">Location: {{ location.name }}</h2>
+<h2 class="title is-2">Delete Location: {{ location.name }}</h2>
+
+<p class="content">Are you sure that you want to delete this location?</p>
 
 <section>
     <table class="table is-fullwidth is-striped is-hoverable">
@@ -65,5 +68,11 @@
 <br>
 <div id="mapContainer"></div>
 {% endif %}
+
+<form action="" method="post">
+    <div class="control submitcontrols">
+        <button type="submit" class="button is-danger">Yes, delete!</button>
+    </div>
+</form>
 
 {% endblock %}

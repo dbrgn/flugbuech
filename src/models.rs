@@ -141,6 +141,8 @@ pub struct LocationWithCount {
     pub elevation: i32,
     #[sql_type = "Integer"]
     pub user_id: i32,
+    #[sql_type = "Nullable<Geography>"]
+    pub geog: Option<GeogPoint>,
     #[sql_type = "BigInt"]
     pub count: i64,
 }

@@ -8,7 +8,7 @@ use serde::Serialize;
 
 use crate::{
     auth,
-    data::{self, LocationOrderBy},
+    data::{self, LocationAggregateBy},
     models::{LocationWithCount, User},
 };
 
@@ -45,9 +45,10 @@ pub(crate) fn stats(db: data::Database, user: auth::AuthUser) -> Template {
     let user = user.into_inner();
 
     // Get all locations
-    let launch_locations = data::get_locations_with_stats_for_user(&db, &user, LocationOrderBy::Launches, 10);
+    let launch_locations =
+        data::get_visited_locations_with_stats_for_user(&db, &user, LocationAggregateBy::Launches, 10);
     let landing_locations =
-        data::get_locations_with_stats_for_user(&db, &user, LocationOrderBy::Landings, 10);
+        data::get_visited_locations_with_stats_for_user(&db, &user, LocationAggregateBy::Landings, 10);
 
     // Yearly stats map
     let mut yearly_stats: BTreeMap<u16, YearStats> = BTreeMap::new();

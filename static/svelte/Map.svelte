@@ -3,10 +3,11 @@
     import { onMount } from 'svelte';
 
     // Props
-    export let lngInput: HTMLInputElement;
-    export let latInput: HTMLInputElement;
+    export let lngInput: HTMLInputElement | null;
+    export let latInput: HTMLInputElement | null;
     export let position: LngLatLike = {lng: 10, lat: 47};
     export let zoom: number = 6;
+    let editable: boolean = lngInput !== null && latInput !== null;
 
     // Access token
     const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiZGFuaWxvIiwiYSI6ImNrMHk4bHcyaTA0OGMzcHA2aXloems2MnQifQ.YovfgNgeajD4aORTUE5aFw';
@@ -124,38 +125,40 @@
         map.addControl(new NavigationControl());
 
         // Add draggable marker
-        const marker = new Marker({draggable: true})
+        const marker = new Marker({draggable: editable})
             .setLngLat(position)
             .addTo(map);
 
-        // Function to update coordinates from marker
-        const updateCoordinatesFromMarker = () => {
-            const lngLat = marker.getLngLat();
-            lngInput.value = lngLat.lng.toFixed(5);
-            latInput.value = lngLat.lat.toFixed(5);
-        };
+        if (editable) {
+            // Function to update coordinates from marker
+            const updateCoordinatesFromMarker = () => {
+                const lngLat = marker.getLngLat();
+                lngInput.value = lngLat.lng.toFixed(5);
+                latInput.value = lngLat.lat.toFixed(5);
+            };
 
-        // Update coordinates on marker drag
-        marker.on('dragend', updateCoordinatesFromMarker);
+            // Update coordinates on marker drag
+            marker.on('dragend', updateCoordinatesFromMarker);
 
-        // Update marker and coordinates on double click
-        map.on('dblclick', (e) => {
-            marker.setLngLat(e.lngLat);
-            updateCoordinatesFromMarker();
-        });
+            // Update marker and coordinates on double click
+            map.on('dblclick', (e) => {
+                marker.setLngLat(e.lngLat);
+                updateCoordinatesFromMarker();
+            });
 
-        // When the input value changes, update the marker
-        const updateMarkerFromCoordinates = () => {
-            const lng = parseFloat(lngInput.value);
-            const lat = parseFloat(latInput.value);
-            if (validLngLat(lng, lat) === true) {
-                const pos = {lng: lng, lat: lat};
-                marker.setLngLat(pos);
-                map.flyTo({center: pos});
-            }
-        };
-        lngInput.addEventListener('change', updateMarkerFromCoordinates);
-        latInput.addEventListener('change', updateMarkerFromCoordinates);
+            // When the input value changes, update the marker
+            const updateMarkerFromCoordinates = () => {
+                const lng = parseFloat(lngInput.value);
+                const lat = parseFloat(latInput.value);
+                if (validLngLat(lng, lat) === true) {
+                    const pos = {lng: lng, lat: lat};
+                    marker.setLngLat(pos);
+                    map.flyTo({center: pos});
+                }
+            };
+            lngInput.addEventListener('change', updateMarkerFromCoordinates);
+            latInput.addEventListener('change', updateMarkerFromCoordinates);
+        }
     });
 </script>
 

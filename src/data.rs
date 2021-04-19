@@ -273,19 +273,36 @@ pub fn get_locations_for_user(conn: &PgConnection, user: &User) -> Vec<Location>
         .expect("Error loading locations")
 }
 
+/// Retrieve all locations for the specified user, including the number of
+/// associated flights (with either launch and/or landing at that location).
+pub fn get_all_locations_with_stats_for_user(conn: &PgConnection, user: &User) -> Vec<LocationWithCount> {
+    sql_query(
+        "SELECT l.*, count(f.id) as count
+           FROM locations l
+                LEFT JOIN flights f ON f.launch_at = l.id OR f.landing_at = l.id
+          WHERE l.user_id = $1
+          GROUP BY l.id
+          ORDER BY l.name ASC",
+    )
+    .bind::<Integer, _>(user.id)
+    .load(conn)
+    .expect("Error loading locations with stats")
+}
+
 #[derive(Debug, PartialEq)]
-pub enum LocationOrderBy {
+pub enum LocationAggregateBy {
     Launches,
     Landings,
 }
 
-/// Retrieve all visited locations for the specified user, including launch or landing count.
+/// Retrieve all visited locations for the specified user, including either
+/// launch or landing count.
 ///
 /// Entries with a count of 0 will not be included.
-pub fn get_locations_with_stats_for_user(
+pub fn get_visited_locations_with_stats_for_user(
     conn: &PgConnection,
     user: &User,
-    order_by: LocationOrderBy,
+    aggregate_by: LocationAggregateBy,
     limit: i32,
 ) -> Vec<LocationWithCount> {
     sql_query(&format!(
@@ -296,9 +313,9 @@ pub fn get_locations_with_stats_for_user(
           GROUP BY l.id
           ORDER BY count DESC
           LIMIT $2",
-        match order_by {
-            LocationOrderBy::Launches => "launch_at",
-            LocationOrderBy::Landings => "landing_at",
+        match aggregate_by {
+            LocationAggregateBy::Launches => "launch_at",
+            LocationAggregateBy::Landings => "landing_at",
         },
     ))
     .bind::<Integer, _>(user.id)
@@ -336,12 +353,27 @@ pub fn get_locations_around_point(
 }
 
 /// Retrieve location with the specified ID.
-pub fn get_location_with_id(conn: &PgConnection, id: i32) -> Option<Location> {
+pub fn get_location_by_id(conn: &PgConnection, id: i32) -> Option<Location> {
     locations::table
         .find(id)
         .first(conn)
         .optional()
         .expect("Error loading location by id")
+}
+
+/// Retrieve location with the specified ID and the number of associated flights.
+pub fn get_location_with_flight_count_by_id(conn: &PgConnection, id: i32) -> Option<LocationWithCount> {
+    sql_query(
+        "SELECT l.*, count(f.id) as count
+           FROM locations l
+                LEFT JOIN flights f ON f.launch_at = l.id OR f.landing_at = l.id
+          WHERE l.id = $1
+          GROUP BY l.id",
+    )
+    .bind::<Integer, _>(id)
+    .get_result(conn)
+    .optional()
+    .expect("Error loading location by id with flight count")
 }
 
 /// Create a new location.
@@ -358,6 +390,13 @@ pub fn update_location(conn: &PgConnection, location: &Location) {
         .set(location)
         .execute(conn)
         .expect("Could not update location");
+}
+
+/// Delete a location by ID.
+pub fn delete_location_by_id(conn: &PgConnection, id: i32) -> QueryResult<()> {
+    let delete_count = diesel::delete(locations::table.filter(locations::id.eq(&id))).execute(conn)?;
+    assert_eq!(delete_count, 1); // Sanity check
+    Ok(())
 }
 
 /// Create a new glider.
@@ -655,14 +694,14 @@ mod tests {
     }
 
     #[test]
-    fn test_get_locations_with_stats_for_user() {
+    fn test_get_visited_locations_with_stats_for_user() {
         let ctx = test_utils::DbTestContext::new();
 
         // No locations
-        let l = get_locations_with_stats_for_user(
+        let l = get_visited_locations_with_stats_for_user(
             &*ctx.force_get_conn(),
             &ctx.testuser1.user,
-            LocationOrderBy::Launches,
+            LocationAggregateBy::Launches,
             99,
         );
         assert_eq!(l.len(), 0);
@@ -703,10 +742,10 @@ mod tests {
             ])
             .get_results::<Location>(&*ctx.force_get_conn())
             .expect("Could not create flight");
-        let l = get_locations_with_stats_for_user(
+        let l = get_visited_locations_with_stats_for_user(
             &*ctx.force_get_conn(),
             &ctx.testuser1.user,
-            LocationOrderBy::Launches,
+            LocationAggregateBy::Launches,
             99,
         );
         assert_eq!(l.len(), 0);
@@ -759,20 +798,20 @@ mod tests {
             ])
             .execute(&*ctx.force_get_conn())
             .expect("Could not create flight");
-        let l_launches = get_locations_with_stats_for_user(
+        let l_launches = get_visited_locations_with_stats_for_user(
             &*ctx.force_get_conn(),
             &ctx.testuser1.user,
-            LocationOrderBy::Launches,
+            LocationAggregateBy::Launches,
             99,
         )
         .into_iter()
         .map(|l| (l.name, l.count))
         .collect::<Vec<_>>();
         assert_eq!(l_launches, vec![("Selun".into(), 3), ("Etzel".into(), 2)]);
-        let l_landings = get_locations_with_stats_for_user(
+        let l_landings = get_visited_locations_with_stats_for_user(
             &*ctx.force_get_conn(),
             &ctx.testuser1.user,
-            LocationOrderBy::Landings,
+            LocationAggregateBy::Landings,
             99,
         )
         .into_iter()

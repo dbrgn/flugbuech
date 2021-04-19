@@ -39,7 +39,8 @@ href="mailto:flugbuech@bargen.dev">flugbuech@bargen.dev</a>.</p>
 
 <h3 class="title is-size-3">News</h3>
 <ul class="content">
-    <li><strong>2021-04-19:</strong> Location editing now supports Swisstopo maps</li>
+    <li><strong>2021-04-20:</strong> Locations can now be viewed and deleted, number of associated flights is listed</li>
+    <li><strong>2021-04-19:</strong> Location editing now supports <a href="https://www.swisstopo.admin.ch/de/karten-daten-online/karten-geodaten-online.html">Swisstopo</a> maps</li>
     <li><strong>2020-09-25:</strong> Show stats (flights, flight hours) for gliders</li>
     <li><strong>2020-07-11:</strong> Allow marking flights as hike&amp;fly, allow deleting flights, enhance stats</li>
     <li><strong>2020-07-10:</strong> Your own password <a href="/auth/password/change">can now be changed</a></li>
