@@ -194,7 +194,7 @@ pub fn password_change(
     }
 
     // Ensure minimum length of new password
-    if password_change.new1.len() < 8 {
+    if password_change.new1.len() < data::MIN_PASSWORD_LENGTH {
         fail!("Password must have at least 8 characters");
     }
 

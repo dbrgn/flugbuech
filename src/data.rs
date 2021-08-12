@@ -32,8 +32,8 @@ sql_function! {
 }
 
 const PW_SALT_ITERATIONS: i32 = 10;
-const MIN_PASSWORD_LENGTH: i32 = 6;
-const MAX_PASSWORD_LENGTH: i32 = 30;
+pub const MIN_PASSWORD_LENGTH: usize = 8;
+pub const MAX_PASSWORD_LENGTH: usize = 30;
 
 /// Database connection state object.
 #[database("flugbuech")]
@@ -127,8 +127,7 @@ fn validate_email(email: &str) -> bool {
 // TODO: extend with proper format check
 /// Validates the password -> { length }
 fn validate_password_format(password: &str) -> bool {
-    let password_length = password.len() as i32;
-    password_length >= MIN_PASSWORD_LENGTH && password_length <= MAX_PASSWORD_LENGTH
+    password.len() >= MIN_PASSWORD_LENGTH && password.len() <= MAX_PASSWORD_LENGTH
 }
 
 /// Validate username / password combination. Return the corresponding user model if it is valid.
