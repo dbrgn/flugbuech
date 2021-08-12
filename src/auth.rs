@@ -93,6 +93,67 @@ pub fn login_page(flash: Option<FlashMessage>) -> Template {
 }
 
 #[derive(FromForm)]
+pub struct Registration {
+    username: String,
+    email: String,
+    password: String,
+    password_confirmation: String,
+}
+
+/// Redirect requests to registration page if user is already logged in.
+#[get("/auth/registration")]
+pub fn register_user(_user: AuthUser) -> Redirect {
+    Redirect::to("/")
+}
+
+/// Show the registration page (with flash messages) if not already logged in.
+#[get("/auth/registration", rank = 2)]
+pub fn registration_page(flash: Option<FlashMessage>) -> Template {
+    Template::render("registration", &context_from_flash_opt(flash))
+}
+
+/// Registration handler
+#[post("/auth/registration", data = "<registration>")]
+pub fn registration(
+    mut cookies: Cookies,
+    registration: Form<Registration>,
+    db: Database,
+) -> Result<Redirect, Flash<Redirect>> {
+    macro_rules! fail {
+        ($msg:expr) => {{
+            log::error!("Was not able to register user: \n{}", $msg);
+            return Err(Flash::error(Redirect::to(uri!(registration_page)), $msg));
+        }};
+    }
+
+    let (valid_registration, error_attribute) = data::validate_registration(
+        &db,
+        &registration.email,
+        &registration.username,
+        &registration.password,
+        &registration.password_confirmation,
+    );
+
+    if valid_registration {
+        let new_user = data::create_user(
+            &db,
+            &registration.username,
+            &registration.password,
+            &registration.email,
+        );
+        cookies.add_private(Cookie::new(USER_COOKIE_ID, new_user.id.to_string()));
+        Ok(Redirect::to("/"))
+    } else {
+        match error_attribute.as_ref() {
+            "email" => fail!("Invalid email format or email is not unique"),
+            "password_confirmation" => fail!("Password and password confirmation do not match"),
+            "username" => fail!("Username is not unique"),
+            _ => fail!("The reason for the failure is not known"),
+        }
+    }
+}
+
+#[derive(FromForm)]
 pub struct PasswordChange {
     current: String,
     new1: String,
@@ -155,6 +216,9 @@ pub fn get_routes() -> Vec<Route> {
         login,
         login_user,
         login_page,
+        registration,
+        register_user,
+        registration_page,
         logout,
         password_change_form,
         password_change_form_nologin,

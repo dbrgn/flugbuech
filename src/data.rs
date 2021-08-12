@@ -9,6 +9,7 @@ use diesel::{
 };
 use diesel_geography::{sql_types::Geography, types::GeogPoint};
 use log::error;
+use regex::Regex;
 use rocket_contrib::database;
 use serde::Serialize;
 
@@ -31,6 +32,8 @@ sql_function! {
 }
 
 const PW_SALT_ITERATIONS: i32 = 10;
+const MIN_PASSWORD_LENGTH: i32 = 6;
+const MAX_PASSWORD_LENGTH: i32 = 30;
 
 /// Database connection state object.
 #[database("flugbuech")]
@@ -58,6 +61,74 @@ pub fn get_user(conn: &PgConnection, id: i32) -> Option<User> {
             e
         })
         .ok()
+}
+
+/// Validate registration params and check for unique attributes { email, username }
+pub fn validate_registration(
+    conn: &PgConnection,
+    email: &str,
+    username: &str,
+    password: &str,
+    password_confirmation: &str,
+) -> (bool, String) {
+    let matching_password = password_confirmation == password;
+    let valid_email = validate_email(email);
+    let valid_password_format = validate_password_format(password);
+
+    if vec![matching_password, valid_email, valid_password_format]
+        .iter()
+        .any(|&validation| validation == false)
+    {
+        let error_object = if !matching_password {
+            String::from("password_confirmation")
+        } else if !valid_password_format {
+            String::from("password")
+        } else {
+            String::from("email")
+        };
+        return (false, error_object);
+    }
+
+    let (valid_unique_attributes, error_attribute) =
+        validate_unique_registration_fields(conn, email, username);
+
+    if valid_unique_attributes {
+        (true, String::from(""))
+    } else {
+        (false, error_attribute)
+    }
+}
+
+fn validate_unique_registration_fields(conn: &PgConnection, email: &str, username: &str) -> (bool, String) {
+    // TODO: query user with or and then compare in memory and not issue two db calls
+
+    let queried_user_by_username: Option<User> =
+        users::table.filter(users::username.eq(username)).first(conn).ok();
+    if queried_user_by_username.is_some() {
+        return (false, String::from("username"));
+    }
+    let queried_user_by_email: Option<User> = users::table.filter(users::email.eq(email)).first(conn).ok();
+
+    if queried_user_by_email.is_some() {
+        (false, String::from("email"))
+    } else {
+        (true, String::from(""))
+    }
+}
+
+/// Validates the email based on an email regex which should cover most cases
+fn validate_email(email: &str) -> bool {
+    let email_regex =
+        Regex::new(r"^([a-z0-9_+]([a-z0-9_+.]*[a-z0-9_+])?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})")
+            .unwrap();
+    email_regex.is_match(email)
+}
+
+// TODO: extend with proper format check
+/// Validates the password -> { length }
+fn validate_password_format(password: &str) -> bool {
+    let password_length = password.len() as i32;
+    password_length >= MIN_PASSWORD_LENGTH && password_length <= MAX_PASSWORD_LENGTH
 }
 
 /// Validate username / password combination. Return the corresponding user model if it is valid.

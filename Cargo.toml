@@ -19,6 +19,7 @@ log = "0.4"
 num-traits = "0.2"
 rocket = { version = "0.4", default-features = false, features = ["private-cookies"] }
 serde = { version = "1", features = ["derive"] }
+regex = "1.5.4"
 
 [dependencies.rocket_contrib]
 version = "0.4"

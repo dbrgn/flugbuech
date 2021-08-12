@@ -1,0 +1,56 @@
+{% extends 'base' %}
+
+{% block content %}
+<h2 class="title is-2">Registration</h2>
+
+{% include 'flash' %}
+
+<form action="/auth/registration" method="post" accept-charset="utf-8">
+    <div class="field">
+        <label class="label" for="username">Username</label>
+        <div class="control has-icons-left">
+            <input class="input" type="text" name="username" id="username" value="" required />
+            <span class="icon is-small is-left">
+                <i class="fas fa-user"></i>
+            </span>
+        </div>
+    </div>
+    <div class="field">
+        <label class="label" for="email">Email</label>
+        <div class="control has-icons-left">
+            <input class="input" type="text" name="email" id="email" value="" required />
+            <span class="icon is-small is-left">
+                <i class="fas fa-envelope"></i>
+            </span>
+        </div>
+    </div>
+    <div class="field">
+        <label class="label" for="password">Password</label>
+        <div class="control has-icons-left">
+            <input class="input" type="password" name="password" id="password" value="" required />
+            <span class="icon is-small is-left">
+                <i class="fas fa-lock"></i>
+            </span>
+        </div>
+    </div>
+    <div class="field">
+        <label class="label" for="password_confirmation">Password Confirmation</label>
+        <div class="control has-icons-left">
+            <input class="input"
+            type="password"
+            name="password_confirmation" id="password_confirmation"
+            value="" required />
+            <span class="icon is-small is-left">
+                <i class="fas fa-lock"></i>
+            </span>
+        </div>
+    </div>
+    <div class="field">
+        <div class="control">
+            <button class="button is-primary" type="submit">Register</button>
+        </div>
+    </div>
+
+    <a href="/auth/login">Already have an account? Login in now!</a>
+</form>
+{% endblock %}

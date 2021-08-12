@@ -29,5 +29,7 @@
             <button class="button is-primary" type="submit">Login</button>
         </div>
     </div>
+
+    <a href="/auth/registration">Don't have an account yet? Register a new account</a>
 </form>
 {% endblock %}
