@@ -102,7 +102,8 @@ pub fn validate_registration(
     validate_email(email)?;
     validate_password_confirmation_match(password, password_confirmation)?;
     validate_password_format(password)?;
-    validate_unique_registration_fields(conn, email, username)
+    validate_unique_registration_fields(conn, email, username)?;
+    Ok(())
 }
 
 fn validate_unique_registration_fields(
@@ -137,11 +138,11 @@ fn validate_password_confirmation_match(
 
 /// Validates the email based on an email regex which should cover most cases
 fn validate_email(email: &str) -> Result<(), RegistrationError> {
-    if Regex::new(r"^[^@\s]+@[^@\s]+\.[^@\s]+$").unwrap().is_match(email) {
-        Ok(())
-    } else {
-        Err(RegistrationError::InvalidEmail)
-    }
+    Regex::new(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+        .unwrap()
+        .is_match(email)
+        .then(|| ())
+        .ok_or(RegistrationError::InvalidEmail)
 }
 
 // TODO: extend with proper format check

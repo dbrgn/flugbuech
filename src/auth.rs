@@ -134,13 +134,6 @@ pub fn registration(
     registration: Form<Registration>,
     db: Database,
 ) -> Result<Flash<Redirect>, Flash<Redirect>> {
-    macro_rules! fail {
-        ($msg:expr) => {{
-            log::error!("Was not able to register user: {}", $msg);
-            return Err(Flash::error(Redirect::to(uri!(registration_page)), $msg));
-        }};
-    }
-
     let registration_result = data::validate_registration(
         &db,
         &registration.email,
@@ -163,7 +156,11 @@ pub fn registration(
                 "Your account was successfully created",
             ))
         },
-        Err(error) => fail!(format!("{}", error)),
+        Err(error) => {
+            let msg = error.to_string();
+            log::error!("Was not able to register user: {}", msg);
+            Err(Flash::error(Redirect::to(uri!(registration_page)), msg))
+        },
     }
 }
 
