@@ -55,7 +55,7 @@ pub(crate) fn list(db: data::Database, user: auth::AuthUser, flash: Option<Flash
         .flat_map(|flight| vec![flight.launch_at, flight.landing_at])
         .filter_map(|opt| opt)
         .collect::<Vec<_>>();
-    location_ids.sort();
+    location_ids.sort_unstable();
     location_ids.dedup();
     let location_map = data::get_locations_with_ids(&db, &location_ids)
         .into_iter()

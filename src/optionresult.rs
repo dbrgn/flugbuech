@@ -1,7 +1,5 @@
-use base64;
 use chrono::naive::{NaiveDate, NaiveTime};
-use rocket::http::RawStr;
-use rocket::request::FromFormValue;
+use rocket::{http::RawStr, request::FromFormValue};
 
 use crate::base64::Base64Data;
 

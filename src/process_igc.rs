@@ -2,7 +2,6 @@
 
 use std::io::{self, BufRead, BufReader, Read};
 
-use diesel;
 use flat_projection::{FlatPoint, FlatProjection};
 use igc::records::{HRecord, Record};
 use igc::util::RawPosition;
@@ -184,15 +183,13 @@ fn parse_igc(reader: impl BufRead, user: &models::User, db: &diesel::PgConnectio
     if let Some(ref mut launch) = info.launch {
         launch.location_id =
             data::get_locations_around_point(&db, &user, launch.pos.lat, launch.pos.lng, max_distance)
-                .iter()
-                .next()
+                .get(0)
                 .map(|location| location.id);
     }
     if let Some(ref mut landing) = info.landing {
         landing.location_id =
             data::get_locations_around_point(&db, &user, landing.pos.lat, landing.pos.lng, max_distance)
-                .iter()
-                .next()
+                .get(0)
                 .map(|location| location.id);
     }
 

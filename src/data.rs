@@ -582,12 +582,11 @@ pub fn get_flight_time_per_year_for_user(conn: &PgConnection, user: &User) -> Ve
 }
 
 pub fn get_flight_count_without_launch_time(conn: &PgConnection, user: &User) -> i64 {
-    let incomplete_count = Flight::belonging_to(user)
+    Flight::belonging_to(user)
         .filter(flights::launch_time.is_null())
         .select(count(flights::id))
         .first::<i64>(conn)
-        .expect("Error loading flight count without launch time");
-    incomplete_count
+        .expect("Error loading flight count without launch time")
 }
 
 #[derive(Debug, QueryableByName, Serialize)]

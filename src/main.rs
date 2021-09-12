@@ -21,7 +21,6 @@ mod templates;
 #[cfg(test)] mod test_utils;
 
 use clap::{App, Arg};
-use dotenv;
 use rocket::request::{FlashMessage, Request};
 use rocket::{catch, catchers, get, routes};
 use rocket_contrib::serve::StaticFiles;
