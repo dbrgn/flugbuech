@@ -37,10 +37,11 @@ release so far.
   duration, distance, etc can be extracted from that file)
 - [x] Manage locations
 - [x] Show stats about the past flights
+- [x] Simple user registration
 
 ### What's not yet implemented
 
-- [ ] User registration, password recovery
+- [ ] Password recovery
 - [ ] Map with all your flights
 - [ ] Make it easy to self-host
 - [ ] Import launch / landing locations from a public database
