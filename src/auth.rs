@@ -93,6 +93,81 @@ pub fn login_page(flash: Option<FlashMessage>) -> Template {
 }
 
 #[derive(FromForm)]
+pub struct Registration {
+    username: String,
+    email: String,
+    password: String,
+    password_confirmation: String,
+}
+
+/// Redirect requests to registration page if user is already logged in.
+#[get("/auth/registration")]
+pub fn register_user(_user: AuthUser) -> Redirect {
+    Redirect::to("/")
+}
+
+#[derive(Serialize)]
+struct RegistrationContext {
+    min_password_length: usize,
+    flashes: Vec<crate::flash::FlashMessage>,
+}
+
+/// Show the registration page (with flash messages) if not already logged in.
+#[get("/auth/registration", rank = 2)]
+pub fn registration_page(flash: Option<FlashMessage>) -> Template {
+    let flash_messages = if let Some(f) = flash {
+        vec![crate::flash::FlashMessage::from(f)]
+    } else {
+        Vec::new()
+    };
+    let context = RegistrationContext {
+        min_password_length: data::MIN_PASSWORD_LENGTH,
+        flashes: flash_messages,
+    };
+    Template::render("registration", &context)
+}
+
+/// Registration handler
+#[post("/auth/registration", data = "<registration>")]
+pub fn registration(
+    mut cookies: Cookies,
+    registration: Form<Registration>,
+    db: Database,
+) -> Result<Flash<Redirect>, Flash<Redirect>> {
+    macro_rules! fail {
+        ($msg:expr) => {{
+            log::error!("Was not able to register user: {}", $msg);
+            return Err(Flash::error(Redirect::to(uri!(registration_page)), $msg));
+        }};
+    }
+
+    let registration_result = data::validate_registration(
+        &db,
+        &registration.email,
+        &registration.username,
+        &registration.password,
+        &registration.password_confirmation,
+    );
+
+    match registration_result {
+        Ok(_) => {
+            let new_user = data::create_user(
+                &db,
+                &registration.username,
+                &registration.password,
+                &registration.email,
+            );
+            cookies.add_private(Cookie::new(USER_COOKIE_ID, new_user.id.to_string()));
+            Ok(Flash::success(
+                Redirect::to("/"),
+                "Your account was successfully created",
+            ))
+        },
+        Err(error) => fail!(format!("{}", error)),
+    }
+}
+
+#[derive(FromForm)]
 pub struct PasswordChange {
     current: String,
     new1: String,
@@ -133,7 +208,7 @@ pub fn password_change(
     }
 
     // Ensure minimum length of new password
-    if password_change.new1.len() < 8 {
+    if password_change.new1.len() < data::MIN_PASSWORD_LENGTH {
         fail!("Password must have at least 8 characters");
     }
 
@@ -155,6 +230,9 @@ pub fn get_routes() -> Vec<Route> {
         login,
         login_user,
         login_page,
+        registration,
+        register_user,
+        registration_page,
         logout,
         password_change_form,
         password_change_form_nologin,

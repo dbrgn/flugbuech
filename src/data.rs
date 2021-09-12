@@ -1,4 +1,4 @@
-use std::{env, io};
+use std::{env, fmt, io};
 
 use diesel::{
     dsl::{count, exists, max, select},
@@ -9,6 +9,7 @@ use diesel::{
 };
 use diesel_geography::{sql_types::Geography, types::GeogPoint};
 use log::error;
+use regex::Regex;
 use rocket_contrib::database;
 use serde::Serialize;
 
@@ -31,6 +32,7 @@ sql_function! {
 }
 
 const PW_SALT_ITERATIONS: i32 = 10;
+pub const MIN_PASSWORD_LENGTH: usize = 8;
 
 /// Database connection state object.
 #[database("flugbuech")]
@@ -58,6 +60,98 @@ pub fn get_user(conn: &PgConnection, id: i32) -> Option<User> {
             e
         })
         .ok()
+}
+
+#[derive(Debug)]
+pub enum RegistrationError {
+    /// E-Mail is invalid or already registered
+    InvalidEmail,
+    /// Username is invalid or already taken
+    NonUniqueUsername,
+    /// The password confirmation does not match
+    PasswordConfirmation,
+    /// Password is too short
+    InvalidPasswordFormat,
+}
+
+impl std::error::Error for RegistrationError {}
+
+impl fmt::Display for RegistrationError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            RegistrationError::InvalidEmail => write!(f, "Invalid email format or email is not unique"),
+            RegistrationError::InvalidPasswordFormat => {
+                write!(f, "Password is too short or does not match format")
+            },
+            RegistrationError::NonUniqueUsername => write!(f, "Username is not unique"),
+            RegistrationError::PasswordConfirmation => {
+                write!(f, "Password and password confirmation do not match")
+            },
+        }
+    }
+}
+
+/// Validate registration params and check for unique attributes { email, username }
+pub fn validate_registration(
+    conn: &PgConnection,
+    email: &str,
+    username: &str,
+    password: &str,
+    password_confirmation: &str,
+) -> Result<(), RegistrationError> {
+    validate_email(email)?;
+    validate_password_confirmation_match(password, password_confirmation)?;
+    validate_password_format(password)?;
+    validate_unique_registration_fields(conn, email, username)
+}
+
+fn validate_unique_registration_fields(
+    conn: &PgConnection,
+    email: &str,
+    username: &str,
+) -> Result<(), RegistrationError> {
+    let user: Option<User> = users::table
+        .filter(users::username.eq(username))
+        .or_filter(users::email.eq(email))
+        .first(conn)
+        .ok();
+    match user {
+        Some(user) if user.username == username => Err(RegistrationError::NonUniqueUsername),
+        Some(user) if user.email == email => Err(RegistrationError::InvalidEmail),
+        Some(_) => unreachable!("Returned user must match with either email or username"),
+        None => Ok(()),
+    }
+}
+
+/// Validates that password and confirmation match
+fn validate_password_confirmation_match(
+    password: &str,
+    password_confirmation: &str,
+) -> Result<(), RegistrationError> {
+    if password == password_confirmation {
+        Ok(())
+    } else {
+        Err(RegistrationError::PasswordConfirmation)
+    }
+}
+
+/// Validates the email based on an email regex which should cover most cases
+fn validate_email(email: &str) -> Result<(), RegistrationError> {
+    if Regex::new(r"^[^@\s]+@[^@\s]+\.[^@\s]+$").unwrap().is_match(email) {
+        Ok(())
+    } else {
+        Err(RegistrationError::InvalidEmail)
+    }
+}
+
+// TODO: extend with proper format check
+/// Validates the password -> { length }
+fn validate_password_format(password: &str) -> Result<(), RegistrationError> {
+    if password.len() >= MIN_PASSWORD_LENGTH {
+        Ok(())
+    } else {
+        Err(RegistrationError::InvalidPasswordFormat)
+    }
 }
 
 /// Validate username / password combination. Return the corresponding user model if it is valid.

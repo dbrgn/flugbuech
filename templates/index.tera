@@ -1,7 +1,10 @@
 {% extends 'base' %}
 
 {% block content %}
+
 <h2 class="title is-size-2">Overview</h2>
+
+{% include 'flash' %}
 
 <p class="content">Welcome to Flugbuech! This is a free, open source and
 ad-free platform for keeping track of your free flights (paragliding or hang
@@ -26,9 +29,7 @@ things have a catch, but in this case I'm developing the flight log for my own
 needs, and others may use it too.</p>
 
 <h4 class="title is-size-5">Can I sign up?</h4>
-<p class="content">Registration is not yet implemented. However, if you want an
-account, just send me an e-mail at <a
-href="mailto:flugbuech@bargen.dev">flugbuech@bargen.dev</a>.</p>
+<p class="content">Sure thing! Feel free to <a href="/auth/registration"> create an account<a/>.</p>
 
 <h4 class="title is-size-5">Where can I find the source code or report bugs?</h4>
 <p class="content">On <a href="https://github.com/dbrgn/flugbuech">GitHub</a>.</p>

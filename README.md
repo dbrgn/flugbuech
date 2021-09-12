@@ -84,14 +84,12 @@ Start server:
     cargo run
 
 
-## Adding Users
+## Registration
 
-Right now users have to be added to the database manually.
-
-```sql
-INSERT INTO users(username, password, email)
-VALUES ('user', crypt('password', gen_salt('bf', 10)), 'user@example.com');
-```
+In order to register a new user, head to localhost:8000/auth/registration.
+Both email and username have to be unique and the password has to match password confirmation.
+Upon successful registration you will be redirect to the root_path and will see
+a welcome message bearing your username.
 
 
 ## Testing
