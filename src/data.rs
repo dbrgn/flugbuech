@@ -110,21 +110,16 @@ fn validate_unique_registration_fields(
     email: &str,
     username: &str,
 ) -> Result<(), RegistrationError> {
-    // TODO: query user with or and then compare in memory and not issue two db calls
-
-    let queried_user_by_username: Option<User> =
-        users::table.filter(users::username.eq(username)).first(conn).ok();
-
-    if queried_user_by_username.is_some() {
-        return Err(RegistrationError::NonUniqueUsername);
-    }
-
-    let queried_user_by_email: Option<User> = users::table.filter(users::email.eq(email)).first(conn).ok();
-
-    if queried_user_by_email.is_some() {
-        Err(RegistrationError::InvalidEmail)
-    } else {
-        Ok(())
+    let user: Option<User> = users::table
+        .filter(users::username.eq(username))
+        .or_filter(users::email.eq(email))
+        .first(conn)
+        .ok();
+    match user {
+        Some(user) if user.username == username => Err(RegistrationError::NonUniqueUsername),
+        Some(user) if user.email == email => Err(RegistrationError::InvalidEmail),
+        Some(_) => unreachable!("Returned user must match with either email or username"),
+        None => Ok(()),
     }
 }
 

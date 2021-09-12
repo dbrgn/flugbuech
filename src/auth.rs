@@ -106,10 +106,25 @@ pub fn register_user(_user: AuthUser) -> Redirect {
     Redirect::to("/")
 }
 
+#[derive(Serialize)]
+struct RegistrationContext {
+    min_password_length: usize,
+    flashes: Vec<crate::flash::FlashMessage>,
+}
+
 /// Show the registration page (with flash messages) if not already logged in.
 #[get("/auth/registration", rank = 2)]
 pub fn registration_page(flash: Option<FlashMessage>) -> Template {
-    Template::render("registration", &context_from_flash_opt(flash))
+    let flash_messages = if let Some(f) = flash {
+        vec![crate::flash::FlashMessage::from(f)]
+    } else {
+        Vec::new()
+    };
+    let context = RegistrationContext {
+        min_password_length: data::MIN_PASSWORD_LENGTH,
+        flashes: flash_messages,
+    };
+    Template::render("registration", &context)
 }
 
 /// Registration handler
@@ -118,7 +133,7 @@ pub fn registration(
     mut cookies: Cookies,
     registration: Form<Registration>,
     db: Database,
-) -> Result<Redirect, Flash<Redirect>> {
+) -> Result<Flash<Redirect>, Flash<Redirect>> {
     macro_rules! fail {
         ($msg:expr) => {{
             log::error!("Was not able to register user: {}", $msg);
@@ -126,7 +141,7 @@ pub fn registration(
         }};
     }
 
-    let registrationResult = data::validate_registration(
+    let registration_result = data::validate_registration(
         &db,
         &registration.email,
         &registration.username,
@@ -134,7 +149,7 @@ pub fn registration(
         &registration.password_confirmation,
     );
 
-    match registrationResult {
+    match registration_result {
         Ok(_) => {
             let new_user = data::create_user(
                 &db,
@@ -143,11 +158,12 @@ pub fn registration(
                 &registration.email,
             );
             cookies.add_private(Cookie::new(USER_COOKIE_ID, new_user.id.to_string()));
-            Ok(Redirect::to("/"))
+            Ok(Flash::success(
+                Redirect::to("/"),
+                "Your account was successfully created",
+            ))
         },
-        Err(error) => {
-            fail!(format!("{}", error))
-        },
+        Err(error) => fail!(format!("{}", error)),
     }
 }
 

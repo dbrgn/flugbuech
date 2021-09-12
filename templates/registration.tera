@@ -27,7 +27,9 @@
     <div class="field">
         <label class="label" for="password">Password</label>
         <div class="control has-icons-left">
-            <input class="input" type="password" name="password" id="password" value="" required>
+            <input class="input" minlength="{{min_password_length}}"
+                placeholder="Choose a password (at least {{min_password_length}} characters)"
+                type="password" name="password" id="password" value="" required>
             <span class="icon is-small is-left">
                 <i class="fas fa-lock"></i>
             </span>
@@ -38,6 +40,8 @@
         <div class="control has-icons-left">
             <input class="input"
             type="password"
+            placeholder="Please confirm your chosen password"
+            minlength="{{ min_password_length }}"
             name="password_confirmation" id="password_confirmation"
             value="" required />
             <span class="icon is-small is-left">

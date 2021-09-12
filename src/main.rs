@@ -22,7 +22,7 @@ mod templates;
 
 use clap::{App, Arg};
 use dotenv;
-use rocket::request::Request;
+use rocket::request::{FlashMessage, Request};
 use rocket::{catch, catchers, get, routes};
 use rocket_contrib::serve::StaticFiles;
 use rocket_contrib::templates::Template;
@@ -41,15 +41,22 @@ struct IndexContext {
     user_count: i64,
     glider_count: i64,
     flight_count: i64,
+    flashes: Vec<crate::flash::FlashMessage>,
 }
 
 #[get("/")]
-fn index(db: data::Database, user: Option<auth::AuthUser>) -> Template {
+fn index(db: data::Database, user: Option<auth::AuthUser>, flash: Option<FlashMessage>) -> Template {
+    let flash_messages = if let Some(f) = flash {
+        vec![crate::flash::FlashMessage::from(f)]
+    } else {
+        Vec::new()
+    };
     let context = IndexContext {
         user: user.map(|u| u.into_inner()),
         user_count: data::get_user_count(&db),
         glider_count: data::get_glider_count(&db),
         flight_count: data::get_flight_count(&db),
+        flashes: flash_messages,
     };
     Template::render("index", &context)
 }
