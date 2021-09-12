@@ -9,7 +9,7 @@
     <div class="field">
         <label class="label" for="username">Username</label>
         <div class="control has-icons-left">
-            <input class="input" type="text" name="username" id="username" value="" required />
+            <input class="input" type="text" name="username" id="username" value="" required>
             <span class="icon is-small is-left">
                 <i class="fas fa-user"></i>
             </span>
@@ -18,7 +18,7 @@
     <div class="field">
         <label class="label" for="email">Email</label>
         <div class="control has-icons-left">
-            <input class="input" type="text" name="email" id="email" value="" required />
+            <input class="input" type="text" name="email" id="email" value="" required>
             <span class="icon is-small is-left">
                 <i class="fas fa-envelope"></i>
             </span>
@@ -27,7 +27,7 @@
     <div class="field">
         <label class="label" for="password">Password</label>
         <div class="control has-icons-left">
-            <input class="input" type="password" name="password" id="password" value="" required />
+            <input class="input" type="password" name="password" id="password" value="" required>
             <span class="icon is-small is-left">
                 <i class="fas fa-lock"></i>
             </span>
@@ -51,6 +51,6 @@
         </div>
     </div>
 
-    <a href="/auth/login">Already have an account? Login in now!</a>
+    <p>Already have an account? <a href="/auth/login">Log in now!<a></p>
 </form>
 {% endblock %}

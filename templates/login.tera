@@ -30,6 +30,6 @@
         </div>
     </div>
 
-    <a href="/auth/registration">Don't have an account yet? Register a new account</a>
+    <p>Don't have an account yet? <a href="/auth/registration">Register now!<a></p>
 </form>
 {% endblock %}

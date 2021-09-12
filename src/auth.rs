@@ -121,12 +121,12 @@ pub fn registration(
 ) -> Result<Redirect, Flash<Redirect>> {
     macro_rules! fail {
         ($msg:expr) => {{
-            log::error!("Was not able to register user: \n{}", $msg);
+            log::error!("Was not able to register user: {}", $msg);
             return Err(Flash::error(Redirect::to(uri!(registration_page)), $msg));
         }};
     }
 
-    let (valid_registration, error_attribute) = data::validate_registration(
+    let registrationResult = data::validate_registration(
         &db,
         &registration.email,
         &registration.username,
@@ -134,22 +134,20 @@ pub fn registration(
         &registration.password_confirmation,
     );
 
-    if valid_registration {
-        let new_user = data::create_user(
-            &db,
-            &registration.username,
-            &registration.password,
-            &registration.email,
-        );
-        cookies.add_private(Cookie::new(USER_COOKIE_ID, new_user.id.to_string()));
-        Ok(Redirect::to("/"))
-    } else {
-        match error_attribute.as_ref() {
-            "email" => fail!("Invalid email format or email is not unique"),
-            "password_confirmation" => fail!("Password and password confirmation do not match"),
-            "username" => fail!("Username is not unique"),
-            _ => fail!("The reason for the failure is not known"),
-        }
+    match registrationResult {
+        Ok(_) => {
+            let new_user = data::create_user(
+                &db,
+                &registration.username,
+                &registration.password,
+                &registration.email,
+            );
+            cookies.add_private(Cookie::new(USER_COOKIE_ID, new_user.id.to_string()));
+            Ok(Redirect::to("/"))
+        },
+        Err(error) => {
+            fail!(format!("{}", error))
+        },
     }
 }
 
