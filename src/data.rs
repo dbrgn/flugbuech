@@ -82,11 +82,11 @@ impl fmt::Display for RegistrationError {
             RegistrationError::InvalidEmail => write!(f, "Invalid email format or email is not unique"),
             RegistrationError::InvalidPasswordFormat => {
                 write!(f, "Password is too short or does not match format")
-            }
+            },
             RegistrationError::NonUniqueUsername => write!(f, "Username is not unique"),
             RegistrationError::PasswordConfirmation => {
                 write!(f, "Password and password confirmation do not match")
-            }
+            },
         }
     }
 }
@@ -632,7 +632,6 @@ mod tests {
 
     #[test]
     fn test_invalid_email() {
-        assert_eq!(validate_email("email.peter@gmail.com"), Ok(()));
         assert_eq!(validate_email("email.peter@gmail.com").is_ok(), true);
         assert_eq!(validate_email("email@gmail.com").is_ok(), true);
         assert_eq!(validate_email("em123@gmail.com").is_ok(), true);
