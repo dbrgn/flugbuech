@@ -62,7 +62,7 @@ pub fn get_user(conn: &PgConnection, id: i32) -> Option<User> {
         .ok()
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum RegistrationError {
     /// E-Mail is invalid or already registered
     InvalidEmail,
@@ -614,6 +614,75 @@ mod tests {
     use crate::test_utils;
 
     use super::*;
+
+    #[test]
+    fn test_invalid_email() {
+        assert_eq!(validate_email("email.peter@gmail.com").is_ok(), true);
+        assert_eq!(validate_email("email@gmail.com").is_ok(), true);
+        assert_eq!(validate_email("em123@gmail.com").is_ok(), true);
+        assert_eq!(validate_email("em+@gmail.com").is_ok(), true);
+        assert_eq!(validate_email("@gmail.com"), Err(RegistrationError::InvalidEmail));
+        assert_eq!(
+            validate_email("@gmail1.com"),
+            Err(RegistrationError::InvalidEmail)
+        );
+        assert_eq!(validate_email("@peter.com"), Err(RegistrationError::InvalidEmail));
+        assert_eq!(
+            validate_email("petergmail1.com"),
+            Err(RegistrationError::InvalidEmail)
+        );
+    }
+
+    #[test]
+    fn test_duplicate_username() {
+        let ctx = test_utils::DbTestContext::new();
+        assert_eq!(
+            validate_unique_registration_fields(&*ctx.force_get_conn(), "email@email.ch", "user"),
+            Ok(())
+        );
+        assert_eq!(
+            validate_unique_registration_fields(&*ctx.force_get_conn(), "example@example.com", "testuser1"),
+            Err(RegistrationError::NonUniqueUsername)
+        );
+        assert_eq!(
+            validate_unique_registration_fields(&*ctx.force_get_conn(), "user1@example.com", "username"),
+            Err(RegistrationError::InvalidEmail)
+        );
+    }
+
+    #[test]
+    fn test_non_matching_password_confirmation() {
+        assert_eq!(
+            validate_password_confirmation_match("password", "password").is_ok(),
+            true
+        );
+        assert_eq!(
+            validate_password_confirmation_match("password123", "password123").is_ok(),
+            true
+        );
+        assert_eq!(
+            validate_password_confirmation_match("password", "password123"),
+            Err(RegistrationError::PasswordConfirmation)
+        );
+        assert_eq!(
+            validate_password_confirmation_match("password123", "password"),
+            Err(RegistrationError::PasswordConfirmation)
+        );
+    }
+
+    #[test]
+    fn test_invalid_password_format() {
+        assert_eq!(validate_password_format("password123").is_ok(), true);
+        assert_eq!(validate_password_format("password").is_ok(), true);
+        assert_eq!(
+            validate_password_format("passwor"),
+            Err(RegistrationError::InvalidPasswordFormat)
+        );
+        assert_eq!(
+            validate_password_format(""),
+            Err(RegistrationError::InvalidPasswordFormat)
+        );
+    }
 
     #[test]
     fn test_get_max_flight_number_for_user() {
