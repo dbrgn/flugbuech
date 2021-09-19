@@ -1,8 +1,7 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use diesel::sql_types::{BigInt, Bool, Date, Double, Integer, Nullable, Text};
 use diesel::{Associations, Identifiable, Queryable};
-use diesel_geography::sql_types::Geography;
-use diesel_geography::types::GeogPoint;
+use diesel_geography::{sql_types::Geography, types::GeogPoint};
 use serde::Serialize;
 
 use crate::schema::{flights, gliders, igcs, locations, users};

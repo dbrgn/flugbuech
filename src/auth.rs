@@ -59,7 +59,7 @@ impl<'r> FromRequest<'r> for AuthUser {
             Ok(int) => int,
             Err(_) => return Outcome::Forward(()),
         };
-        match database.run(move |db| data::get_user(&db, id)).await {
+        match database.run(move |db| data::get_user(db, id)).await {
             Some(user) => Outcome::Success(AuthUser(user)),
             None => {
                 error!("Login cookie with invalid user id found. Removing cookie.");
@@ -85,7 +85,7 @@ pub async fn login(
     database: Database,
 ) -> Result<Redirect, Flash<Redirect>> {
     match database
-        .run(move |db| data::validate_login(&db, &login.username, &login.password))
+        .run(move |db| data::validate_login(db, &login.username, &login.password))
         .await
     {
         Some(user) => {
@@ -164,7 +164,7 @@ pub async fn registration(
     let registration_result = database
         .run(move |db| {
             data::validate_registration(
-                &db,
+                db,
                 &registration_clone.email,
                 &registration_clone.username,
                 &registration_clone.password,
@@ -178,7 +178,7 @@ pub async fn registration(
             let new_user = database
                 .run(move |db| {
                     data::create_user(
-                        &db,
+                        db,
                         &registration.username,
                         &registration.password,
                         &registration.email,
@@ -254,7 +254,7 @@ pub async fn password_change(
     // Verify current password
     let user_clone = user.clone();
     match database
-        .run(move |db| data::validate_login(&db, &user_clone.username, &pw_current))
+        .run(move |db| data::validate_login(db, &user_clone.username, &pw_current))
         .await
     {
         Some(u) if u.id == user.id => { /* Valid password */ }
@@ -264,7 +264,7 @@ pub async fn password_change(
 
     // Update password
     database
-        .run(move |db| data::update_password(&db, &user, &pw_new))
+        .run(move |db| data::update_password(db, &user, &pw_new))
         .await;
     Flash::success(Redirect::to(uri!(crate::profile::view)), "Password changed")
 }

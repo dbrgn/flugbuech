@@ -70,9 +70,9 @@ async fn index(
     let (user_count, glider_count, flight_count) = database
         .run(|db| {
             (
-                data::get_user_count(&db),
-                data::get_glider_count(&db),
-                data::get_flight_count(&db),
+                data::get_user_count(db),
+                data::get_glider_count(db),
+                data::get_flight_count(db),
             )
         })
         .await;

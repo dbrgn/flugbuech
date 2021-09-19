@@ -56,7 +56,7 @@ pub async fn list(
     let flights = database
         .run({
             let user = user.clone();
-            move |db| data::get_flights_for_user(&db, &user)
+            move |db| data::get_flights_for_user(db, &user)
         })
         .await;
 
@@ -64,7 +64,7 @@ pub async fn list(
     let glider_map = database
         .run({
             let user = user.clone();
-            move |db| data::get_gliders_for_user(&db, &user)
+            move |db| data::get_gliders_for_user(db, &user)
         })
         .await
         .into_iter()
@@ -75,12 +75,12 @@ pub async fn list(
     let mut location_ids = flights
         .iter()
         .flat_map(|flight| vec![flight.launch_at, flight.landing_at])
-        .filter_map(|opt| opt)
+        .flatten()
         .collect::<Vec<_>>();
     location_ids.sort_unstable();
     location_ids.dedup();
     let location_map = database
-        .run(move |db| data::get_locations_with_ids(&db, &location_ids))
+        .run(move |db| data::get_locations_with_ids(db, &location_ids))
         .await
         .into_iter()
         .map(|location| (location.id, location))
@@ -90,7 +90,7 @@ pub async fn list(
     let flights_with_igc = database
         .run({
             let user = user.clone();
-            move |db| data::get_flight_ids_with_igc_for_user(&db, &user)
+            move |db| data::get_flight_ids_with_igc_for_user(db, &user)
         })
         .await;
 
@@ -163,7 +163,7 @@ pub async fn flight(id: i32, database: data::Database, user: auth::AuthUser) -> 
     let user = user.into_inner();
 
     // Get flight
-    let flight = match database.run(move |db| data::get_flight_with_id(&db, id)).await {
+    let flight = match database.run(move |db| data::get_flight_with_id(db, id)).await {
         Some(flight) => Arc::new(flight),
         None => return Err(Status::NotFound),
     };
@@ -177,7 +177,7 @@ pub async fn flight(id: i32, database: data::Database, user: auth::AuthUser) -> 
     let has_igc = database
         .run({
             let flight = flight.clone();
-            move |db| data::flight_has_igc(&db, &flight)
+            move |db| data::flight_has_igc(db, &flight)
         })
         .await;
 
@@ -185,19 +185,19 @@ pub async fn flight(id: i32, database: data::Database, user: auth::AuthUser) -> 
     let launch_at = database
         .run({
             let flight = flight.clone();
-            move |db| flight.launch_at.and_then(|id| data::get_location_by_id(&db, id))
+            move |db| flight.launch_at.and_then(|id| data::get_location_by_id(db, id))
         })
         .await;
     let landing_at = database
         .run({
             let flight = flight.clone();
-            move |db| flight.landing_at.and_then(|id| data::get_location_by_id(&db, id))
+            move |db| flight.landing_at.and_then(|id| data::get_location_by_id(db, id))
         })
         .await;
     let glider = database
         .run({
             let flight = flight.clone();
-            move |db| flight.glider_id.and_then(|id| data::get_glider_with_id(&db, id))
+            move |db| flight.glider_id.and_then(|id| data::get_glider_with_id(db, id))
         })
         .await;
 
@@ -271,7 +271,7 @@ pub async fn igc_download(
     let user = user.into_inner();
 
     // Get flight
-    let flight = match database.run(move |db| data::get_flight_with_id(&db, id)).await {
+    let flight = match database.run(move |db| data::get_flight_with_id(db, id)).await {
         Some(flight) => flight,
         None => return Err(Status::NotFound),
     };
@@ -284,7 +284,7 @@ pub async fn igc_download(
     // Get IGC data
     let flight_id = flight.id;
     match database
-        .run(move |db| data::get_igc_for_flight(&db, &flight))
+        .run(move |db| data::get_igc_for_flight(db, &flight))
         .await
     {
         Some(igc) => Ok(FileAttachment::new(
@@ -349,7 +349,7 @@ impl FlightForm {
         // Extract and validate glider
         let glider = match self.glider {
             Some(id) => {
-                match database.run(move |db| data::get_glider_with_id(&db, id)).await {
+                match database.run(move |db| data::get_glider_with_id(db, id)).await {
                     Some(glider) => {
                         // Validate ownership
                         if glider.user_id != user.id {
@@ -471,9 +471,9 @@ pub async fn submit_form(user: auth::AuthUser, database: data::Database) -> Temp
             let user = user.clone();
             move |db| {
                 (
-                    data::get_gliders_for_user(&db, &user),
-                    data::get_locations_for_user(&db, &user),
-                    data::get_max_flight_number_for_user(&db, &user),
+                    data::get_gliders_for_user(db, &user),
+                    data::get_locations_for_user(db, &user),
+                    data::get_max_flight_number_for_user(db, &user),
                 )
             }
         })
@@ -509,9 +509,9 @@ pub async fn submit(
             let user = user.clone();
             move |db| {
                 (
-                    data::get_gliders_for_user(&db, &user),
-                    data::get_locations_for_user(&db, &user),
-                    data::get_max_flight_number_for_user(&db, &user),
+                    data::get_gliders_for_user(db, &user),
+                    data::get_locations_for_user(db, &user),
+                    data::get_max_flight_number_for_user(db, &user),
                 )
             }
         })
@@ -548,10 +548,10 @@ pub async fn submit(
         // Insert flight into database
         database
             .run(move |db| {
-                data::create_flight(&db, &new_flight, igc);
+                data::create_flight(db, &new_flight, igc);
                 log::info!("Created flight for user {}", user.id);
                 if let Some(glider_id) = new_flight.glider_id {
-                    data::update_user_last_glider(&db, &user, glider_id);
+                    data::update_user_last_glider(db, &user, glider_id);
                 }
             })
             .await;
@@ -577,9 +577,9 @@ pub async fn edit_form(
             let user = user.clone();
             move |db| {
                 (
-                    data::get_gliders_for_user(&db, &user),
-                    data::get_locations_for_user(&db, &user),
-                    data::get_flight_with_id(&db, id),
+                    data::get_gliders_for_user(db, &user),
+                    data::get_locations_for_user(db, &user),
+                    data::get_flight_with_id(db, id),
                 )
             }
         })
@@ -630,7 +630,7 @@ pub async fn edit(
     }
 
     // Get flight
-    let mut flight = match database.run(move |db| data::get_flight_with_id(&db, id)).await {
+    let mut flight = match database.run(move |db| data::get_flight_with_id(db, id)).await {
         Some(flight) => flight,
         None => return EditResponse::Error(Status::NotFound),
     };
@@ -670,10 +670,10 @@ pub async fn edit(
     // TODO: Error handling
     database
         .run(move |db| {
-            data::update_flight(&db, &flight);
+            data::update_flight(db, &flight);
             if let Some(data) = igc {
                 // We don't want to overwrite IGC data with nothing.
-                data::update_igc(&db, &flight, &data);
+                data::update_igc(db, &flight, &data);
             }
         })
         .await;
@@ -697,7 +697,7 @@ pub async fn delete_form(
     let user = user.into_inner();
 
     // Get data
-    let flight = match database.run(move |db| data::get_flight_with_id(&db, id)).await {
+    let flight = match database.run(move |db| data::get_flight_with_id(db, id)).await {
         Some(flight) => flight,
         None => return Err(Status::NotFound),
     };
@@ -721,7 +721,7 @@ pub async fn delete(
     let user = user.into_inner();
 
     // Get data
-    let flight = match database.run(move |db| data::get_flight_with_id(&db, id)).await {
+    let flight = match database.run(move |db| data::get_flight_with_id(db, id)).await {
         Some(flight) => flight,
         None => return Err(Status::NotFound),
     };
@@ -734,7 +734,7 @@ pub async fn delete(
     // Delete database entry
     let flight_id = flight.id;
     database
-        .run(move |db| data::delete_flight(&db, flight))
+        .run(move |db| data::delete_flight(db, flight))
         .await
         .map(|()| {
             log::info!("Deleted flight with ID {}", flight_id);

@@ -66,7 +66,7 @@ pub async fn list(database: data::Database, user: auth::AuthUser) -> Template {
     let gliders = database
         .run({
             let user = user.clone();
-            move |db| data::get_gliders_with_stats_for_user(&db, &user)
+            move |db| data::get_gliders_with_stats_for_user(db, &user)
         })
         .await;
 
@@ -141,7 +141,7 @@ pub async fn add(user: auth::AuthUser, database: data::Database, data: Form<Glid
     };
 
     // Create database entry
-    match database.run(move |db| data::create_glider(&db, glider)).await {
+    match database.run(move |db| data::create_glider(db, glider)).await {
         Ok(_) => {
             // Glider created, redirect to glider list
             log::info!("Created glider for user {}", user.id);
@@ -170,7 +170,7 @@ pub async fn edit_form(user: auth::AuthUser, database: data::Database, id: i32) 
 
     // Get glider
     let glider = database
-        .run(move |db| data::get_glider_with_id(&db, id))
+        .run(move |db| data::get_glider_with_id(db, id))
         .await
         .ok_or(Status::NotFound)?;
 
@@ -199,7 +199,7 @@ pub async fn edit(
 
     // Get glider
     let mut glider = database
-        .run(move |db| data::get_glider_with_id(&db, id))
+        .run(move |db| data::get_glider_with_id(db, id))
         .await
         .ok_or(Status::NotFound)?;
 
@@ -229,7 +229,7 @@ pub async fn edit(
 
     // Update database
     // TODO: Error handling
-    database.run(move |db| data::update_glider(&db, &glider)).await;
+    database.run(move |db| data::update_glider(db, &glider)).await;
 
     // Render template
     Ok(Redirect::to(uri!(list)))
@@ -238,13 +238,12 @@ pub async fn edit(
 #[cfg(test)]
 mod tests {
     use chrono::NaiveDate;
-    use rocket::http::ContentType;
-    use rocket::local::blocking::Client;
-    use rocket::{self, routes};
+    use rocket::{self, http::ContentType, local::blocking::Client, routes};
 
-    use crate::flights;
-    use crate::templates;
-    use crate::test_utils::{make_test_config, DbTestContext};
+    use crate::{
+        flights, templates,
+        test_utils::{make_test_config, DbTestContext},
+    };
 
     use super::*;
 

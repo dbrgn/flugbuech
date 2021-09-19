@@ -3,8 +3,10 @@
 use std::io::{self, BufRead, BufReader, Cursor};
 
 use flat_projection::{FlatPoint, FlatProjection};
-use igc::records::{HRecord, Record};
-use igc::util::RawPosition;
+use igc::{
+    records::{HRecord, Record},
+    util::RawPosition,
+};
 use num_traits::Float;
 use rocket::{
     data::{Data, ToByteUnit},
@@ -105,7 +107,7 @@ fn parse_igc(reader: impl BufRead, user: &models::User, db: &diesel::PgConnectio
 
     for line_bytes in &lines {
         let line = String::from_utf8_lossy(line_bytes);
-        match Record::parse_line(&line.trim()) {
+        match Record::parse_line(line.trim()) {
             Ok(Record::H(h @ HRecord { mnemonic: "PLT", .. })) => {
                 info.pilot = Some(h.data.trim().into());
             }
@@ -184,13 +186,13 @@ fn parse_igc(reader: impl BufRead, user: &models::User, db: &diesel::PgConnectio
     let max_distance = 1000.0;
     if let Some(ref mut launch) = info.launch {
         launch.location_id =
-            data::get_locations_around_point(&db, &user, launch.pos.lat, launch.pos.lng, max_distance)
+            data::get_locations_around_point(db, user, launch.pos.lat, launch.pos.lng, max_distance)
                 .get(0)
                 .map(|location| location.id);
     }
     if let Some(ref mut landing) = info.landing {
         landing.location_id =
-            data::get_locations_around_point(&db, &user, landing.pos.lat, landing.pos.lng, max_distance)
+            data::get_locations_around_point(db, user, landing.pos.lat, landing.pos.lng, max_distance)
                 .get(0)
                 .map(|location| location.id);
     }
@@ -231,7 +233,7 @@ pub async fn process_igc(
     let buf_reader = BufReader::new(Cursor::new(igc_bytes));
 
     // Process data
-    Json(database.run(move |db| parse_igc(buf_reader, &user, &db)).await)
+    Json(database.run(move |db| parse_igc(buf_reader, &user, db)).await)
 }
 
 #[cfg(test)]

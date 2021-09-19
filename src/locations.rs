@@ -53,7 +53,7 @@ pub async fn view(user: auth::AuthUser, database: data::Database, id: i32) -> Re
 
     // Get data
     let location = match database
-        .run(move |db| data::get_location_with_flight_count_by_id(&db, id))
+        .run(move |db| data::get_location_with_flight_count_by_id(db, id))
         .await
     {
         Some(location) => location,
@@ -82,7 +82,7 @@ pub async fn list(
     let locations = database
         .run({
             let user = user.clone();
-            move |db| data::get_all_locations_with_stats_for_user(&db, &user)
+            move |db| data::get_all_locations_with_stats_for_user(db, &user)
         })
         .await;
 
@@ -143,7 +143,7 @@ pub async fn add(user: auth::AuthUser, database: data::Database, data: Form<Loca
 
     // Create database entry
     // TODO: Error handling
-    database.run(move |db| data::create_location(&db, location)).await;
+    database.run(move |db| data::create_location(db, location)).await;
     log::info!("Created location for user {}", user.id);
 
     // Redirect to location list
@@ -156,7 +156,7 @@ pub async fn edit_form(user: auth::AuthUser, database: data::Database, id: i32) 
 
     // Get location
     let location = match database
-        .run(move |db| data::get_location_with_flight_count_by_id(&db, id))
+        .run(move |db| data::get_location_with_flight_count_by_id(db, id))
         .await
     {
         Some(location) => location,
@@ -183,7 +183,7 @@ pub async fn edit(
     let user = user.into_inner();
 
     // Get location
-    let mut location = match database.run(move |db| data::get_location_by_id(&db, id)).await {
+    let mut location = match database.run(move |db| data::get_location_by_id(db, id)).await {
         Some(location) => location,
         None => return Err(Status::NotFound),
     };
@@ -216,9 +216,7 @@ pub async fn edit(
 
     // Update database
     // TODO: Error handling
-    database
-        .run(move |db| data::update_location(&db, &location))
-        .await;
+    database.run(move |db| data::update_location(db, &location)).await;
 
     // Render template
     Ok(Redirect::to(uri!(list)))
@@ -234,7 +232,7 @@ pub async fn delete_form(
 
     // Get data
     let location = match database
-        .run(move |db| data::get_location_with_flight_count_by_id(&db, id))
+        .run(move |db| data::get_location_with_flight_count_by_id(db, id))
         .await
     {
         Some(location) => location,
@@ -267,7 +265,7 @@ pub async fn delete(
 
     // Get data
     let location = match database
-        .run(move |db| data::get_location_with_flight_count_by_id(&db, id))
+        .run(move |db| data::get_location_with_flight_count_by_id(db, id))
         .await
     {
         Some(location) => location,
@@ -288,7 +286,7 @@ pub async fn delete(
     // Delete database entry
     let location_id = location.id;
     database
-        .run(move |db| data::delete_location_by_id(&db, location_id))
+        .run(move |db| data::delete_location_by_id(db, location_id))
         .await
         .map(|()| {
             log::info!("Deleted location with ID {}", location.id);

@@ -22,14 +22,14 @@ pub struct TestUser {
     pub password: String,
 }
 
-pub(crate) struct DbTestContext<'a> {
+pub struct DbTestContext<'a> {
     /// The database connection.
-    pub(crate) conn: Mutex<PgConnection>,
+    pub conn: Mutex<PgConnection>,
 
     /// A pre-created test user.
-    pub(crate) testuser1: TestUser,
+    pub testuser1: TestUser,
     /// A pre-created test user.
-    pub(crate) testuser2: TestUser,
+    pub testuser2: TestUser,
 
     /// Used to prevent concurrent database access.
     #[allow(dead_code)]

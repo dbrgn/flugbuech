@@ -47,33 +47,25 @@ pub async fn stats(database: data::Database, user: auth::AuthUser) -> Template {
     let context = database
         .run(move |db| {
             // Get all locations
-            let launch_locations = data::get_visited_locations_with_stats_for_user(
-                &db,
-                &user,
-                LocationAggregateBy::Launches,
-                10,
-            );
-            let landing_locations = data::get_visited_locations_with_stats_for_user(
-                &db,
-                &user,
-                LocationAggregateBy::Landings,
-                10,
-            );
+            let launch_locations =
+                data::get_visited_locations_with_stats_for_user(db, &user, LocationAggregateBy::Launches, 10);
+            let landing_locations =
+                data::get_visited_locations_with_stats_for_user(db, &user, LocationAggregateBy::Landings, 10);
 
             // Yearly stats map
             let mut yearly_stats: BTreeMap<u16, YearStats> = BTreeMap::new();
 
             // Determine data completeness
-            let flights_without_launch_time = data::get_flight_count_without_launch_time(&db, &user) as u64;
+            let flights_without_launch_time = data::get_flight_count_without_launch_time(db, &user) as u64;
 
             // Get flight count per year
-            for count in data::get_flight_count_per_year_for_user(&db, &user) {
+            for count in data::get_flight_count_per_year_for_user(db, &user) {
                 yearly_stats.entry(count.year as u16).or_default().flight_count = Some(count.count as u32);
             }
             let flight_count_total = yearly_stats.values().filter_map(|s| s.flight_count).sum();
 
             // Get hike&fly count per year
-            for count in data::get_hikeandfly_count_per_year_for_user(&db, &user) {
+            for count in data::get_hikeandfly_count_per_year_for_user(db, &user) {
                 yearly_stats
                     .entry(count.year as u16)
                     .or_default()
@@ -82,13 +74,13 @@ pub async fn stats(database: data::Database, user: auth::AuthUser) -> Template {
             let hikeandfly_count_total = yearly_stats.values().filter_map(|s| s.hikeandfly_count).sum();
 
             // Get hours per year
-            for time in data::get_flight_time_per_year_for_user(&db, &user) {
+            for time in data::get_flight_time_per_year_for_user(db, &user) {
                 yearly_stats.entry(time.year as u16).or_default().flight_seconds = Some(time.seconds as u64);
             }
             let flight_time_total = yearly_stats.values().filter_map(|s| s.flight_seconds).sum();
 
             // Get km per year
-            for distance in data::get_flight_distance_per_year_for_user(&db, &user) {
+            for distance in data::get_flight_distance_per_year_for_user(db, &user) {
                 let mut stats = yearly_stats.entry(distance.year as u16).or_default();
                 stats.distance_track = distance.track;
                 stats.distance_track_incomplete = distance.track_incomplete;
