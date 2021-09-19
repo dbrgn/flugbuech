@@ -8,11 +8,11 @@ pub struct FlashMessage {
     pub msg: String,
 }
 
-impl<'a, 'r> From<rocket::request::FlashMessage<'a, 'r>> for FlashMessage {
+impl<'a> From<rocket::request::FlashMessage<'a>> for FlashMessage {
     fn from(f: rocket::request::FlashMessage) -> Self {
         FlashMessage {
-            name: f.name().to_string(),
-            msg: f.msg().to_string(),
+            name: f.kind().to_string(),
+            msg: f.message().to_string(),
         }
     }
 }

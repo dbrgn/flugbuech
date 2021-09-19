@@ -1,7 +1,7 @@
 use std::fmt;
 
 /// Data that is passed in as URL safe Base64
-pub(crate) struct Base64Data(pub(crate) Vec<u8>);
+pub struct Base64Data(pub Vec<u8>);
 
 impl fmt::Debug for Base64Data {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

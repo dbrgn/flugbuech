@@ -1,11 +1,13 @@
+//! Tera template filters.
+
 use std::collections::HashMap;
 
-use rocket_contrib::templates::tera::{self, Number, Value};
+use rocket_dyn_templates::tera::{self, Number, Value};
 
 /// Convert seconds into a hour/minute duration string.
-pub fn duration(value: Value, _: HashMap<String, Value>) -> tera::Result<Value> {
+pub fn duration(value: &Value, _: &HashMap<String, Value>) -> tera::Result<Value> {
     let num: Number = match value {
-        Value::Number(num) => num,
+        Value::Number(num) => num.to_owned(),
         _ => return Err("The duration filter can only be applied to numbers".into()),
     };
     let seconds: u64 = match num.as_u64() {
@@ -21,9 +23,9 @@ pub fn duration(value: Value, _: HashMap<String, Value>) -> tera::Result<Value> 
 ///
 /// If the string value is not a valid tracktype, the value is returned
 /// unmodified.
-pub fn xcontest_icon(value: Value, _: HashMap<String, Value>) -> tera::Result<Value> {
+pub fn xcontest_icon(value: &Value, _: &HashMap<String, Value>) -> tera::Result<Value> {
     let tracktype: String = if let Value::String(s) = value {
-        s
+        s.to_string()
     } else {
         return Err("The xcontest_icon filter can only be applied to strings".into());
     };
@@ -37,9 +39,9 @@ pub fn xcontest_icon(value: Value, _: HashMap<String, Value>) -> tera::Result<Va
 }
 
 /// Convert line breaks to HTML newlines.
-pub fn linebreaksbr(value: Value, _: HashMap<String, Value>) -> tera::Result<Value> {
+pub fn linebreaksbr(value: &Value, _: &HashMap<String, Value>) -> tera::Result<Value> {
     let text: String = if let Value::String(s) = value {
-        s
+        s.to_string()
     } else {
         return Err("The linebreaksbr filter can only be applied to strings".into());
     };

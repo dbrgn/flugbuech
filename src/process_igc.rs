@@ -1,14 +1,16 @@
 //! Process IGC files and extract relevant information.
 
-use std::io::{self, BufRead, BufReader, Read};
+use std::io::{self, BufRead, BufReader, Cursor};
 
 use flat_projection::{FlatPoint, FlatProjection};
 use igc::records::{HRecord, Record};
 use igc::util::RawPosition;
 use num_traits::Float;
-use rocket::data::Data;
-use rocket::post;
-use rocket_contrib::json::Json;
+use rocket::{
+    data::{Data, ToByteUnit},
+    post,
+    serde::json::Json,
+};
 use serde::Serialize;
 
 use crate::{auth, data, models};
@@ -28,7 +30,7 @@ struct LaunchLandingInfo {
 }
 
 #[derive(Default, Debug, PartialEq, Serialize)]
-pub(crate) struct FlightInfo {
+pub struct FlightInfo {
     /// Name of the pilot, as configured in the flight instrument.
     pilot: Option<String>,
     /// Name of the glider, as configured in the flight instrument.
@@ -48,7 +50,7 @@ pub(crate) struct FlightInfo {
 #[derive(Debug, Serialize)]
 #[serde(tag = "type")]
 #[serde(rename_all = "lowercase")]
-pub(crate) enum FlightInfoResult {
+pub enum FlightInfoResult {
     Success(FlightInfo),
     Error { msg: String },
 }
@@ -90,7 +92,7 @@ fn parse_igc(reader: impl BufRead, user: &models::User, db: &diesel::PgConnectio
             return FlightInfoResult::Error {
                 msg: format!("I/O Error: {}", e),
             }
-        },
+        }
     };
 
     // Prepare FlightInfo instance
@@ -106,13 +108,13 @@ fn parse_igc(reader: impl BufRead, user: &models::User, db: &diesel::PgConnectio
         match Record::parse_line(&line.trim()) {
             Ok(Record::H(h @ HRecord { mnemonic: "PLT", .. })) => {
                 info.pilot = Some(h.data.trim().into());
-            },
+            }
             Ok(Record::H(h @ HRecord { mnemonic: "GTY", .. })) => {
                 info.glidertype = Some(h.data.trim().into());
-            },
+            }
             Ok(Record::H(h @ HRecord { mnemonic: "SIT", .. })) => {
                 info.site = Some(h.data.trim().into());
-            },
+            }
             Ok(Record::H(h @ HRecord { mnemonic: "DTE", .. })) => {
                 let string_val = h.data.trim();
                 // Date formats:
@@ -130,7 +132,7 @@ fn parse_igc(reader: impl BufRead, user: &models::User, db: &diesel::PgConnectio
                 } else {
                     log::warn!("Unexpected H record DTE format: {:?}", h);
                 }
-            },
+            }
             Ok(Record::B(b)) => {
                 // Extract raw float coordinates
                 let RawPosition {
@@ -167,13 +169,13 @@ fn parse_igc(reader: impl BufRead, user: &models::User, db: &diesel::PgConnectio
                         location_id: None,
                     });
                 }
-            },
-            Ok(_rec) => {},
+            }
+            Ok(_rec) => {}
             Err(e) => {
                 return FlightInfoResult::Error {
                     msg: format!("Error parsing lines: {:?}", e),
                 }
-            },
+            }
         }
     }
     info.track_distance = flight_path.length();
@@ -204,21 +206,36 @@ fn parse_igc(reader: impl BufRead, user: &models::User, db: &diesel::PgConnectio
     format = "application/octet-stream",
     data = "<data>"
 )]
-pub(crate) fn process_igc(data: Data, user: auth::AuthUser, db: data::Database) -> Json<FlightInfoResult> {
+pub async fn process_igc(
+    data: Data<'_>,
+    user: auth::AuthUser,
+    database: data::Database,
+) -> Json<FlightInfoResult> {
     let user = user.into_inner();
 
     // Open IGC file
-    let reader = data.open().take(crate::MAX_UPLOAD_BYTES);
-    let buf_reader = BufReader::new(reader);
+    let igc_bytes = match data.open(crate::MAX_UPLOAD_BYTES.bytes()).into_bytes().await {
+        Ok(capped_vec) if capped_vec.is_complete() => capped_vec.into_inner(),
+        Ok(_) => {
+            return Json(FlightInfoResult::Error {
+                msg: "Too many bytes received while reading IGC data".into(),
+            })
+        }
+        Err(e) => {
+            log::error!("Error while reading IGC data: {}", e);
+            return Json(FlightInfoResult::Error {
+                msg: "Error while reading IGC data".into(),
+            });
+        }
+    };
+    let buf_reader = BufReader::new(Cursor::new(igc_bytes));
 
     // Process data
-    Json(parse_igc(buf_reader, &user, &db))
+    Json(database.run(move |db| parse_igc(buf_reader, &user, &db)).await)
 }
 
 #[cfg(test)]
 mod tests {
-    use std::io::Cursor;
-
     use crate::test_utils::DbTestContext;
 
     use super::*;
@@ -267,11 +284,13 @@ mod tests {
         );
         assert!(
             info.track_distance > 1.98988,
-            format!("Track distance is {:?}, not >1.98988", info.track_distance)
+            "Track distance is {:?}, not >1.98988",
+            info.track_distance
         );
         assert!(
             info.track_distance < 1.98989,
-            format!("Track distance is {:?}, not <1.98989", info.track_distance)
+            "Track distance is {:?}, not <1.98989",
+            info.track_distance
         );
     }
 

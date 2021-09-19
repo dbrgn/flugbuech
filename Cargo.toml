@@ -6,25 +6,23 @@ edition = "2018"
 license = "AGPL-3.0"
 
 [dependencies]
+anyhow = "1"
 base64 = "0.13"
 chrono = { version = "0.4", features = ["serde"] }
 clap = "2"
 diesel = { version = "1.4", features = ["postgres", "chrono"] }
-diesel-geography = { version = "0.2", features = ["serde"], git = "https://github.com/dbrgn/diesel-geography", branch = "geography-queryid" }
+diesel-geography = { version = "0.2", features = ["serde"], git = "https://github.com/Boscop/diesel-geography", branch = "master" }
 diesel_migrations = { version = "1.4", features = ["postgres"] }
 dotenv = "0.15"
 flat_projection = "0.4"
 igc = "0.2"
 log = "0.4"
 num-traits = "0.2"
-rocket = { version = "0.4", default-features = false, features = ["private-cookies"] }
+rocket = { version = "0.5.0-rc.1", features = ["secrets", "json"], default-features = false }
+rocket_dyn_templates = { version = "0.1.0-rc.1", features = ["tera"], default-features = false }
+rocket_sync_db_pools = { version = "0.1.0-rc.1", features = ["diesel_postgres_pool"], default-features = false }
 serde = { version = "1", features = ["derive"] }
 regex = "1.5.4"
-
-[dependencies.rocket_contrib]
-version = "0.4"
-default-features = false
-features = ["diesel_postgres_pool", "json", "serve", "tera_templates"]
 
 [dev-dependencies]
 lazy_static = "1"

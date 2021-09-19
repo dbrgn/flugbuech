@@ -1,5 +1,7 @@
+use std::borrow::Cow;
+
 use chrono::naive::{NaiveDate, NaiveTime};
-use rocket::{http::RawStr, request::FromFormValue};
+use rocket::form::{self, FromFormField, ValueField};
 
 use crate::base64::Base64Data;
 
@@ -21,71 +23,104 @@ impl<T> OptionResult<T> {
     }
 }
 
-impl<'v> FromFormValue<'v> for OptionResult<NaiveDate> {
-    type Error = String;
-    fn from_form_value(form_value: &'v RawStr) -> Result<Self, Self::Error> {
-        if form_value.trim().is_empty() {
+/// Parse naive dates in ISO format (YYYY-MM-DD).
+///
+/// Return None if the field is empty, Some if the field can be parsed, and Err
+/// if the field cannot be parsed.
+#[rocket::async_trait]
+impl<'r> FromFormField<'r> for OptionResult<NaiveDate> {
+    fn from_value(field: ValueField<'r>) -> form::Result<'r, Self> {
+        if field.value.trim().is_empty() {
             return Ok(OptionResult::None);
         }
-        NaiveDate::parse_from_str(form_value, "%Y-%m-%d")
+        NaiveDate::parse_from_str(field.value, "%Y-%m-%d")
             .map(OptionResult::Ok)
-            .or_else(|e| Ok(OptionResult::Err(format!("Invalid date ({}): {}", form_value, e))))
+            .or_else(|e| {
+                Ok(OptionResult::Err(format!(
+                    "Invalid date in field {} ({}): {}",
+                    field.name, field.value, e
+                )))
+            })
     }
 }
 
-impl<'v> FromFormValue<'v> for OptionResult<NaiveTime> {
-    type Error = !;
-    fn from_form_value(form_value: &'v RawStr) -> Result<Self, Self::Error> {
-        if form_value.trim().is_empty() {
+/// Parse urlencoded naive times in format HH:MM:SS or HH:MM.
+///
+/// Return None if the field is empty, Some if the field can be parsed, and Err
+/// if the field cannot be parsed.
+impl<'r> FromFormField<'r> for OptionResult<NaiveTime> {
+    fn from_value(field: ValueField<'r>) -> form::Result<'r, Self> {
+        if field.value.trim().is_empty() {
             return Ok(OptionResult::None);
         }
-        let mut decoded = match form_value.url_decode() {
-            Ok(val) => val,
-            Err(e) => return Ok(OptionResult::Err(format!("Could not urldecode value: {}", e))),
+        let value = if field.value.len() < 8 {
+            Cow::Owned(format!("{}:00", field.value))
+        } else {
+            Cow::Borrowed(field.value)
         };
-        if decoded.len() < 8 {
-            decoded.push_str(":00");
-        }
-        NaiveTime::parse_from_str(&decoded, "%H:%M:%S")
+        NaiveTime::parse_from_str(&value, "%H:%M:%S")
             .map(OptionResult::Ok)
-            .or_else(|e| Ok(OptionResult::Err(format!("Invalid time ({}): {}", decoded, e))))
+            .or_else(|e| {
+                Ok(OptionResult::Err(format!(
+                    "Invalid time in field {} ({}): {}",
+                    field.name, value, e
+                )))
+            })
     }
 }
 
-impl<'v> FromFormValue<'v> for OptionResult<i32> {
-    type Error = !;
-    fn from_form_value(form_value: &'v RawStr) -> Result<Self, Self::Error> {
-        if form_value.trim().is_empty() {
+/// Parse integers.
+///
+/// Return None if the field is empty, Some if the field can be parsed, and Err
+/// if the field cannot be parsed.
+impl<'r> FromFormField<'r> for OptionResult<i32> {
+    fn from_value(field: ValueField<'r>) -> form::Result<'r, Self> {
+        if field.value.trim().is_empty() {
             return Ok(OptionResult::None);
         }
-        form_value
-            .parse()
-            .map(OptionResult::Ok)
-            .or_else(|e| Ok(OptionResult::Err(format!("Invalid integer: {}", e))))
+        field.value.parse().map(OptionResult::Ok).or_else(|e| {
+            Ok(OptionResult::Err(format!(
+                "Invalid integer in field {}: {}",
+                field.name, e
+            )))
+        })
     }
 }
 
-impl<'v> FromFormValue<'v> for OptionResult<f32> {
-    type Error = !;
-    fn from_form_value(form_value: &'v RawStr) -> Result<Self, Self::Error> {
-        if form_value.trim().is_empty() {
+/// Parse floating point numbers.
+///
+/// Return None if the field is empty, Some if the field can be parsed, and Err
+/// if the field cannot be parsed.
+impl<'r> FromFormField<'r> for OptionResult<f32> {
+    fn from_value(field: ValueField<'r>) -> form::Result<'r, Self> {
+        if field.value.trim().is_empty() {
             return Ok(OptionResult::None);
         }
-        form_value
-            .parse()
-            .map(OptionResult::Ok)
-            .or_else(|e| Ok(OptionResult::Err(format!("Invalid integer: {}", e))))
+        field.value.parse().map(OptionResult::Ok).or_else(|e| {
+            Ok(OptionResult::Err(format!(
+                "Invalid float in field {}: {}",
+                field.name, e
+            )))
+        })
     }
 }
 
-impl<'v> FromFormValue<'v> for OptionResult<Base64Data> {
-    type Error = !;
-    fn from_form_value(form_value: &'v RawStr) -> Result<Self, Self::Error> {
-        if form_value.trim().is_empty() {
+/// Parse base64 encoded data.
+///
+/// Return None if the field is empty, Some if the field can be parsed, and Err
+/// if the field cannot be parsed.
+impl<'r> FromFormField<'r> for OptionResult<Base64Data> {
+    fn from_value(field: ValueField<'r>) -> form::Result<'r, Self> {
+        if field.value.trim().is_empty() {
             return Ok(OptionResult::None);
         }
-        base64::decode_config(form_value, base64::URL_SAFE)
+        base64::decode_config(field.value, base64::URL_SAFE)
             .map(|vec| OptionResult::Ok(Base64Data(vec)))
-            .or_else(|e| Ok(OptionResult::Err(format!("Invalid base64 data: {}", e))))
+            .or_else(|e| {
+                Ok(OptionResult::Err(format!(
+                    "Invalid base64 data in field {}: {}",
+                    field.name, e
+                )))
+            })
     }
 }
