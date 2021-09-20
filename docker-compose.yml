@@ -23,9 +23,10 @@ services:
     volumes:
       - "/static"
     environment:
-      ROCKET_ENV: production
-      ROCKET_HOST: "0.0.0.0"
+      ROCKET_PROFILE: release
+      ROCKET_ADDRESS: "0.0.0.0"
       ROCKET_PORT: 8000
+      ROCKET_LOG_LEVEL: normal
       ROCKET_TEMPLATE_DIR: /flugbuech/templates
       ROCKET_STATIC_FILES_DIR: /static
       # IMPORTANT: Change the secret key below in production!
