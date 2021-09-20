@@ -1,23 +1,31 @@
 //! Flight views.
 
-use std::collections::HashMap;
-use std::io::Cursor;
+use std::{collections::HashMap, io::Cursor, sync::Arc};
 
-use chrono::naive::{NaiveDate, NaiveDateTime, NaiveTime};
-use chrono::{DateTime, Utc};
-use rocket::http::hyper::header::{Charset, ContentDisposition, DispositionParam, DispositionType};
-use rocket::http::{ContentType, Status};
-use rocket::request::{FlashMessage, Form, FromForm};
-use rocket::response::{Flash, Redirect, Responder, Response};
-use rocket::{get, post, uri};
-use rocket_contrib::templates::Template;
+use chrono::{
+    naive::{NaiveDate, NaiveDateTime, NaiveTime},
+    DateTime, Utc,
+};
+use rocket::{
+    form::{Form, FromForm},
+    get,
+    http::{ContentType, Header, Status},
+    post,
+    request::{FlashMessage, Request},
+    response::{self, Flash, Redirect, Responder, Response},
+    uri,
+};
+use rocket_dyn_templates::Template;
 use serde::Serialize;
 
-use crate::base64::Base64Data;
-use crate::flash::flashes_from_flash_opt;
-use crate::models::{Flight, Glider, Location, NewFlight, User};
-use crate::optionresult::OptionResult;
-use crate::{auth, data};
+use crate::{
+    auth,
+    base64::Base64Data,
+    data,
+    flash::flashes_from_flash_opt,
+    models::{Flight, Glider, Location, NewFlight, User},
+    optionresult::OptionResult,
+};
 
 #[derive(Serialize)]
 struct FlightWithDetails<'a> {
@@ -37,14 +45,28 @@ struct FlightsContext<'a> {
 }
 
 #[get("/flights")]
-pub(crate) fn list(db: data::Database, user: auth::AuthUser, flash: Option<FlashMessage>) -> Template {
-    let user = user.into_inner();
+pub async fn list(
+    database: data::Database,
+    user: auth::AuthUser,
+    flash: Option<FlashMessage<'_>>,
+) -> Template {
+    let user = Arc::new(user.into_inner());
 
     // Get all flights
-    let flights = data::get_flights_for_user(&db, &user);
+    let flights = database
+        .run({
+            let user = user.clone();
+            move |db| data::get_flights_for_user(db, &user)
+        })
+        .await;
 
     // Get all gliders for user
-    let glider_map = data::get_gliders_for_user(&db, &user)
+    let glider_map = database
+        .run({
+            let user = user.clone();
+            move |db| data::get_gliders_for_user(db, &user)
+        })
+        .await
         .into_iter()
         .map(|glider| (glider.id, glider))
         .collect::<HashMap<i32, Glider>>();
@@ -53,17 +75,24 @@ pub(crate) fn list(db: data::Database, user: auth::AuthUser, flash: Option<Flash
     let mut location_ids = flights
         .iter()
         .flat_map(|flight| vec![flight.launch_at, flight.landing_at])
-        .filter_map(|opt| opt)
+        .flatten()
         .collect::<Vec<_>>();
     location_ids.sort_unstable();
     location_ids.dedup();
-    let location_map = data::get_locations_with_ids(&db, &location_ids)
+    let location_map = database
+        .run(move |db| data::get_locations_with_ids(db, &location_ids))
+        .await
         .into_iter()
         .map(|location| (location.id, location))
         .collect::<HashMap<i32, Location>>();
 
     // Get all flight IDs with IGC files
-    let flights_with_igc = data::get_flight_ids_with_igc_for_user(&db, &user);
+    let flights_with_igc = database
+        .run({
+            let user = user.clone();
+            move |db| data::get_flight_ids_with_igc_for_user(db, &user)
+        })
+        .await;
 
     // Add details to flights
     let flights_with_details = flights
@@ -85,7 +114,7 @@ pub(crate) fn list(db: data::Database, user: auth::AuthUser, flash: Option<Flash
                     } else {
                         Some(duration as u64)
                     }
-                },
+                }
                 _ => None,
             };
 
@@ -104,6 +133,7 @@ pub(crate) fn list(db: data::Database, user: auth::AuthUser, flash: Option<Flash
         .collect::<Vec<_>>();
 
     // Render template
+    let user = Arc::try_unwrap(user).expect("cannot unwrap user Arc");
     let context = FlightsContext {
         user,
         flights: flights_with_details,
@@ -113,7 +143,7 @@ pub(crate) fn list(db: data::Database, user: auth::AuthUser, flash: Option<Flash
 }
 
 #[get("/flights", rank = 2)]
-pub(crate) fn list_nologin() -> Redirect {
+pub fn list_nologin() -> Redirect {
     Redirect::to("/auth/login")
 }
 
@@ -129,12 +159,12 @@ struct FlightContext<'a> {
 }
 
 #[get("/flights/<id>")]
-pub(crate) fn flight(id: i32, db: data::Database, user: auth::AuthUser) -> Result<Template, Status> {
+pub async fn flight(id: i32, database: data::Database, user: auth::AuthUser) -> Result<Template, Status> {
     let user = user.into_inner();
 
     // Get flight
-    let flight = match data::get_flight_with_id(&db, id) {
-        Some(flight) => flight,
+    let flight = match database.run(move |db| data::get_flight_with_id(db, id)).await {
+        Some(flight) => Arc::new(flight),
         None => return Err(Status::NotFound),
     };
 
@@ -144,12 +174,32 @@ pub(crate) fn flight(id: i32, db: data::Database, user: auth::AuthUser) -> Resul
     }
 
     // Check whether flight has IGC data
-    let has_igc = data::flight_has_igc(&db, &flight);
+    let has_igc = database
+        .run({
+            let flight = flight.clone();
+            move |db| data::flight_has_igc(db, &flight)
+        })
+        .await;
 
     // Resolve foreign keys
-    let launch_at = flight.launch_at.and_then(|id| data::get_location_by_id(&db, id));
-    let landing_at = flight.landing_at.and_then(|id| data::get_location_by_id(&db, id));
-    let glider = flight.glider_id.and_then(|id| data::get_glider_with_id(&db, id));
+    let launch_at = database
+        .run({
+            let flight = flight.clone();
+            move |db| flight.launch_at.and_then(|id| data::get_location_by_id(db, id))
+        })
+        .await;
+    let landing_at = database
+        .run({
+            let flight = flight.clone();
+            move |db| flight.landing_at.and_then(|id| data::get_location_by_id(db, id))
+        })
+        .await;
+    let glider = database
+        .run({
+            let flight = flight.clone();
+            move |db| flight.glider_id.and_then(|id| data::get_glider_with_id(db, id))
+        })
+        .await;
 
     // Calculate duration
     let duration_seconds = match (flight.launch_time, flight.landing_time) {
@@ -160,11 +210,12 @@ pub(crate) fn flight(id: i32, db: data::Database, user: auth::AuthUser) -> Resul
             } else {
                 Some(duration as u64)
             }
-        },
+        }
         _ => None,
     };
 
     // Render template
+    let flight = Arc::try_unwrap(flight).expect("cannot unwrap flight Arc");
     let context = FlightContext {
         user,
         flight,
@@ -177,16 +228,50 @@ pub(crate) fn flight(id: i32, db: data::Database, user: auth::AuthUser) -> Resul
     Ok(Template::render("flight", &context))
 }
 
+/// Responder that returns the `data` bytes with the `content_type` header as a
+/// file download (disposition=attachment).
+pub struct FileAttachment {
+    data: Vec<u8>,
+    content_type: ContentType,
+    filename: String,
+}
+
+impl FileAttachment {
+    /// Note: Ensure that the `filename` does not need any escaping / encoding!
+    ///       There will be no encoding done by this function.
+    pub fn new(data: Vec<u8>, content_type: ContentType, filename: String) -> Self {
+        Self {
+            data,
+            content_type,
+            filename,
+        }
+    }
+}
+
+#[rocket::async_trait]
+impl<'r> Responder<'r, 'static> for FileAttachment {
+    fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
+        Response::build()
+            .header(self.content_type)
+            .header(Header::new(
+                "content-disposition",
+                format!("attachment; filename=\"{}\"", self.filename),
+            ))
+            .sized_body(self.data.len(), Cursor::new(self.data))
+            .ok()
+    }
+}
+
 #[get("/flights/<id>/igc")]
-pub(crate) fn igc_download(
+pub async fn igc_download(
     user: auth::AuthUser,
-    db: data::Database,
+    database: data::Database,
     id: i32,
-) -> Result<Response<'static>, Status> {
+) -> Result<FileAttachment, Status> {
     let user = user.into_inner();
 
     // Get flight
-    let flight = match data::get_flight_with_id(&db, id) {
+    let flight = match database.run(move |db| data::get_flight_with_id(db, id)).await {
         Some(flight) => flight,
         None => return Err(Status::NotFound),
     };
@@ -197,25 +282,22 @@ pub(crate) fn igc_download(
     }
 
     // Get IGC data
-    match data::get_igc_for_flight(&db, &flight) {
-        Some(igc) => Ok(Response::build()
-            .header(ContentType::new("application", "octet-stream"))
-            .header(ContentDisposition {
-                disposition: DispositionType::Attachment,
-                parameters: vec![DispositionParam::Filename(
-                    Charset::Us_Ascii,
-                    None,
-                    format!("flight{}.igc", flight.id).into_bytes(),
-                )],
-            })
-            .sized_body(Cursor::new(igc.data))
-            .finalize()),
+    let flight_id = flight.id;
+    match database
+        .run(move |db| data::get_igc_for_flight(db, &flight))
+        .await
+    {
+        Some(igc) => Ok(FileAttachment::new(
+            igc.data,
+            ContentType::new("application", "octet-stream"),
+            format!("flight{}.igc", flight_id),
+        )),
         None => Err(Status::NotFound),
     }
 }
 
 #[derive(FromForm, Debug)]
-pub(crate) struct FlightForm {
+pub struct FlightForm {
     igc_data: OptionResult<Base64Data>,
     number: OptionResult<i32>,
     glider: Option<i32>,
@@ -235,10 +317,10 @@ pub(crate) struct FlightForm {
 
 impl FlightForm {
     /// Validate a `FlightForm` submission and convert it to a `NewFlight` model (plus the IGC file data).
-    fn into_new_flight(
+    async fn into_new_flight(
         self,
         user: &User,
-        db: &data::Database,
+        database: &data::Database,
     ) -> Result<(NewFlight, Option<Vec<u8>>), String> {
         macro_rules! none_if_empty {
             ($val:expr) => {
@@ -267,17 +349,17 @@ impl FlightForm {
         // Extract and validate glider
         let glider = match self.glider {
             Some(id) => {
-                match data::get_glider_with_id(&db, id) {
+                match database.run(move |db| data::get_glider_with_id(db, id)).await {
                     Some(glider) => {
                         // Validate ownership
                         if glider.user_id != user.id {
                             return Err("Invalid glider".into());
                         }
                         Some(glider)
-                    },
+                    }
                     None => return Err("Invalid glider".into()),
                 }
-            },
+            }
             None => None,
         };
 
@@ -289,7 +371,7 @@ impl FlightForm {
                     date_parts += 1;
                 }
                 val
-            },
+            }
             Err(e) => return Err(format!("Launch date: {}", e)),
         };
         let launch_time_naive = match self.launch_time.into_result() {
@@ -298,7 +380,7 @@ impl FlightForm {
                     date_parts += 1;
                 }
                 val
-            },
+            }
             Err(e) => return Err(format!("Launch time: {}", e)),
         };
         let landing_time_naive = match self.landing_time.into_result() {
@@ -307,7 +389,7 @@ impl FlightForm {
                     date_parts += 1;
                 }
                 val
-            },
+            }
             Err(e) => return Err(format!("Landing time: {}", e)),
         };
         if date_parts > 0 && date_parts < 3 {
@@ -380,11 +462,23 @@ struct SubmitContext {
 }
 
 #[get("/flights/add")]
-pub(crate) fn submit_form(user: auth::AuthUser, db: data::Database) -> Template {
+pub async fn submit_form(user: auth::AuthUser, database: data::Database) -> Template {
     let user = user.into_inner();
-    let gliders = data::get_gliders_for_user(&db, &user);
-    let locations = data::get_locations_for_user(&db, &user);
-    let max_flight_number = data::get_max_flight_number_for_user(&db, &user);
+
+    // Query database
+    let (gliders, locations, max_flight_number) = database
+        .run({
+            let user = user.clone();
+            move |db| {
+                (
+                    data::get_gliders_for_user(db, &user),
+                    data::get_locations_for_user(db, &user),
+                    data::get_max_flight_number_for_user(db, &user),
+                )
+            }
+        })
+        .await;
+
     let context = SubmitContext {
         user,
         flight: None,
@@ -397,22 +491,31 @@ pub(crate) fn submit_form(user: auth::AuthUser, db: data::Database) -> Template 
 }
 
 #[get("/flights/add", rank = 2)]
-pub(crate) fn submit_form_nologin() -> Redirect {
+pub fn submit_form_nologin() -> Redirect {
     Redirect::to("/auth/login")
 }
 
 #[post("/flights/add", data = "<data>")]
-pub(crate) fn submit(
+pub async fn submit(
     user: auth::AuthUser,
-    db: data::Database,
+    database: data::Database,
     data: Option<Form<FlightForm>>,
 ) -> Result<Redirect, Template> {
     log::debug!("flights::submit");
-
     let user = user.into_inner();
-    let gliders = data::get_gliders_for_user(&db, &user);
-    let locations = data::get_locations_for_user(&db, &user);
-    let max_flight_number = data::get_max_flight_number_for_user(&db, &user);
+
+    let (gliders, locations, max_flight_number) = database
+        .run({
+            let user = user.clone();
+            move |db| {
+                (
+                    data::get_gliders_for_user(db, &user),
+                    data::get_locations_for_user(db, &user),
+                    data::get_max_flight_number_for_user(db, &user),
+                )
+            }
+        })
+        .await;
 
     macro_rules! fail {
         ($msg:expr) => {{
@@ -430,17 +533,28 @@ pub(crate) fn submit(
         }};
     }
 
-    if let Some(Form(form)) = data {
-        let (new_flight, igc) = match form.into_new_flight(&user, &db) {
+    if let Some(form) = data {
+        // Unwrap `Form<T>`
+        let form = form.into_inner();
+
+        // Convert flight into `NewFlight`
+        let (new_flight, igc) = match form.into_new_flight(&user, &database).await {
             Ok(val) => val,
             Err(msg) => fail!(msg),
         };
+
         // TODO: Error handling
-        data::create_flight(&db, &new_flight, igc);
-        log::info!("Created flight for user {}", user.id);
-        if let Some(glider_id) = new_flight.glider_id {
-            data::update_user_last_glider(&db, &user, glider_id);
-        }
+
+        // Insert flight into database
+        database
+            .run(move |db| {
+                data::create_flight(db, &new_flight, igc);
+                log::info!("Created flight for user {}", user.id);
+                if let Some(glider_id) = new_flight.glider_id {
+                    data::update_user_last_glider(db, &user, glider_id);
+                }
+            })
+            .await;
 
         Ok(Redirect::to(uri!(list)))
     } else {
@@ -449,18 +563,28 @@ pub(crate) fn submit(
 }
 
 #[get("/flights/<id>/edit")]
-pub(crate) fn edit_form(
+pub async fn edit_form(
     user: auth::AuthUser,
-    db: data::Database,
+    database: data::Database,
     id: i32,
-    flash: Option<FlashMessage>,
+    flash: Option<FlashMessage<'_>>,
 ) -> Result<Template, Status> {
     let user = user.into_inner();
 
     // Get data
-    let gliders = data::get_gliders_for_user(&db, &user);
-    let locations = data::get_locations_for_user(&db, &user);
-    let flight = match data::get_flight_with_id(&db, id) {
+    let (gliders, locations, flight_opt) = database
+        .run({
+            let user = user.clone();
+            move |db| {
+                (
+                    data::get_gliders_for_user(db, &user),
+                    data::get_locations_for_user(db, &user),
+                    data::get_flight_with_id(db, id),
+                )
+            }
+        })
+        .await;
+    let flight = match flight_opt {
         Some(flight) => flight,
         None => return Err(Status::NotFound),
     };
@@ -477,22 +601,22 @@ pub(crate) fn edit_form(
         max_flight_number: None,
         gliders,
         locations,
-        error_msg: flash.map(|f: FlashMessage| f.msg().to_owned()),
+        error_msg: flash.map(|f: FlashMessage| f.message().to_owned()),
     };
     Ok(Template::render("flight_submit", context))
 }
 
 #[derive(Debug, Responder)]
-pub(crate) enum EditResponse {
+pub enum EditResponse {
     Success(Redirect),
     Message(Flash<Redirect>),
     Error(Status),
 }
 
 #[post("/flights/<id>/edit", data = "<data>")]
-pub(crate) fn edit(
+pub async fn edit(
     user: auth::AuthUser,
-    db: data::Database,
+    database: data::Database,
     id: i32,
     data: Option<Form<FlightForm>>,
 ) -> EditResponse {
@@ -501,12 +625,12 @@ pub(crate) fn edit(
     /// If something fails, redirect back to the edit form with an error message.
     macro_rules! fail {
         ($msg:expr) => {{
-            return EditResponse::Message(Flash::error(Redirect::to(uri!(edit_form: id)), $msg));
+            return EditResponse::Message(Flash::error(Redirect::to(uri!(edit_form(id))), $msg));
         }};
     }
 
     // Get flight
-    let mut flight = match data::get_flight_with_id(&db, id) {
+    let mut flight = match database.run(move |db| data::get_flight_with_id(db, id)).await {
         Some(flight) => flight,
         None => return EditResponse::Error(Status::NotFound),
     };
@@ -517,8 +641,8 @@ pub(crate) fn edit(
     }
 
     // Get `NewFlight` instance from form
-    let (new_flight, igc) = if let Some(Form(form)) = data {
-        match form.into_new_flight(&user, &db) {
+    let (new_flight, igc) = if let Some(form) = data {
+        match form.into_inner().into_new_flight(&user, &database).await {
             Ok(val) => val,
             Err(msg) => fail!(msg),
         }
@@ -544,11 +668,15 @@ pub(crate) fn edit(
 
     // Save changes
     // TODO: Error handling
-    data::update_flight(&db, &flight);
-    if let Some(data) = igc {
-        // We don't want to overwrite IGC data with nothing.
-        data::update_igc(&db, &flight, &data);
-    }
+    database
+        .run(move |db| {
+            data::update_flight(db, &flight);
+            if let Some(data) = igc {
+                // We don't want to overwrite IGC data with nothing.
+                data::update_igc(db, &flight, &data);
+            }
+        })
+        .await;
 
     // Render template
     EditResponse::Success(Redirect::to(uri!(list)))
@@ -561,11 +689,15 @@ struct DeleteContext {
 }
 
 #[get("/flights/<id>/delete")]
-pub(crate) fn delete_form(user: auth::AuthUser, db: data::Database, id: i32) -> Result<Template, Status> {
+pub async fn delete_form(
+    user: auth::AuthUser,
+    database: data::Database,
+    id: i32,
+) -> Result<Template, Status> {
     let user = user.into_inner();
 
     // Get data
-    let flight = match data::get_flight_with_id(&db, id) {
+    let flight = match database.run(move |db| data::get_flight_with_id(db, id)).await {
         Some(flight) => flight,
         None => return Err(Status::NotFound),
     };
@@ -581,11 +713,15 @@ pub(crate) fn delete_form(user: auth::AuthUser, db: data::Database, id: i32) -> 
 }
 
 #[post("/flights/<id>/delete")]
-pub(crate) fn delete(user: auth::AuthUser, db: data::Database, id: i32) -> Result<Flash<Redirect>, Status> {
+pub async fn delete(
+    user: auth::AuthUser,
+    database: data::Database,
+    id: i32,
+) -> Result<Flash<Redirect>, Status> {
     let user = user.into_inner();
 
     // Get data
-    let flight = match data::get_flight_with_id(&db, id) {
+    let flight = match database.run(move |db| data::get_flight_with_id(db, id)).await {
         Some(flight) => flight,
         None => return Err(Status::NotFound),
     };
@@ -597,7 +733,9 @@ pub(crate) fn delete(user: auth::AuthUser, db: data::Database, id: i32) -> Resul
 
     // Delete database entry
     let flight_id = flight.id;
-    data::delete_flight(&db, flight)
+    database
+        .run(move |db| data::delete_flight(db, flight))
+        .await
         .map(|()| {
             log::info!("Deleted flight with ID {}", flight_id);
             Flash::success(Redirect::to(uri!(list)), "Flight deleted")

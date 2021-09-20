@@ -1,7 +1,7 @@
-#![feature(proc_macro_hygiene, decl_macro, never_type)]
-
-#[macro_use] extern crate diesel;
-#[macro_use] extern crate diesel_migrations;
+#[macro_use]
+extern crate diesel;
+#[macro_use]
+extern crate diesel_migrations;
 
 mod auth;
 mod base64;
@@ -18,19 +18,32 @@ mod profile;
 mod schema;
 mod stats;
 mod templates;
-#[cfg(test)] mod test_utils;
+#[cfg(test)]
+mod test_utils;
 
+use anyhow::{Context, Result};
 use clap::{App, Arg};
-use rocket::request::{FlashMessage, Request};
-use rocket::{catch, catchers, get, routes};
-use rocket_contrib::serve::StaticFiles;
-use rocket_contrib::templates::Template;
-use serde::Serialize;
+use rocket::{
+    catch, catchers,
+    fs::FileServer,
+    get,
+    request::{FlashMessage, Request},
+    routes,
+};
+use rocket_dyn_templates::Template;
+use serde::{Deserialize, Serialize};
 
-pub(crate) const MAX_UPLOAD_BYTES: u64 = 50 * 1024 * 1024;
-pub(crate) const NAME: &str = "flugbuech";
-pub(crate) const VERSION: &str = env!("CARGO_PKG_VERSION");
-pub(crate) const DESCRIPTION: &str = "Paragliding flight book.";
+pub const MAX_UPLOAD_BYTES: u64 = 50 * 1024 * 1024;
+pub const NAME: &str = "flugbuech";
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const DESCRIPTION: &str = "Paragliding flight book.";
+
+// Config
+
+#[derive(Deserialize)]
+struct Config {
+    static_files_dir: Option<String>,
+}
 
 // Index
 
@@ -44,17 +57,30 @@ struct IndexContext {
 }
 
 #[get("/")]
-fn index(db: data::Database, user: Option<auth::AuthUser>, flash: Option<FlashMessage>) -> Template {
+async fn index(
+    database: data::Database,
+    user: Option<auth::AuthUser>,
+    flash: Option<FlashMessage<'_>>,
+) -> Template {
     let flash_messages = if let Some(f) = flash {
         vec![crate::flash::FlashMessage::from(f)]
     } else {
         Vec::new()
     };
+    let (user_count, glider_count, flight_count) = database
+        .run(|db| {
+            (
+                data::get_user_count(db),
+                data::get_glider_count(db),
+                data::get_flight_count(db),
+            )
+        })
+        .await;
     let context = IndexContext {
         user: user.map(|u| u.into_inner()),
-        user_count: data::get_user_count(&db),
-        glider_count: data::get_glider_count(&db),
-        flight_count: data::get_flight_count(&db),
+        user_count,
+        glider_count,
+        flight_count,
         flashes: flash_messages,
     };
     Template::render("index", &context)
@@ -69,7 +95,8 @@ fn service_not_available(_req: &Request) -> &'static str {
 
 // Main
 
-fn main() {
+#[rocket::main]
+async fn main() -> Result<()> {
     // Load env
     let _ = dotenv::dotenv();
 
@@ -92,12 +119,16 @@ fn main() {
     }
 
     // Initialize application
-    let app = rocket::ignite();
+    let app = rocket::build();
+
+    // Extract additional config values
+    let figment = app.figment();
+    let config: Config = figment.extract().context("Could not extract config")?;
 
     // Determine static files dir
-    let static_files_dir = app
-        .config()
-        .get_str("static_files_dir")
+    let static_files_dir = config
+        .static_files_dir
+        .as_deref()
         .unwrap_or(concat!(env!("CARGO_MANIFEST_DIR"), "/static"))
         .to_string();
 
@@ -105,7 +136,7 @@ fn main() {
     let app = app.attach(data::Database::fairing()).attach(templates::fairing());
 
     // Register custom error catchers
-    let app = app.register(catchers![service_not_available]);
+    let app = app.register("/", catchers![service_not_available]);
 
     // Attach routes
     let app = app
@@ -152,8 +183,9 @@ fn main() {
         // Auth routes
         .mount("/", auth::get_routes())
         // Static files
-        .mount("/static", StaticFiles::from(static_files_dir));
+        .mount("/static", FileServer::from(static_files_dir));
 
-    // Start server
-    app.launch();
+    // Launch app
+    app.ignite().await?.launch().await?;
+    Ok(())
 }

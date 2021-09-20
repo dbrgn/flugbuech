@@ -52,7 +52,7 @@ release so far.
 
 Requirements:
 
-- Rust nightly (see `rust-toolchain` file)
+- Rust stable (see `rust-toolchain` file)
 - PostgreSQL + PostGIS
 - For building the frontend components: nodejs / npm
 - For production environments: A reverse proxy like Nginx

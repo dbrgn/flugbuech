@@ -2,14 +2,15 @@
 
 use diesel_geography::types::GeogPoint;
 use rocket::{
+    form::{Form, FromForm},
     get,
     http::Status,
     post,
-    request::{FlashMessage, Form, FromForm},
+    request::FlashMessage,
     response::{Flash, Redirect},
     uri,
 };
-use rocket_contrib::templates::Template;
+use rocket_dyn_templates::Template;
 use serde::Serialize;
 
 use crate::{
@@ -21,7 +22,7 @@ use crate::{
 // Forms
 
 #[derive(FromForm, Debug)]
-pub(crate) struct LocationForm {
+pub struct LocationForm {
     name: String,
     country: String,
     elevation: i32,
@@ -47,11 +48,14 @@ struct LocationsContext {
 // Views
 
 #[get("/locations/<id>")]
-pub(crate) fn view(user: auth::AuthUser, db: data::Database, id: i32) -> Result<Template, Status> {
+pub async fn view(user: auth::AuthUser, database: data::Database, id: i32) -> Result<Template, Status> {
     let user = user.into_inner();
 
     // Get data
-    let location = match data::get_location_with_flight_count_by_id(&db, id) {
+    let location = match database
+        .run(move |db| data::get_location_with_flight_count_by_id(db, id))
+        .await
+    {
         Some(location) => location,
         None => return Err(Status::NotFound),
     };
@@ -67,11 +71,20 @@ pub(crate) fn view(user: auth::AuthUser, db: data::Database, id: i32) -> Result<
 }
 
 #[get("/locations")]
-pub(crate) fn list(db: data::Database, user: auth::AuthUser, flash: Option<FlashMessage>) -> Template {
+pub async fn list(
+    database: data::Database,
+    user: auth::AuthUser,
+    flash: Option<FlashMessage<'_>>,
+) -> Template {
     let user = user.into_inner();
 
     // Get all locations
-    let locations = data::get_all_locations_with_stats_for_user(&db, &user);
+    let locations = database
+        .run({
+            let user = user.clone();
+            move |db| data::get_all_locations_with_stats_for_user(db, &user)
+        })
+        .await;
 
     // Render template
     let context = LocationsContext {
@@ -83,25 +96,24 @@ pub(crate) fn list(db: data::Database, user: auth::AuthUser, flash: Option<Flash
 }
 
 #[get("/locations", rank = 2)]
-pub(crate) fn list_nologin() -> Redirect {
+pub fn list_nologin() -> Redirect {
     Redirect::to("/auth/login")
 }
 
 #[get("/locations/add")]
-pub(crate) fn add_form(user: auth::AuthUser) -> Template {
+pub fn add_form(user: auth::AuthUser) -> Template {
     let context = auth::UserContext::new(user.into_inner());
     Template::render("location_edit", &context)
 }
 
 #[get("/locations/add", rank = 2)]
-pub(crate) fn add_form_nologin() -> Redirect {
+pub fn add_form_nologin() -> Redirect {
     Redirect::to("/auth/login")
 }
 
 #[post("/locations/add", data = "<data>")]
-pub(crate) fn add(user: auth::AuthUser, db: data::Database, data: Form<LocationForm>) -> Redirect {
+pub async fn add(user: auth::AuthUser, database: data::Database, data: Form<LocationForm>) -> Redirect {
     log::debug!("locations::add");
-
     let user = user.into_inner();
 
     let LocationForm {
@@ -131,7 +143,7 @@ pub(crate) fn add(user: auth::AuthUser, db: data::Database, data: Form<LocationF
 
     // Create database entry
     // TODO: Error handling
-    data::create_location(&db, location);
+    database.run(move |db| data::create_location(db, location)).await;
     log::info!("Created location for user {}", user.id);
 
     // Redirect to location list
@@ -139,11 +151,14 @@ pub(crate) fn add(user: auth::AuthUser, db: data::Database, data: Form<LocationF
 }
 
 #[get("/locations/<id>/edit")]
-pub(crate) fn edit_form(user: auth::AuthUser, db: data::Database, id: i32) -> Result<Template, Status> {
+pub async fn edit_form(user: auth::AuthUser, database: data::Database, id: i32) -> Result<Template, Status> {
     let user = user.into_inner();
 
     // Get location
-    let location = match data::get_location_with_flight_count_by_id(&db, id) {
+    let location = match database
+        .run(move |db| data::get_location_with_flight_count_by_id(db, id))
+        .await
+    {
         Some(location) => location,
         None => return Err(Status::NotFound),
     };
@@ -159,16 +174,16 @@ pub(crate) fn edit_form(user: auth::AuthUser, db: data::Database, id: i32) -> Re
 }
 
 #[post("/locations/<id>/edit", data = "<data>")]
-pub(crate) fn edit(
+pub async fn edit(
     user: auth::AuthUser,
-    db: data::Database,
+    database: data::Database,
     id: i32,
     data: Form<LocationForm>,
 ) -> Result<Redirect, Status> {
     let user = user.into_inner();
 
     // Get location
-    let mut location = match data::get_location_by_id(&db, id) {
+    let mut location = match database.run(move |db| data::get_location_by_id(db, id)).await {
         Some(location) => location,
         None => return Err(Status::NotFound),
     };
@@ -201,18 +216,25 @@ pub(crate) fn edit(
 
     // Update database
     // TODO: Error handling
-    data::update_location(&db, &location);
+    database.run(move |db| data::update_location(db, &location)).await;
 
     // Render template
     Ok(Redirect::to(uri!(list)))
 }
 
 #[get("/locations/<id>/delete")]
-pub(crate) fn delete_form(user: auth::AuthUser, db: data::Database, id: i32) -> Result<Template, Status> {
+pub async fn delete_form(
+    user: auth::AuthUser,
+    database: data::Database,
+    id: i32,
+) -> Result<Template, Status> {
     let user = user.into_inner();
 
     // Get data
-    let location = match data::get_location_with_flight_count_by_id(&db, id) {
+    let location = match database
+        .run(move |db| data::get_location_with_flight_count_by_id(db, id))
+        .await
+    {
         Some(location) => location,
         None => return Err(Status::NotFound),
     };
@@ -234,11 +256,18 @@ pub(crate) fn delete_form(user: auth::AuthUser, db: data::Database, id: i32) -> 
 }
 
 #[post("/locations/<id>/delete")]
-pub(crate) fn delete(user: auth::AuthUser, db: data::Database, id: i32) -> Result<Flash<Redirect>, Status> {
+pub async fn delete(
+    user: auth::AuthUser,
+    database: data::Database,
+    id: i32,
+) -> Result<Flash<Redirect>, Status> {
     let user = user.into_inner();
 
     // Get data
-    let location = match data::get_location_with_flight_count_by_id(&db, id) {
+    let location = match database
+        .run(move |db| data::get_location_with_flight_count_by_id(db, id))
+        .await
+    {
         Some(location) => location,
         None => return Err(Status::NotFound),
     };
@@ -255,7 +284,10 @@ pub(crate) fn delete(user: auth::AuthUser, db: data::Database, id: i32) -> Resul
     }
 
     // Delete database entry
-    data::delete_location_by_id(&db, location.id)
+    let location_id = location.id;
+    database
+        .run(move |db| data::delete_location_by_id(db, location_id))
+        .await
         .map(|()| {
             log::info!("Deleted location with ID {}", location.id);
             Flash::success(

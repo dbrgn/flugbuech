@@ -29,7 +29,11 @@ things have a catch, but in this case I'm developing the flight log for my own
 needs, and others may use it too.</p>
 
 <h4 class="title is-size-5">Can I sign up?</h4>
-<p class="content">Sure thing! Feel free to <a href="/auth/registration"> create an account<a/>.</p>
+<p class="content">Sure thing! Feel free to <a href="/auth/registration">
+create an account</a>.</p>
+<p class="content">Keep in mind that this is still beta software and that there may be bugs. If
+you notice any problems or have ideas for new features, please let me know at
+<a href="mailto:flugbuech@bargen.dev">flugbuech@bargen.dev</a>.</p>
 
 <h4 class="title is-size-5">Where can I find the source code or report bugs?</h4>
 <p class="content">On <a href="https://github.com/dbrgn/flugbuech">GitHub</a>.</p>
@@ -40,7 +44,7 @@ needs, and others may use it too.</p>
 
 <h3 class="title is-size-3">News</h3>
 <ul class="content">
-    <li><strong>2021-09-13:</strong> User registration is implemented</li>
+    <li><strong>2021-09-20:</strong> User registration is implemented</li>
     <li><strong>2021-04-20:</strong> Locations can now be viewed and deleted, number of associated flights is listed</li>
     <li><strong>2021-04-19:</strong> Location editing now supports <a href="https://www.swisstopo.admin.ch/de/karten-daten-online/karten-geodaten-online.html">Swisstopo</a> maps</li>
     <li><strong>2020-09-25:</strong> Show stats (flights, flight hours) for gliders</li>

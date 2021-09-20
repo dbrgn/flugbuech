@@ -3,7 +3,7 @@
 use std::collections::BTreeMap;
 
 use rocket::{get, response::Redirect};
-use rocket_contrib::templates::Template;
+use rocket_dyn_templates::Template;
 use serde::Serialize;
 
 use crate::{
@@ -41,71 +41,75 @@ struct StatsContext {
 // Views
 
 #[get("/stats")]
-pub(crate) fn stats(db: data::Database, user: auth::AuthUser) -> Template {
+pub async fn stats(database: data::Database, user: auth::AuthUser) -> Template {
     let user = user.into_inner();
 
-    // Get all locations
-    let launch_locations =
-        data::get_visited_locations_with_stats_for_user(&db, &user, LocationAggregateBy::Launches, 10);
-    let landing_locations =
-        data::get_visited_locations_with_stats_for_user(&db, &user, LocationAggregateBy::Landings, 10);
+    let context = database
+        .run(move |db| {
+            // Get all locations
+            let launch_locations =
+                data::get_visited_locations_with_stats_for_user(db, &user, LocationAggregateBy::Launches, 10);
+            let landing_locations =
+                data::get_visited_locations_with_stats_for_user(db, &user, LocationAggregateBy::Landings, 10);
 
-    // Yearly stats map
-    let mut yearly_stats: BTreeMap<u16, YearStats> = BTreeMap::new();
+            // Yearly stats map
+            let mut yearly_stats: BTreeMap<u16, YearStats> = BTreeMap::new();
 
-    // Determine data completeness
-    let flights_without_launch_time = data::get_flight_count_without_launch_time(&db, &user) as u64;
+            // Determine data completeness
+            let flights_without_launch_time = data::get_flight_count_without_launch_time(db, &user) as u64;
 
-    // Get flight count per year
-    for count in data::get_flight_count_per_year_for_user(&db, &user) {
-        yearly_stats.entry(count.year as u16).or_default().flight_count = Some(count.count as u32);
-    }
-    let flight_count_total = yearly_stats.values().filter_map(|s| s.flight_count).sum();
+            // Get flight count per year
+            for count in data::get_flight_count_per_year_for_user(db, &user) {
+                yearly_stats.entry(count.year as u16).or_default().flight_count = Some(count.count as u32);
+            }
+            let flight_count_total = yearly_stats.values().filter_map(|s| s.flight_count).sum();
 
-    // Get hike&fly count per year
-    for count in data::get_hikeandfly_count_per_year_for_user(&db, &user) {
-        yearly_stats
-            .entry(count.year as u16)
-            .or_default()
-            .hikeandfly_count = Some(count.count as u32);
-    }
-    let hikeandfly_count_total = yearly_stats.values().filter_map(|s| s.hikeandfly_count).sum();
+            // Get hike&fly count per year
+            for count in data::get_hikeandfly_count_per_year_for_user(db, &user) {
+                yearly_stats
+                    .entry(count.year as u16)
+                    .or_default()
+                    .hikeandfly_count = Some(count.count as u32);
+            }
+            let hikeandfly_count_total = yearly_stats.values().filter_map(|s| s.hikeandfly_count).sum();
 
-    // Get hours per year
-    for time in data::get_flight_time_per_year_for_user(&db, &user) {
-        yearly_stats.entry(time.year as u16).or_default().flight_seconds = Some(time.seconds as u64);
-    }
-    let flight_time_total = yearly_stats.values().filter_map(|s| s.flight_seconds).sum();
+            // Get hours per year
+            for time in data::get_flight_time_per_year_for_user(db, &user) {
+                yearly_stats.entry(time.year as u16).or_default().flight_seconds = Some(time.seconds as u64);
+            }
+            let flight_time_total = yearly_stats.values().filter_map(|s| s.flight_seconds).sum();
 
-    // Get km per year
-    for distance in data::get_flight_distance_per_year_for_user(&db, &user) {
-        let mut stats = yearly_stats.entry(distance.year as u16).or_default();
-        stats.distance_track = distance.track;
-        stats.distance_track_incomplete = distance.track_incomplete;
-        stats.distance_scored = distance.scored;
-        stats.distance_scored_incomplete = distance.scored_incomplete;
-    }
-    let flight_distance_total = (
-        yearly_stats.values().filter_map(|s| s.distance_track).sum(),
-        yearly_stats.values().filter_map(|s| s.distance_scored).sum(),
-    );
+            // Get km per year
+            for distance in data::get_flight_distance_per_year_for_user(db, &user) {
+                let mut stats = yearly_stats.entry(distance.year as u16).or_default();
+                stats.distance_track = distance.track;
+                stats.distance_track_incomplete = distance.track_incomplete;
+                stats.distance_scored = distance.scored;
+                stats.distance_scored_incomplete = distance.scored_incomplete;
+            }
+            let flight_distance_total = (
+                yearly_stats.values().filter_map(|s| s.distance_track).sum(),
+                yearly_stats.values().filter_map(|s| s.distance_scored).sum(),
+            );
 
-    // Render template
-    let context = StatsContext {
-        user,
-        launch_locations,
-        landing_locations,
-        yearly_stats,
-        flight_count_total,
-        hikeandfly_count_total,
-        flight_time_total,
-        flight_distance_total,
-        flights_without_launch_time,
-    };
+            // Render template
+            StatsContext {
+                user,
+                launch_locations,
+                landing_locations,
+                yearly_stats,
+                flight_count_total,
+                hikeandfly_count_total,
+                flight_time_total,
+                flight_distance_total,
+                flights_without_launch_time,
+            }
+        })
+        .await;
     Template::render("stats", &context)
 }
 
 #[get("/stats", rank = 2)]
-pub(crate) fn stats_nologin() -> Redirect {
+pub fn stats_nologin() -> Redirect {
     Redirect::to("/auth/login")
 }

@@ -10,7 +10,7 @@ use diesel::{
 use diesel_geography::{sql_types::Geography, types::GeogPoint};
 use log::error;
 use regex::Regex;
-use rocket_contrib::database;
+use rocket_sync_db_pools::database;
 use serde::Serialize;
 
 use crate::{
@@ -82,11 +82,11 @@ impl fmt::Display for RegistrationError {
             RegistrationError::InvalidEmail => write!(f, "Invalid email format or email is not unique"),
             RegistrationError::InvalidPasswordFormat => {
                 write!(f, "Password is too short or does not match format")
-            },
+            }
             RegistrationError::NonUniqueUsername => write!(f, "Username is not unique"),
             RegistrationError::PasswordConfirmation => {
                 write!(f, "Password and password confirmation do not match")
-            },
+            }
         }
     }
 }
@@ -164,10 +164,6 @@ pub fn validate_login(conn: &PgConnection, username: &str, password: &str) -> Op
         .ok()
 }
 
-pub fn get_users(conn: &PgConnection) -> Vec<User> {
-    users::table.load(conn).expect("Error loading users")
-}
-
 pub fn get_user_count(conn: &PgConnection) -> i64 {
     users::table
         .select(count(users::id))
@@ -198,10 +194,6 @@ pub fn update_password(conn: &PgConnection, user: &User, password: impl Into<Str
         .set(users::password.eq(crypt(password.into(), gen_salt("bf", PW_SALT_ITERATIONS))))
         .get_result(conn)
         .expect("Could not update user password")
-}
-
-pub fn get_gliders(conn: &PgConnection) -> Vec<Glider> {
-    gliders::table.load(conn).expect("Error loading gliders")
 }
 
 pub fn get_glider_count(conn: &PgConnection) -> i64 {
@@ -240,13 +232,6 @@ pub fn get_glider_with_id(conn: &PgConnection, id: i32) -> Option<Glider> {
         .first(conn)
         .optional()
         .expect("Error loading glider by id")
-}
-
-pub fn get_latest_flight_number(conn: &PgConnection, user: &User) -> Option<i32> {
-    Flight::belonging_to(user)
-        .select(max(flights::number))
-        .first(conn)
-        .expect("Error loading flight")
 }
 
 /// Create a new flight.
@@ -631,11 +616,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_get_latest_flight_number() {
+    fn test_get_max_flight_number_for_user() {
         let ctx = test_utils::DbTestContext::new();
 
         // No flights
-        let n = get_latest_flight_number(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        let n = get_max_flight_number_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
         assert_eq!(n, None);
 
         // Single flight, no number
@@ -647,7 +632,7 @@ mod tests {
             })
             .execute(&*ctx.force_get_conn())
             .expect("Could not create flight");
-        let n = get_latest_flight_number(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        let n = get_max_flight_number_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
         assert_eq!(n, None);
 
         // Now insert some flights with a flight number
@@ -681,11 +666,11 @@ mod tests {
             ])
             .execute(&*ctx.force_get_conn())
             .expect("Could not create flight");
-        let n = get_latest_flight_number(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        let n = get_max_flight_number_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
         assert_eq!(n, Some(7));
 
         // The user id is properly taken into account
-        let n = get_latest_flight_number(&*ctx.force_get_conn(), &ctx.testuser2.user);
+        let n = get_max_flight_number_for_user(&*ctx.force_get_conn(), &ctx.testuser2.user);
         assert_eq!(n, None);
     }
 

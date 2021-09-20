@@ -272,8 +272,8 @@ Currently locations cannot be created automatically.</p>
         {%- for glider in gliders %}
         {
             "id": {{ glider.id }},
-            "model": {{ glider.model | safe | json_encode() }},
-            "manufacturer": {{ glider.manufacturer | safe | json_encode() }},
+            "model": {{ glider.model | json_encode() | safe }},
+            "manufacturer": {{ glider.manufacturer | json_encode() | safe }},
         },
         {%- endfor %}
     ];

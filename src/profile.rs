@@ -1,7 +1,7 @@
 //! Profile views.
 
 use rocket::{get, request::FlashMessage, response::Redirect};
-use rocket_contrib::templates::Template;
+use rocket_dyn_templates::Template;
 
 use crate::auth;
 

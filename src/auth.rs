@@ -1,17 +1,26 @@
 //! Authentication and authorization related functionality.
 
+use std::sync::Arc;
+
 use log::error;
-use rocket::http::{Cookie, Cookies};
-use rocket::outcome::IntoOutcome;
-use rocket::request::{self, FlashMessage, Form, FromRequest, Request};
-use rocket::response::{Flash, Redirect};
-use rocket::{get, post, routes, uri, FromForm, Route};
-use rocket_contrib::templates::Template;
+use rocket::{
+    form::Form,
+    get,
+    http::{Cookie, CookieJar},
+    outcome::Outcome,
+    post,
+    request::{self, FlashMessage, FromRequest, Request},
+    response::{Flash, Redirect},
+    routes, uri, FromForm, Route,
+};
+use rocket_dyn_templates::Template;
 use serde::Serialize;
 
-use crate::data::{self, Database};
-use crate::flash::context_from_flash_opt;
-use crate::models::User;
+use crate::{
+    data::{self, Database},
+    flash::context_from_flash_opt,
+    models::User,
+};
 
 pub const USER_COOKIE_ID: &str = "user_id";
 
@@ -26,28 +35,38 @@ pub struct Login {
 pub struct AuthUser(User);
 
 /// Get the user model from a request cookie.
-impl<'a, 'r> FromRequest<'a, 'r> for AuthUser {
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for AuthUser {
     type Error = ();
 
-    fn from_request(request: &'a Request<'r>) -> request::Outcome<AuthUser, Self::Error> {
-        Database::from_request(request).and_then(|db| {
-            let mut cookies = request.cookies();
-            cookies
-                .get_private(USER_COOKIE_ID)
-                .and_then(|cookie| {
-                    // A login cookie was found. Look up the corresponding database user.
-                    cookie.value().parse().ok().and_then(|id| {
-                        let user = data::get_user(&db, id);
-                        if user.is_none() {
-                            error!("Login cookie with invalid user id found. Removing cookie.");
-                            cookies.remove_private(cookie);
-                        }
-                        user
-                    })
-                })
-                .map(AuthUser)
-                .or_forward(())
-        })
+    async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
+        // Get database access
+        let database = match Database::from_request(request).await {
+            Outcome::Failure(f) => return Outcome::Failure(f),
+            Outcome::Forward(f) => return Outcome::Forward(f),
+            Outcome::Success(database) => database,
+        };
+
+        // Get login cookie
+        let cookies = request.cookies();
+        let user_cookie = match cookies.get_private(USER_COOKIE_ID) {
+            Some(cookie) => cookie,
+            None => return Outcome::Forward(()),
+        };
+
+        // A login cookie was found. Look up the corresponding database user.
+        let id: i32 = match user_cookie.value().parse() {
+            Ok(int) => int,
+            Err(_) => return Outcome::Forward(()),
+        };
+        match database.run(move |db| data::get_user(db, id)).await {
+            Some(user) => Outcome::Success(AuthUser(user)),
+            None => {
+                error!("Login cookie with invalid user id found. Removing cookie.");
+                cookies.remove_private(user_cookie);
+                Outcome::Forward(())
+            }
+        }
     }
 }
 
@@ -60,12 +79,19 @@ impl AuthUser {
 
 /// Login handler.
 #[post("/auth/login", data = "<login>")]
-pub fn login(mut cookies: Cookies, login: Form<Login>, db: Database) -> Result<Redirect, Flash<Redirect>> {
-    match data::validate_login(&db, &login.username, &login.password) {
+pub async fn login(
+    cookies: &CookieJar<'_>,
+    login: Form<Login>,
+    database: Database,
+) -> Result<Redirect, Flash<Redirect>> {
+    match database
+        .run(move |db| data::validate_login(db, &login.username, &login.password))
+        .await
+    {
         Some(user) => {
             cookies.add_private(Cookie::new(USER_COOKIE_ID, user.id.to_string()));
             Ok(Redirect::to("/"))
-        },
+        }
         None => Err(Flash::error(
             Redirect::to(uri!(login_page)),
             "Invalid username/password.",
@@ -75,7 +101,7 @@ pub fn login(mut cookies: Cookies, login: Form<Login>, db: Database) -> Result<R
 
 /// Logout handler.
 #[get("/auth/logout")]
-pub fn logout(mut cookies: Cookies) -> Redirect {
+pub fn logout(cookies: &CookieJar<'_>) -> Redirect {
     cookies.remove_private(Cookie::named(USER_COOKIE_ID));
     Redirect::to("/")
 }
@@ -92,7 +118,7 @@ pub fn login_page(flash: Option<FlashMessage>) -> Template {
     Template::render("login", &context_from_flash_opt(flash))
 }
 
-#[derive(FromForm)]
+#[derive(FromForm, Clone)]
 pub struct Registration {
     username: String,
     email: String,
@@ -129,38 +155,47 @@ pub fn registration_page(flash: Option<FlashMessage>) -> Template {
 
 /// Registration handler
 #[post("/auth/registration", data = "<registration>")]
-pub fn registration(
-    mut cookies: Cookies,
+pub async fn registration(
+    cookies: &CookieJar<'_>,
     registration: Form<Registration>,
-    db: Database,
+    database: Database,
 ) -> Result<Flash<Redirect>, Flash<Redirect>> {
-    let registration_result = data::validate_registration(
-        &db,
-        &registration.email,
-        &registration.username,
-        &registration.password,
-        &registration.password_confirmation,
-    );
+    let registration_clone = registration.clone();
+    let registration_result = database
+        .run(move |db| {
+            data::validate_registration(
+                db,
+                &registration_clone.email,
+                &registration_clone.username,
+                &registration_clone.password,
+                &registration_clone.password_confirmation,
+            )
+        })
+        .await;
 
     match registration_result {
         Ok(_) => {
-            let new_user = data::create_user(
-                &db,
-                &registration.username,
-                &registration.password,
-                &registration.email,
-            );
+            let new_user = database
+                .run(move |db| {
+                    data::create_user(
+                        db,
+                        &registration.username,
+                        &registration.password,
+                        &registration.email,
+                    )
+                })
+                .await;
             cookies.add_private(Cookie::new(USER_COOKIE_ID, new_user.id.to_string()));
             Ok(Flash::success(
                 Redirect::to("/"),
                 "Your account was successfully created",
             ))
-        },
+        }
         Err(error) => {
             let msg = error.to_string();
             log::error!("Was not able to register user: {}", msg);
             Err(Flash::error(Redirect::to(uri!(registration_page)), msg))
-        },
+        }
     }
 }
 
@@ -185,12 +220,12 @@ pub fn password_change_form_nologin() -> Redirect {
 }
 
 #[post("/auth/password/change", data = "<password_change>")]
-pub fn password_change(
+pub async fn password_change(
     user: AuthUser,
     password_change: Form<PasswordChange>,
-    db: Database,
+    database: Database,
 ) -> Flash<Redirect> {
-    let user = user.into_inner();
+    let user = Arc::new(user.into_inner());
 
     macro_rules! fail {
         ($msg:expr) => {{
@@ -209,15 +244,28 @@ pub fn password_change(
         fail!("Password must have at least 8 characters");
     }
 
+    // Unwrap password fields
+    let PasswordChange {
+        current: pw_current,
+        new1: pw_new,
+        ..
+    } = password_change.into_inner();
+
     // Verify current password
-    match data::validate_login(&db, &user.username, &password_change.current) {
-        Some(u) if u.id == user.id => { /* Valid password */ },
+    let user_clone = user.clone();
+    match database
+        .run(move |db| data::validate_login(db, &user_clone.username, &pw_current))
+        .await
+    {
+        Some(u) if u.id == user.id => { /* Valid password */ }
         Some(_) => fail!("Invalid user"),
         None => fail!("Invalid current password"),
     }
 
     // Update password
-    data::update_password(&db, &user, &password_change.new1);
+    database
+        .run(move |db| data::update_password(db, &user, &pw_new))
+        .await;
     Flash::success(Redirect::to(uri!(crate::profile::view)), "Password changed")
 }
 
@@ -269,12 +317,14 @@ mod tests {
     use rocket::{
         self,
         http::{ContentType, Status},
-        local::Client,
+        local::blocking::Client,
         routes,
     };
 
-    use crate::templates;
-    use crate::test_utils::{make_test_config, DbTestContext};
+    use crate::{
+        templates,
+        test_utils::{make_test_config, DbTestContext},
+    };
 
     use super::*;
 
@@ -286,7 +336,7 @@ mod tests {
             .attach(data::Database::fairing())
             .attach(templates::fairing())
             .mount("/", test_routes);
-        Client::new(app).expect("valid rocket instance")
+        Client::tracked(app).expect("valid rocket instance")
     }
 
     #[derive(Debug)]
@@ -315,14 +365,14 @@ mod tests {
             .get_one("location")
             .expect("location header")
             .to_string();
-        let mut resp2 = client
+        let resp2 = client
             .get(redirect_url.clone())
             .private_cookie(ctx.auth_cookie_user1())
             .dispatch();
         assert_eq!(resp2.status(), Status::Ok);
         ChangeResult {
             redirect_url,
-            body: resp2.body_string().expect("body"),
+            body: resp2.into_string().expect("body"),
         }
     }
 

@@ -2,11 +2,16 @@
 
 use chrono::NaiveDate;
 use diesel::result::{DatabaseErrorKind, Error as DieselError};
-use rocket::http::Status;
-use rocket::request::{Form, FromForm, Request};
-use rocket::response::{self, Redirect};
-use rocket::{get, post, uri};
-use rocket_contrib::templates::Template;
+use rocket::{
+    form::{Form, FromForm},
+    get,
+    http::Status,
+    post,
+    request::Request,
+    response::{self, Redirect, Responder},
+    uri,
+};
+use rocket_dyn_templates::Template;
 use serde::Serialize;
 
 use crate::models::{Glider, GliderWithStats, NewGlider, User};
@@ -15,11 +20,11 @@ use crate::{auth, data};
 // Forms
 
 #[derive(FromForm, Debug)]
-pub(crate) struct GliderForm {
+pub struct GliderForm {
     manufacturer: String,
     model: String,
-    since: Option<String>, // ISO date (e.g. 2010-11-30)
-    until: Option<String>, // ISO date (e.g. 2010-11-30)
+    since: Option<String>, // ISO date (e.g. 2010-11-30) // TODO: Use OptionResult<NaiveDate>
+    until: Option<String>, // ISO date (e.g. 2010-11-30) // TODO: Use OptionResult<NaiveDate>
     source: Option<String>,
     cost: Option<i32>,
     comment: Option<String>,
@@ -54,11 +59,16 @@ fn render_form(user: User, glider: Option<Glider>, error_msg: Option<String>) ->
 // Views
 
 #[get("/gliders")]
-pub(crate) fn list(db: data::Database, user: auth::AuthUser) -> Template {
+pub async fn list(database: data::Database, user: auth::AuthUser) -> Template {
     let user = user.into_inner();
 
     // Get all gliders
-    let gliders = data::get_gliders_with_stats_for_user(&db, &user);
+    let gliders = database
+        .run({
+            let user = user.clone();
+            move |db| data::get_gliders_with_stats_for_user(db, &user)
+        })
+        .await;
 
     // Render template
     let context = GlidersContext { user, gliders };
@@ -66,17 +76,17 @@ pub(crate) fn list(db: data::Database, user: auth::AuthUser) -> Template {
 }
 
 #[get("/gliders", rank = 2)]
-pub(crate) fn list_nologin() -> Redirect {
+pub fn list_nologin() -> Redirect {
     Redirect::to("/auth/login")
 }
 
 #[get("/gliders/add")]
-pub(crate) fn add_form(user: auth::AuthUser) -> Template {
+pub fn add_form(user: auth::AuthUser) -> Template {
     render_form(user.into_inner(), None, None)
 }
 
 #[get("/gliders/add", rank = 2)]
-pub(crate) fn add_form_nologin() -> Redirect {
+pub fn add_form_nologin() -> Redirect {
     Redirect::to("/auth/login")
 }
 
@@ -89,8 +99,9 @@ pub enum ValidationResult {
     Invalid(Template, Status),
 }
 
-impl<'r> response::Responder<'r> for ValidationResult {
-    fn respond_to(self, req: &Request) -> response::Result<'r> {
+#[rocket::async_trait]
+impl<'r> Responder<'r, 'static> for ValidationResult {
+    fn respond_to(self, req: &'r Request<'_>) -> response::Result<'static> {
         match self {
             ValidationResult::Success(redirect) => redirect.respond_to(req),
             ValidationResult::Invalid(template, status) => template.respond_to(req).map(|mut response| {
@@ -102,9 +113,8 @@ impl<'r> response::Responder<'r> for ValidationResult {
 }
 
 #[post("/gliders/add", data = "<data>")]
-pub(crate) fn add(user: auth::AuthUser, db: data::Database, data: Form<GliderForm>) -> ValidationResult {
+pub async fn add(user: auth::AuthUser, database: data::Database, data: Form<GliderForm>) -> ValidationResult {
     log::debug!("gliders::add");
-
     let user = user.into_inner();
 
     // Destructure data
@@ -131,12 +141,12 @@ pub(crate) fn add(user: auth::AuthUser, db: data::Database, data: Form<GliderFor
     };
 
     // Create database entry
-    match data::create_glider(&db, glider) {
+    match database.run(move |db| data::create_glider(db, glider)).await {
         Ok(_) => {
             // Glider created, redirect to glider list
             log::info!("Created glider for user {}", user.id);
             ValidationResult::Success(Redirect::to(uri!(list)))
-        },
+        }
         Err(DieselError::DatabaseError(DatabaseErrorKind::UniqueViolation, _info)) => {
             ValidationResult::Invalid(
                 render_form(
@@ -146,7 +156,7 @@ pub(crate) fn add(user: auth::AuthUser, db: data::Database, data: Form<GliderFor
                 ),
                 Status::Conflict,
             )
-        },
+        }
         Err(other) => ValidationResult::Invalid(
             render_form(user, None, Some(format!("Unknown error: {}", other))),
             Status::InternalServerError,
@@ -155,11 +165,14 @@ pub(crate) fn add(user: auth::AuthUser, db: data::Database, data: Form<GliderFor
 }
 
 #[get("/gliders/<id>/edit")]
-pub(crate) fn edit_form(user: auth::AuthUser, db: data::Database, id: i32) -> Result<Template, Status> {
+pub async fn edit_form(user: auth::AuthUser, database: data::Database, id: i32) -> Result<Template, Status> {
     let user = user.into_inner();
 
     // Get glider
-    let glider = data::get_glider_with_id(&db, id).ok_or(Status::NotFound)?;
+    let glider = database
+        .run(move |db| data::get_glider_with_id(db, id))
+        .await
+        .ok_or(Status::NotFound)?;
 
     // Ownership check
     if glider.user_id != user.id {
@@ -176,16 +189,19 @@ pub(crate) fn edit_form(user: auth::AuthUser, db: data::Database, id: i32) -> Re
 }
 
 #[post("/gliders/<id>/edit", data = "<data>")]
-pub(crate) fn edit(
+pub async fn edit(
     user: auth::AuthUser,
-    db: data::Database,
+    database: data::Database,
     id: i32,
     data: Form<GliderForm>,
 ) -> Result<Redirect, Status> {
     let user = user.into_inner();
 
     // Get glider
-    let mut glider = data::get_glider_with_id(&db, id).ok_or(Status::NotFound)?;
+    let mut glider = database
+        .run(move |db| data::get_glider_with_id(db, id))
+        .await
+        .ok_or(Status::NotFound)?;
 
     // Ownership check
     if glider.user_id != user.id {
@@ -213,7 +229,7 @@ pub(crate) fn edit(
 
     // Update database
     // TODO: Error handling
-    data::update_glider(&db, &glider);
+    database.run(move |db| data::update_glider(db, &glider)).await;
 
     // Render template
     Ok(Redirect::to(uri!(list)))
@@ -222,13 +238,12 @@ pub(crate) fn edit(
 #[cfg(test)]
 mod tests {
     use chrono::NaiveDate;
-    use rocket::http::ContentType;
-    use rocket::local::Client;
-    use rocket::{self, routes};
+    use rocket::{self, http::ContentType, local::blocking::Client, routes};
 
-    use crate::flights;
-    use crate::templates;
-    use crate::test_utils::{make_test_config, DbTestContext};
+    use crate::{
+        flights, templates,
+        test_utils::{make_test_config, DbTestContext},
+    };
 
     use super::*;
 

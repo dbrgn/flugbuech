@@ -1,17 +1,17 @@
-use std::env;
-use std::sync::{Mutex, MutexGuard};
+use std::{
+    collections::HashMap,
+    env,
+    sync::{Mutex, MutexGuard},
+};
 
-use diesel::connection::SimpleConnection;
-use diesel::pg::PgConnection;
-use diesel::prelude::*;
+use diesel::{connection::SimpleConnection, pg::PgConnection, prelude::*};
 use diesel_migrations;
 use dotenv;
 use lazy_static::lazy_static;
 use log::debug;
-use rocket::http::Cookie;
+use rocket::{config::Config, figment::Figment, http::Cookie};
 
-use crate::data::create_user;
-use crate::models::User;
+use crate::{data::create_user, models::User};
 
 lazy_static! {
     static ref DB_MUTEX: Mutex<()> = Mutex::new(());
@@ -22,14 +22,14 @@ pub struct TestUser {
     pub password: String,
 }
 
-pub(crate) struct DbTestContext<'a> {
+pub struct DbTestContext<'a> {
     /// The database connection.
-    pub(crate) conn: Mutex<PgConnection>,
+    pub conn: Mutex<PgConnection>,
 
     /// A pre-created test user.
-    pub(crate) testuser1: TestUser,
+    pub testuser1: TestUser,
     /// A pre-created test user.
-    pub(crate) testuser2: TestUser,
+    pub testuser2: TestUser,
 
     /// Used to prevent concurrent database access.
     #[allow(dead_code)]
@@ -108,19 +108,17 @@ impl<'a> DbTestContext<'a> {
     }
 }
 
-pub fn make_test_config() -> rocket::config::Config {
+pub fn make_test_config() -> rocket::figment::Figment {
     // Load env
     let _ = dotenv::dotenv();
 
     // Database config
     let database_url = env::var("TEST_DATABASE_URL").expect("TEST_DATABASE_URL must be set");
-    let mut database_flugbuech = std::collections::BTreeMap::new();
-    database_flugbuech.insert("url", database_url);
-    let mut databases = std::collections::BTreeMap::new();
-    databases.insert("flugbuech", database_flugbuech);
+    let mut database = HashMap::new();
+    database.insert("url", database_url);
 
-    rocket::config::Config::build(rocket::config::Environment::Development)
-        .extra("databases", databases)
-        .finalize()
-        .expect("a valid config")
+    // Generate figment config
+    Figment::from(Config::default())
+        .select(Config::DEBUG_PROFILE)
+        .merge(("databases.flugbuech", database))
 }

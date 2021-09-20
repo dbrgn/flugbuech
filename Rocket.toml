@@ -1,12 +1,22 @@
-[global.limits]
-forms = 3145728  # 3 MiB
+# Docs: https://rocket.rs/v0.5-rc/guide/configuration/
+#
+# Rocket automatically sets the configuration profile to `debug` when compiled
+# in debug mode and `release` when compiled in release mode.
+#
+# In addition to any profiles you declare, there are two meta-profiles,
+# `default` and `global`, which can be used to provide values that apply to all
+# profiles.  Values provided in a `default` profile are used as fall-back
+# values when the selected profile doesn't contain a requested values, while
+# values in the `global` profile supplant any values with the same name in any
+# profile.
 
-[development]
-static_files_dir = "static/"
+[global.limits]
+forms = "3 MiB"
+
+[debug]
+static_files_dir = "static"
 secret_key = "eXqSA0wz+qLlg8umREPesnkBzNlhwaNcp34BttIWLes="
 
-[development.databases]
-flugbuech = { url = "postgres://localhost/flugbuech" }
-
-[production]
-keep_alive = 0  # Disabled until Rocket 0.5 (see https://matej.laitl.cz/bench-actix-rocket/)
+  [debug.databases.flugbuech]
+  url = "postgres://localhost/flugbuech"
+  timeout = 5
