@@ -6,7 +6,7 @@ COPY . /build/flugbuech/
 RUN cd /build/flugbuech && npm install && npm run build
 
 # Build server resources in rust container
-FROM rustlang/rust:1-buster
+FROM docker.io/rust:1-buster
 
 # Install dependencies
 ARG DEBIAN_FRONTEND=noninteractive
