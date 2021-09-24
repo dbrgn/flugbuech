@@ -7,7 +7,7 @@ use chrono::{
     DateTime, Utc,
 };
 use rocket::{
-    form::{Form, FromForm},
+    form::{Errors, Form, FromForm},
     get,
     http::{ContentType, Header, Status},
     post,
@@ -499,7 +499,7 @@ pub fn submit_form_nologin() -> Redirect {
 pub async fn submit(
     user: auth::AuthUser,
     database: data::Database,
-    data: Option<Form<FlightForm>>,
+    data: Result<Form<FlightForm>, Errors<'_>>,
 ) -> Result<Redirect, Template> {
     log::debug!("flights::submit");
     let user = user.into_inner();
@@ -533,32 +533,36 @@ pub async fn submit(
         }};
     }
 
-    if let Some(form) = data {
-        // Unwrap `Form<T>`
-        let form = form.into_inner();
+    match data {
+        Ok(form) => {
+            // Unwrap `Form<T>`
+            let form = form.into_inner();
 
-        // Convert flight into `NewFlight`
-        let (new_flight, igc) = match form.into_new_flight(&user, &database).await {
-            Ok(val) => val,
-            Err(msg) => fail!(msg),
-        };
+            // Convert flight into `NewFlight`
+            let (new_flight, igc) = match form.into_new_flight(&user, &database).await {
+                Ok(val) => val,
+                Err(msg) => fail!(msg),
+            };
 
-        // TODO: Error handling
+            // TODO: Error handling
 
-        // Insert flight into database
-        database
-            .run(move |db| {
-                data::create_flight(db, &new_flight, igc);
-                log::info!("Created flight for user {}", user.id);
-                if let Some(glider_id) = new_flight.glider_id {
-                    data::update_user_last_glider(db, &user, glider_id);
-                }
-            })
-            .await;
+            // Insert flight into database
+            database
+                .run(move |db| {
+                    data::create_flight(db, &new_flight, igc);
+                    log::info!("Created flight for user {}", user.id);
+                    if let Some(glider_id) = new_flight.glider_id {
+                        data::update_user_last_glider(db, &user, glider_id);
+                    }
+                })
+                .await;
 
-        Ok(Redirect::to(uri!(list)))
-    } else {
-        fail!("Invalid form, could not parse data. Note: Only IGC files up to ~2 MiB can be uploaded.");
+            Ok(Redirect::to(uri!(list)))
+        }
+        Err(e) => {
+            eprintln!("Error: Could not parse form: {:?}", e);
+            fail!("Invalid form, could not parse data. Note: Only IGC files up to ~2 MiB can be uploaded.");
+        }
     }
 }
 
