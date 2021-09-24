@@ -7,7 +7,7 @@ use chrono::{
     DateTime, Utc,
 };
 use rocket::{
-    form::{Errors, Form, FromForm},
+    form::{error::ErrorKind, Errors, Form, FromForm},
     get,
     http::{ContentType, Header, Status},
     post,
@@ -559,9 +559,20 @@ pub async fn submit(
 
             Ok(Redirect::to(uri!(list)))
         }
-        Err(e) => {
-            eprintln!("Error: Could not parse form: {:?}", e);
-            fail!("Invalid form, could not parse data. Note: Only IGC files up to ~2 MiB can be uploaded.");
+        Err(errors) => {
+            if let Some(error) = errors.first() {
+                if let ErrorKind::InvalidLength {
+                    max: Some(max_bytes), ..
+                } = error.kind
+                {
+                    fail!(format!(
+                        "The size of the form submission is larger than {} KiB, form cannot be submitted.",
+                        max_bytes / 1024
+                    ));
+                }
+            }
+            eprintln!("Error: Could not parse form: {:?}", errors);
+            fail!("Invalid form, could not parse data. Please contact the admin.");
         }
     }
 }
@@ -622,7 +633,7 @@ pub async fn edit(
     user: auth::AuthUser,
     database: data::Database,
     id: i32,
-    data: Option<Form<FlightForm>>,
+    data: Result<Form<FlightForm>, Errors<'_>>,
 ) -> EditResponse {
     let user = user.into_inner();
 
@@ -645,13 +656,26 @@ pub async fn edit(
     }
 
     // Get `NewFlight` instance from form
-    let (new_flight, igc) = if let Some(form) = data {
-        match form.into_inner().into_new_flight(&user, &database).await {
+    let (new_flight, igc) = match data {
+        Ok(form) => match form.into_inner().into_new_flight(&user, &database).await {
             Ok(val) => val,
             Err(msg) => fail!(msg),
+        },
+        Err(errors) => {
+            if let Some(error) = errors.first() {
+                if let ErrorKind::InvalidLength {
+                    max: Some(max_bytes), ..
+                } = error.kind
+                {
+                    fail!(format!(
+                        "The size of the form submission is larger than {} KiB, form cannot be submitted.",
+                        max_bytes / 1024
+                    ));
+                }
+            }
+            eprintln!("Error: Could not parse form: {:?}", errors);
+            fail!("Invalid form, could not parse data. Please contact the admin.");
         }
-    } else {
-        fail!("Invalid form, could not parse data. Note: Only IGC files up to ~2 MiB can be uploaded.");
     };
 
     // Update existing flight
