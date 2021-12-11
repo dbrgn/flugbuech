@@ -40,9 +40,11 @@ pub const DESCRIPTION: &str = "Paragliding flight book.";
 
 // Config
 
-#[derive(Deserialize)]
-struct Config {
-    static_files_dir: Option<String>,
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct Config {
+    pub static_files_dir: Option<String>,
+    pub plausible_domain: Option<String>,
+    pub plausible_url: Option<String>,
 }
 
 // Index
@@ -133,7 +135,9 @@ async fn main() -> Result<()> {
         .to_string();
 
     // Attach fairings
-    let app = app.attach(data::Database::fairing()).attach(templates::fairing());
+    let app = app
+        .attach(data::Database::fairing())
+        .attach(templates::fairing(&config));
 
     // Register custom error catchers
     let app = app.register("/", catchers![service_not_available]);

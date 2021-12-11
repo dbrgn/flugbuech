@@ -324,6 +324,7 @@ mod tests {
     use crate::{
         templates,
         test_utils::{make_test_config, DbTestContext},
+        Config,
     };
 
     use super::*;
@@ -334,7 +335,7 @@ mod tests {
         test_routes.extend_from_slice(&routes![crate::profile::view]);
         let app = rocket::custom(make_test_config())
             .attach(data::Database::fairing())
-            .attach(templates::fairing())
+            .attach(templates::fairing(&Config::default()))
             .mount("/", test_routes);
         Client::tracked(app).expect("valid rocket instance")
     }

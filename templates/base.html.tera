@@ -11,6 +11,12 @@
         <script src="/static/js/common.js"></script>
         <script src="/static/js/navbar.js"></script>
         <script src="/static/js/elements.flagmeister.min.js"></script>
+
+        {% set plausible = plausible_config() %}
+        {% if plausible %}
+        <!-- self-hosted, GDPR compliant, non-privacy-invading visitor stats -->
+        <script defer data-domain="{{ plausible.domain }}" src="{{ plausible.url | safe }}"></script>
+        {% endif %}
     </head>
     <body>
         <!-- Navbar -->
