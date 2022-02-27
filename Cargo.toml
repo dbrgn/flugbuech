@@ -26,3 +26,4 @@ regex = "1.5.4"
 
 [dev-dependencies]
 lazy_static = "1"
+rstest = "0.12"
