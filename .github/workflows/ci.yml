@@ -75,11 +75,11 @@ jobs:
         uses: actions-rs/clippy-check@v1
         if: steps.check_permissions.outputs.has-permission
         with:
-          args: --all-features --all-targets -- -D warnings
+          args: --all-features -- -D warnings
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Run clippy manually without annotations
         if: ${{ !steps.check_permissions.outputs.has-permission }}
-        run: cargo clippy --all-features --all-targets -- -D warnings
+        run: cargo clippy --all-features -- -D warnings
 
   rustfmt:
     name: Check code formatting
