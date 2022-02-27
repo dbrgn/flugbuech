@@ -610,76 +610,69 @@ pub fn get_flight_distance_per_year_for_user(conn: &PgConnection, user: &User) -
 
 #[cfg(test)]
 mod tests {
-    use crate::models::NewGlider;
-    use crate::test_utils;
+    use rstest::rstest;
+
+    use crate::{models::NewGlider, test_utils};
 
     use super::*;
 
-    #[test]
-    fn test_invalid_email() {
-        assert_eq!(validate_email("email.peter@gmail.com").is_ok(), true);
-        assert_eq!(validate_email("email@gmail.com").is_ok(), true);
-        assert_eq!(validate_email("em123@gmail.com").is_ok(), true);
-        assert_eq!(validate_email("em+@gmail.com").is_ok(), true);
-        assert_eq!(validate_email("@gmail.com"), Err(RegistrationError::InvalidEmail));
+    #[rstest]
+    #[case("email.peter@gmail.com")]
+    #[case("email@gmail.com")]
+    #[case("em123@gmail.com")]
+    #[case("em+@gmail.com")]
+    fn test_valid_email(#[case] email: &str) {
+        assert_eq!(validate_email(email), Ok(()));
+    }
+
+    #[rstest]
+    #[case("@gmail.com", RegistrationError::InvalidEmail)]
+    #[case("petergmail.com", RegistrationError::InvalidEmail)]
+    fn test_invalid_email(#[case] email: &str, #[case] error: RegistrationError) {
+        assert_eq!(validate_email(email), Err(error));
+    }
+
+    #[rstest]
+    #[case("email@email.ch", "user", Ok(()))]
+    #[case("example@example.com", "testuser1", Err(RegistrationError::NonUniqueUsername))]
+    #[case("user1@example.com", "username", Err(RegistrationError::InvalidEmail))]
+    fn test_duplicate_username(
+        #[case] email: &str,
+        #[case] username: &str,
+        #[case] result: Result<(), RegistrationError>,
+    ) {
+        let ctx = test_utils::DbTestContext::new();
         assert_eq!(
-            validate_email("@gmail1.com"),
-            Err(RegistrationError::InvalidEmail)
-        );
-        assert_eq!(validate_email("@peter.com"), Err(RegistrationError::InvalidEmail));
-        assert_eq!(
-            validate_email("petergmail1.com"),
-            Err(RegistrationError::InvalidEmail)
+            validate_unique_registration_fields(&*ctx.force_get_conn(), email, username),
+            result
         );
     }
 
     #[test]
-    fn test_duplicate_username() {
-        let ctx = test_utils::DbTestContext::new();
+    fn test_matching_password_confirmation() {
         assert_eq!(
-            validate_unique_registration_fields(&*ctx.force_get_conn(), "email@email.ch", "user"),
+            validate_password_confirmation_match("password", "password"),
             Ok(())
         );
         assert_eq!(
-            validate_unique_registration_fields(&*ctx.force_get_conn(), "example@example.com", "testuser1"),
-            Err(RegistrationError::NonUniqueUsername)
-        );
-        assert_eq!(
-            validate_unique_registration_fields(&*ctx.force_get_conn(), "user1@example.com", "username"),
-            Err(RegistrationError::InvalidEmail)
-        );
-    }
-
-    #[test]
-    fn test_non_matching_password_confirmation() {
-        assert_eq!(
-            validate_password_confirmation_match("password", "password").is_ok(),
-            true
-        );
-        assert_eq!(
-            validate_password_confirmation_match("password123", "password123").is_ok(),
-            true
-        );
-        assert_eq!(
-            validate_password_confirmation_match("password", "password123"),
-            Err(RegistrationError::PasswordConfirmation)
-        );
-        assert_eq!(
-            validate_password_confirmation_match("password123", "password"),
+            validate_password_confirmation_match("password", "passwor"),
             Err(RegistrationError::PasswordConfirmation)
         );
     }
 
-    #[test]
-    fn test_invalid_password_format() {
-        assert_eq!(validate_password_format("password123").is_ok(), true);
-        assert_eq!(validate_password_format("password").is_ok(), true);
+    #[rstest]
+    #[case("password123")]
+    #[case("password")]
+    fn test_valid_password_format(#[case] password: &str) {
+        assert_eq!(validate_password_format(password), Ok(()));
+    }
+
+    #[rstest]
+    #[case("passwor")]
+    #[case("")]
+    fn test_invalid_password_format(#[case] password: &str) {
         assert_eq!(
-            validate_password_format("passwor"),
-            Err(RegistrationError::InvalidPasswordFormat)
-        );
-        assert_eq!(
-            validate_password_format(""),
+            validate_password_format(password),
             Err(RegistrationError::InvalidPasswordFormat)
         );
     }
