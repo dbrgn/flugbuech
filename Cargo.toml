@@ -22,7 +22,7 @@ rocket = { version = "0.5.0-rc.1", features = ["secrets", "json"], default-featu
 rocket_dyn_templates = { version = "0.1.0-rc.1", features = ["tera"], default-features = false }
 rocket_sync_db_pools = { version = "0.1.0-rc.1", features = ["diesel_postgres_pool"], default-features = false }
 serde = { version = "1", features = ["derive"] }
-regex = "1.5.4"
+regex = "1.5.5"
 
 [dev-dependencies]
 lazy_static = "1"
