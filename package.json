@@ -28,7 +28,7 @@
     "eslint": "^7.2.0",
     "eslint-plugin-svelte3": "^2.7.3",
     "maplibre-gl": "^1.14.0",
-    "svelte": "^3.23.2",
+    "svelte": "^3.49.0",
     "svelte-loader": "^2.13.6",
     "svelte-preprocess": "^3.9.7",
     "typescript": "^3.9.5",
