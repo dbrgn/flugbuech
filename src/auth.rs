@@ -15,6 +15,7 @@ use rocket::{
 };
 use rocket_dyn_templates::Template;
 use serde::Serialize;
+use time::{Duration, OffsetDateTime};
 
 use crate::{
     data::{self, Database},
@@ -89,7 +90,17 @@ pub async fn login(
         .await
     {
         Some(user) => {
-            cookies.add_private(Cookie::new(USER_COOKIE_ID, user.id.to_string()));
+            // Auth cookie expiration: 1 year
+            let mut expiration = OffsetDateTime::now_utc();
+            expiration += Duration::weeks(52);
+
+            // Create cookie
+            let mut cookie = Cookie::new(USER_COOKIE_ID, user.id.to_string());
+            cookie.set_expires(expiration);
+
+            // Add cookie to response
+            cookies.add_private(cookie);
+
             Ok(Redirect::to("/"))
         }
         None => Err(Flash::error(
