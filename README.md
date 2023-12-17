@@ -61,14 +61,18 @@ Install `diesel_cli`:
 
     cargo install -f diesel_cli --no-default-features --features postgres
 
-Set up PostgreSQL database:
+Start PostGIS database:
 
-    createdb flugbuech
+    docker run -d --name flugbuech-pg \
+      -e POSTGRES_DB=flugbuech \
+      -e POSTGRES_USER=flugbuech \
+      -e POSTGRES_PASSWORD=flugbuech-dev-password \
+      -p 127.0.0.1:5432:5432 \
+      docker.io/postgis/postgis:15-3.4-alpine
+
+Prepare database and run migrations:
+
     diesel setup
-
-Run database migrations:
-
-    diesel migration run
 
 (Note: You can also apply migrations by starting with the `--migrate` flag)
 

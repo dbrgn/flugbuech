@@ -18,5 +18,5 @@ static_files_dir = "static"
 secret_key = "eXqSA0wz+qLlg8umREPesnkBzNlhwaNcp34BttIWLes="
 
   [debug.databases.flugbuech]
-  url = "postgres://localhost/flugbuech"
+  url = "postgres://flugbuech:flugbuech-dev-password@localhost/flugbuech"
   timeout = 5
