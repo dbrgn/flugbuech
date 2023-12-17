@@ -81,7 +81,7 @@ pub async fn stats(database: data::Database, user: auth::AuthUser) -> Template {
 
             // Get km per year
             for distance in data::get_flight_distance_per_year_for_user(db, &user) {
-                let mut stats = yearly_stats.entry(distance.year as u16).or_default();
+                let stats = yearly_stats.entry(distance.year as u16).or_default();
                 stats.distance_track = distance.track;
                 stats.distance_track_incomplete = distance.track_incomplete;
                 stats.distance_scored = distance.scored;
