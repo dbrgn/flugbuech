@@ -78,7 +78,7 @@ impl<T: Float> FlatPointString<T> {
     }
 }
 
-fn parse_igc(reader: impl BufRead, user: &models::User, db: &diesel::PgConnection) -> FlightInfoResult {
+fn parse_igc(reader: impl BufRead, user: &models::User, db: &mut diesel::PgConnection) -> FlightInfoResult {
     log::info!("Parsing IGC file for user {}", user.id);
 
     // Split lines in IGC file
@@ -245,7 +245,7 @@ mod tests {
     fn process(data: &str) -> Result<FlightInfo, String> {
         let ctx = DbTestContext::new();
         let reader = BufReader::new(Cursor::new(data));
-        let result = parse_igc(reader, &ctx.testuser1.user, &*ctx.force_get_conn());
+        let result = parse_igc(reader, &ctx.testuser1.user, &mut ctx.force_get_conn());
         match result {
             FlightInfoResult::Success(info) => Ok(info),
             FlightInfoResult::Error { msg } => Err(msg),

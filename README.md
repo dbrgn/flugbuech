@@ -97,7 +97,7 @@ a welcome message bearing your username.
 
 First, set up a test database:
 
-    createdb flugbuech_test
+    docker exec flugbuech-pg createdb -U flugbuech flugbuech_test
 
 Run tests:
 
