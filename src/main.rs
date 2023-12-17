@@ -1,3 +1,5 @@
+#![allow(clippy::needless_borrow)]
+
 #[macro_use]
 extern crate diesel;
 extern crate diesel_migrations;

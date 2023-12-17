@@ -146,7 +146,7 @@ fn validate_email(email: &str) -> Result<(), RegistrationError> {
     Regex::new(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
         .unwrap()
         .is_match(email)
-        .then(|| ())
+        .then_some(())
         .ok_or(RegistrationError::InvalidEmail)
 }
 
