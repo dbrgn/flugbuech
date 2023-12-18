@@ -9,7 +9,7 @@ license = "AGPL-3.0"
 anyhow = "1"
 base64 = "0.21"
 chrono = { version = "0.4", features = ["serde"] }
-clap = "2"
+clap = "4"
 diesel = { version = "2.1.4", features = ["postgres", "chrono"] }
 diesel-geography = { version = "0.2", features = ["serde"], git = "https://github.com/66np/diesel-geography", rev = "059c553" }
 diesel_migrations = { version = "2", features = ["postgres"] }
