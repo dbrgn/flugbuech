@@ -95,7 +95,7 @@ pub fn add_form_nologin() -> Redirect {
 ///
 /// TODO: Generalize this and move it into a helper module.
 pub enum ValidationResult {
-    Success(Redirect),
+    Success(Box<Redirect>),
     Invalid(Template, Status),
 }
 
@@ -145,7 +145,7 @@ pub async fn add(user: auth::AuthUser, database: data::Database, data: Form<Glid
         Ok(_) => {
             // Glider created, redirect to glider list
             log::info!("Created glider for user {}", user.id);
-            ValidationResult::Success(Redirect::to(uri!(list)))
+            ValidationResult::Success(Box::new(Redirect::to(uri!(list))))
         }
         Err(DieselError::DatabaseError(DatabaseErrorKind::UniqueViolation, _info)) => {
             ValidationResult::Invalid(
