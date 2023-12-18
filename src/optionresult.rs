@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use chrono::naive::{NaiveDate, NaiveTime};
 use rocket::form::{self, FromFormField, ValueField};
 
@@ -105,16 +106,17 @@ impl<'r> FromFormField<'r> for OptionResult<f32> {
     }
 }
 
-/// Parse base64 encoded data.
+/// Parse URL safe base64 encoded data (with optional padding).
 ///
-/// Return None if the field is empty, Some if the field can be parsed, and Err
-/// if the field cannot be parsed.
+/// Return `None` if the field is empty, `Some` if the field can be parsed, and
+/// `Err` if the field cannot be parsed.
 impl<'r> FromFormField<'r> for OptionResult<Base64Data> {
     fn from_value(field: ValueField<'r>) -> form::Result<'r, Self> {
         if field.value.trim().is_empty() {
             return Ok(OptionResult::None);
         }
-        base64::decode_config(field.value, base64::URL_SAFE)
+        URL_SAFE_NO_PAD
+            .decode(field.value)
             .map(|vec| OptionResult::Ok(Base64Data(vec)))
             .or_else(|e| {
                 Ok(OptionResult::Err(format!(
