@@ -403,11 +403,11 @@ impl FlightForm {
         let landing_at = self.landing_site;
         let launch_time = launch_time_naive.map(|time| {
             let ndt = NaiveDateTime::new(launch_date_naive.unwrap(), time);
-            DateTime::from_utc(ndt, Utc) // TODO: Timezone
+            DateTime::from_naive_utc_and_offset(ndt, Utc) // TODO: Timezone
         });
         let landing_time = landing_time_naive.map(|time| {
             let ndt = NaiveDateTime::new(launch_date_naive.unwrap(), time);
-            DateTime::from_utc(ndt, Utc) // TODO: Timezone
+            DateTime::from_naive_utc_and_offset(ndt, Utc) // TODO: Timezone
         });
         let hikeandfly = self.hikeandfly;
 

@@ -340,8 +340,8 @@ mod tests {
         assert_eq!(g.len(), 1);
         assert_eq!(g[0].manufacturer, "Ozone");
         assert_eq!(g[0].model, "Enzo 2");
-        assert_eq!(g[0].since, Some(NaiveDate::from_ymd(2019, 2, 3)));
-        assert_eq!(g[0].until, Some(NaiveDate::from_ymd(2019, 11, 20)));
+        assert_eq!(g[0].since, Some(NaiveDate::from_ymd_opt(2019, 2, 3).unwrap()));
+        assert_eq!(g[0].until, Some(NaiveDate::from_ymd_opt(2019, 11, 20).unwrap()));
         assert_eq!(g[0].source, Some("Flycenter".into()));
         assert_eq!(g[0].cost, Some(3344));
         assert_eq!(g[0].comment, Some("Sold it to Joe.".into()));
