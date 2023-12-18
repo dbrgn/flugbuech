@@ -509,9 +509,9 @@ pub fn update_user_last_glider(conn: &mut PgConnection, user: &User, glider_id: 
 
 #[derive(Debug, QueryableByName)]
 pub struct FlightCount {
-    #[sql_type = "SmallInt"]
+    #[diesel(sql_type = SmallInt)]
     pub year: i16,
-    #[sql_type = "BigInt"]
+    #[diesel(sql_type = BigInt)]
     pub count: i64,
 }
 
@@ -550,9 +550,9 @@ pub fn get_hikeandfly_count_per_year_for_user(conn: &mut PgConnection, user: &Us
 
 #[derive(Debug, QueryableByName)]
 pub struct FlightTime {
-    #[sql_type = "SmallInt"]
+    #[diesel(sql_type = SmallInt)]
     pub year: i16,
-    #[sql_type = "BigInt"]
+    #[diesel(sql_type = BigInt)]
     pub seconds: i64,
 }
 
@@ -582,15 +582,15 @@ pub fn get_flight_count_without_launch_time(conn: &mut PgConnection, user: &User
 
 #[derive(Debug, QueryableByName, Serialize)]
 pub struct FlightDistance {
-    #[sql_type = "SmallInt"]
+    #[diesel(sql_type = SmallInt)]
     pub year: i16,
-    #[sql_type = "Nullable<Integer>"]
+    #[diesel(sql_type = Nullable<Integer>)]
     pub track: Option<i32>,
-    #[sql_type = "Bool"]
+    #[diesel(sql_type = Bool)]
     pub track_incomplete: bool,
-    #[sql_type = "Nullable<Integer>"]
+    #[diesel(sql_type = Nullable<Integer>)]
     pub scored: Option<i32>,
-    #[sql_type = "Bool"]
+    #[diesel(sql_type = Bool)]
     pub scored_incomplete: bool,
 }
 
