@@ -26,4 +26,4 @@ serde = { version = "1", features = ["derive"] }
 
 [dev-dependencies]
 lazy_static = "1"
-rstest = "0.12"
+rstest = "0.18"
