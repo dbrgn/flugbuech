@@ -82,7 +82,7 @@
         <!-- Footer -->
         <footer class="section">
             <div class="container">
-                &copy; 2019&ndash;2023 Danilo Bargen | <a href="https://github.com/dbrgn/flugbuech">Source Code</a> | <a href="https://github.com/dbrgn/flugbuech/issues">Bug reports and feature requests</a> | <a href="mailto:flugbuech@bargen.dev">Contact</a>
+                &copy; 2019&ndash;2023 Danilo Bargen | <a href="https://github.com/dbrgn/flugbuech">Source Code</a> | <a href="https://github.com/dbrgn/flugbuech/issues">Bug reports and feature requests</a> | <a href="/privacy-policy">Privacy Policy</a> | <a href="mailto:flugbuech@bargen.dev">Contact</a>
             </div>
         </footer>
 

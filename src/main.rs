@@ -31,7 +31,7 @@ use rocket::{
     request::{FlashMessage, Request},
     routes,
 };
-use rocket_dyn_templates::Template;
+use rocket_dyn_templates::{context, Template};
 use serde::{Deserialize, Serialize};
 
 pub const MAX_UPLOAD_BYTES: u64 = 50 * 1024 * 1024;
@@ -87,6 +87,11 @@ async fn index(
         flashes: flash_messages,
     };
     Template::render("index", &context)
+}
+
+#[get("/privacy-policy")]
+async fn privacy_policy() -> Template {
+    Template::render("privacy_policy", context! {})
 }
 
 // Handle missing DB
@@ -151,6 +156,7 @@ async fn main() -> Result<()> {
             "/",
             routes![
                 index,
+                privacy_policy,
                 flights::list,
                 flights::list_nologin,
                 flights::flight,
