@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: sudo apt-get install -y libpq-dev
-      - uses: dtolnay/rust-toolchain@1.72.0
+      - uses: dtolnay/rust-toolchain@1.80.0
 
       - name: Run check
         run: cargo check --all-features
@@ -53,7 +53,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: sudo apt-get install -y libpq-dev
-      - uses: dtolnay/rust-toolchain@1.72.0
+      - uses: dtolnay/rust-toolchain@1.80.0
         with:
           components: clippy
       - run: cargo clippy --all-features
@@ -63,7 +63,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: dtolnay/rust-toolchain@1.72.0
+      - uses: dtolnay/rust-toolchain@1.80.0
         with:
           components: rustfmt
       - run: cargo fmt -- --check
