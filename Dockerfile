@@ -26,7 +26,7 @@ RUN cd /build/flugbuech \
 
 ###### RUNTIME ######
 
-FROM debian:11-slim
+FROM debian:12-slim
 
 # Install init process and other dependencies
 RUN apt-get update -q \
