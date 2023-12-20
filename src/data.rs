@@ -1,4 +1,4 @@
-use std::{env, fmt, io};
+use std::{env, fmt};
 
 use diesel::{
     dsl::{count, exists, max, select},
@@ -8,6 +8,7 @@ use diesel::{
     {sql_function, sql_query, PgConnection},
 };
 use diesel_geography::{sql_types::Geography, types::GeogPoint};
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, HarnessWithOutput, MigrationHarness};
 use log::error;
 use regex::Regex;
 use rocket_sync_db_pools::database;
@@ -38,20 +39,24 @@ pub const MIN_PASSWORD_LENGTH: usize = 8;
 #[database("flugbuech")]
 pub struct Database(diesel::PgConnection);
 
-embed_migrations!();
+pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
 
 /// Run migrations on the database indicated with `DATABASE_URL`.
 pub fn run_migrations() -> Result<(), String> {
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     match PgConnection::establish(&database_url) {
-        Ok(connection) => embedded_migrations::run_with_output(&connection, &mut io::stdout())
-            .map_err(|e| format!("Could not run migrations: {}", e)),
+        Ok(mut conn) => {
+            HarnessWithOutput::write_to_stdout(&mut conn)
+                .run_pending_migrations(MIGRATIONS)
+                .map_err(|e| format!("Could not run migrations: {}", e))?;
+            Ok(())
+        }
         Err(e) => Err(format!("Could not connect to database: {}", e)),
     }
 }
 
 /// Return the user model with the specified user id.
-pub fn get_user(conn: &PgConnection, id: i32) -> Option<User> {
+pub fn get_user(conn: &mut PgConnection, id: i32) -> Option<User> {
     users::table
         .find(id)
         .first(conn)
@@ -93,7 +98,7 @@ impl fmt::Display for RegistrationError {
 
 /// Validate registration params and check for unique attributes { email, username }
 pub fn validate_registration(
-    conn: &PgConnection,
+    conn: &mut PgConnection,
     email: &str,
     username: &str,
     password: &str,
@@ -107,7 +112,7 @@ pub fn validate_registration(
 }
 
 fn validate_unique_registration_fields(
-    conn: &PgConnection,
+    conn: &mut PgConnection,
     email: &str,
     username: &str,
 ) -> Result<(), RegistrationError> {
@@ -141,7 +146,7 @@ fn validate_email(email: &str) -> Result<(), RegistrationError> {
     Regex::new(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
         .unwrap()
         .is_match(email)
-        .then(|| ())
+        .then_some(())
         .ok_or(RegistrationError::InvalidEmail)
 }
 
@@ -156,7 +161,7 @@ fn validate_password_format(password: &str) -> Result<(), RegistrationError> {
 }
 
 /// Validate username / password combination. Return the corresponding user model if it is valid.
-pub fn validate_login(conn: &PgConnection, username: &str, password: &str) -> Option<User> {
+pub fn validate_login(conn: &mut PgConnection, username: &str, password: &str) -> Option<User> {
     users::table
         .filter(users::username.eq(username))
         .filter(users::password.eq(crypt(password, users::password)))
@@ -164,7 +169,7 @@ pub fn validate_login(conn: &PgConnection, username: &str, password: &str) -> Op
         .ok()
 }
 
-pub fn get_user_count(conn: &PgConnection) -> i64 {
+pub fn get_user_count(conn: &mut PgConnection) -> i64 {
     users::table
         .select(count(users::id))
         .first(conn)
@@ -173,7 +178,7 @@ pub fn get_user_count(conn: &PgConnection) -> i64 {
 
 /// Create a user in the database. The password will be hashed.
 pub fn create_user(
-    conn: &PgConnection,
+    conn: &mut PgConnection,
     username: impl Into<String>,
     password: impl Into<String>,
     email: impl Into<String>,
@@ -189,27 +194,27 @@ pub fn create_user(
 }
 
 /// Update a user password, return the updated user model.
-pub fn update_password(conn: &PgConnection, user: &User, password: impl Into<String>) -> User {
+pub fn update_password(conn: &mut PgConnection, user: &User, password: impl Into<String>) -> User {
     diesel::update(user)
         .set(users::password.eq(crypt(password.into(), gen_salt("bf", PW_SALT_ITERATIONS))))
         .get_result(conn)
         .expect("Could not update user password")
 }
 
-pub fn get_glider_count(conn: &PgConnection) -> i64 {
+pub fn get_glider_count(conn: &mut PgConnection) -> i64 {
     gliders::table
         .select(count(gliders::id))
         .first(conn)
         .expect("Error loading glider count")
 }
 
-pub fn get_gliders_for_user(conn: &PgConnection, user: &User) -> Vec<Glider> {
+pub fn get_gliders_for_user(conn: &mut PgConnection, user: &User) -> Vec<Glider> {
     Glider::belonging_to(user)
         .load(conn)
         .expect("Error loading gliders")
 }
 
-pub fn get_gliders_with_stats_for_user(conn: &PgConnection, user: &User) -> Vec<GliderWithStats> {
+pub fn get_gliders_with_stats_for_user(conn: &mut PgConnection, user: &User) -> Vec<GliderWithStats> {
     sql_query(
         "SELECT g.*,
                 count(f.id) as flights,
@@ -226,7 +231,7 @@ pub fn get_gliders_with_stats_for_user(conn: &PgConnection, user: &User) -> Vec<
     .expect("Error loading gliders with stats")
 }
 
-pub fn get_glider_with_id(conn: &PgConnection, id: i32) -> Option<Glider> {
+pub fn get_glider_with_id(conn: &mut PgConnection, id: i32) -> Option<Glider> {
     gliders::table
         .find(id)
         .first(conn)
@@ -235,8 +240,8 @@ pub fn get_glider_with_id(conn: &PgConnection, id: i32) -> Option<Glider> {
 }
 
 /// Create a new flight.
-pub fn create_flight(conn: &PgConnection, flight: &NewFlight, igc: Option<Vec<u8>>) -> Flight {
-    conn.transaction::<Flight, Error, _>(|| {
+pub fn create_flight(conn: &mut PgConnection, flight: &NewFlight, igc: Option<Vec<u8>>) -> Flight {
+    conn.transaction::<Flight, Error, _>(|conn| {
         // Create flight
         let flight: Flight = diesel::insert_into(flights::table)
             .values(flight)
@@ -257,7 +262,7 @@ pub fn create_flight(conn: &PgConnection, flight: &NewFlight, igc: Option<Vec<u8
 }
 
 /// Save an updated flight in the database.
-pub fn update_flight(conn: &PgConnection, flight: &Flight) {
+pub fn update_flight(conn: &mut PgConnection, flight: &Flight) {
     diesel::update(flight)
         .set(flight)
         .execute(conn)
@@ -265,13 +270,13 @@ pub fn update_flight(conn: &PgConnection, flight: &Flight) {
 }
 
 /// Delete a flight.
-pub fn delete_flight(conn: &PgConnection, flight: Flight) -> QueryResult<()> {
+pub fn delete_flight(conn: &mut PgConnection, flight: Flight) -> QueryResult<()> {
     let delete_count = diesel::delete(&flight).execute(conn)?;
     assert_eq!(delete_count, 1); // Sanity check
     Ok(())
 }
 
-pub fn get_flight_count(conn: &PgConnection) -> i64 {
+pub fn get_flight_count(conn: &mut PgConnection) -> i64 {
     flights::table
         .select(count(flights::id))
         .first(conn)
@@ -279,7 +284,7 @@ pub fn get_flight_count(conn: &PgConnection) -> i64 {
 }
 
 /// Retrieve all flights of a specific user.
-pub fn get_flights_for_user(conn: &PgConnection, user: &User) -> Vec<Flight> {
+pub fn get_flights_for_user(conn: &mut PgConnection, user: &User) -> Vec<Flight> {
     Flight::belonging_to(user)
         .order((flights::number.desc(), flights::launch_time.desc()))
         .load(conn)
@@ -287,7 +292,7 @@ pub fn get_flights_for_user(conn: &PgConnection, user: &User) -> Vec<Flight> {
 }
 
 /// Retrieve the highest flight number for a specific user.
-pub fn get_max_flight_number_for_user(conn: &PgConnection, user: &User) -> Option<i32> {
+pub fn get_max_flight_number_for_user(conn: &mut PgConnection, user: &User) -> Option<i32> {
     Flight::belonging_to(user)
         .select(max(flights::number))
         .first(conn)
@@ -295,7 +300,7 @@ pub fn get_max_flight_number_for_user(conn: &PgConnection, user: &User) -> Optio
 }
 
 /// Retrieve flight with the specified ID.
-pub fn get_flight_with_id(conn: &PgConnection, id: i32) -> Option<Flight> {
+pub fn get_flight_with_id(conn: &mut PgConnection, id: i32) -> Option<Flight> {
     flights::table
         .find(id)
         .first(conn)
@@ -304,7 +309,7 @@ pub fn get_flight_with_id(conn: &PgConnection, id: i32) -> Option<Flight> {
 }
 
 /// Save an updated IGC entry in the database.
-pub fn update_igc(conn: &PgConnection, flight: &Flight, data: &[u8]) {
+pub fn update_igc(conn: &mut PgConnection, flight: &Flight, data: &[u8]) {
     diesel::update(igcs::table.filter(igcs::flight_id.eq(flight.id)))
         .set(igcs::data.eq(data))
         .execute(conn)
@@ -312,7 +317,7 @@ pub fn update_igc(conn: &PgConnection, flight: &Flight, data: &[u8]) {
 }
 
 /// Retrieve IGC data for the specified flight.
-pub fn get_igc_for_flight(conn: &PgConnection, flight: &Flight) -> Option<Igc> {
+pub fn get_igc_for_flight(conn: &mut PgConnection, flight: &Flight) -> Option<Igc> {
     igcs::table
         .filter(igcs::flight_id.eq(flight.id))
         .first(conn)
@@ -322,7 +327,7 @@ pub fn get_igc_for_flight(conn: &PgConnection, flight: &Flight) -> Option<Igc> {
 
 /// Return all flight IDs of flights belonging to the specified user, where IGC
 /// data is available.
-pub fn get_flight_ids_with_igc_for_user(conn: &PgConnection, user: &User) -> Vec<i32> {
+pub fn get_flight_ids_with_igc_for_user(conn: &mut PgConnection, user: &User) -> Vec<i32> {
     Flight::belonging_to(user)
         .inner_join(igcs::table)
         .select(flights::id)
@@ -331,14 +336,14 @@ pub fn get_flight_ids_with_igc_for_user(conn: &PgConnection, user: &User) -> Vec
 }
 
 /// Return whether or not the specified flight has associated IGC data.
-pub fn flight_has_igc(conn: &PgConnection, flight: &Flight) -> bool {
+pub fn flight_has_igc(conn: &mut PgConnection, flight: &Flight) -> bool {
     select(exists(igcs::table.filter(igcs::flight_id.eq(flight.id))))
         .get_result(conn)
         .expect("Error in flight_has_igc")
 }
 
 /// Retrieve all locations with the specified IDs.
-pub fn get_locations_with_ids(conn: &PgConnection, ids: &[i32]) -> Vec<Location> {
+pub fn get_locations_with_ids(conn: &mut PgConnection, ids: &[i32]) -> Vec<Location> {
     locations::table
         .filter(locations::id.eq_any(ids))
         .load(conn)
@@ -346,7 +351,7 @@ pub fn get_locations_with_ids(conn: &PgConnection, ids: &[i32]) -> Vec<Location>
 }
 
 /// Retrieve all locations for the specified user.
-pub fn get_locations_for_user(conn: &PgConnection, user: &User) -> Vec<Location> {
+pub fn get_locations_for_user(conn: &mut PgConnection, user: &User) -> Vec<Location> {
     Location::belonging_to(user)
         .order(locations::name)
         .load(conn)
@@ -355,7 +360,7 @@ pub fn get_locations_for_user(conn: &PgConnection, user: &User) -> Vec<Location>
 
 /// Retrieve all locations for the specified user, including the number of
 /// associated flights (with either launch and/or landing at that location).
-pub fn get_all_locations_with_stats_for_user(conn: &PgConnection, user: &User) -> Vec<LocationWithCount> {
+pub fn get_all_locations_with_stats_for_user(conn: &mut PgConnection, user: &User) -> Vec<LocationWithCount> {
     sql_query(
         "SELECT l.*, count(f.id) as count
            FROM locations l
@@ -380,7 +385,7 @@ pub enum LocationAggregateBy {
 ///
 /// Entries with a count of 0 will not be included.
 pub fn get_visited_locations_with_stats_for_user(
-    conn: &PgConnection,
+    conn: &mut PgConnection,
     user: &User,
     aggregate_by: LocationAggregateBy,
     limit: i32,
@@ -407,7 +412,7 @@ pub fn get_visited_locations_with_stats_for_user(
 /// Retrieve all locations for the specified user within a specified radius
 /// from the specified coordinates.
 pub fn get_locations_around_point(
-    conn: &PgConnection,
+    conn: &mut PgConnection,
     user: &User,
     lat: f64,
     lng: f64,
@@ -433,7 +438,7 @@ pub fn get_locations_around_point(
 }
 
 /// Retrieve location with the specified ID.
-pub fn get_location_by_id(conn: &PgConnection, id: i32) -> Option<Location> {
+pub fn get_location_by_id(conn: &mut PgConnection, id: i32) -> Option<Location> {
     locations::table
         .find(id)
         .first(conn)
@@ -442,7 +447,7 @@ pub fn get_location_by_id(conn: &PgConnection, id: i32) -> Option<Location> {
 }
 
 /// Retrieve location with the specified ID and the number of associated flights.
-pub fn get_location_with_flight_count_by_id(conn: &PgConnection, id: i32) -> Option<LocationWithCount> {
+pub fn get_location_with_flight_count_by_id(conn: &mut PgConnection, id: i32) -> Option<LocationWithCount> {
     sql_query(
         "SELECT l.*, count(f.id) as count
            FROM locations l
@@ -457,7 +462,7 @@ pub fn get_location_with_flight_count_by_id(conn: &PgConnection, id: i32) -> Opt
 }
 
 /// Create a new location.
-pub fn create_location(conn: &PgConnection, location: NewLocation) -> Location {
+pub fn create_location(conn: &mut PgConnection, location: NewLocation) -> Location {
     diesel::insert_into(locations::table)
         .values(location)
         .get_result(conn)
@@ -465,7 +470,7 @@ pub fn create_location(conn: &PgConnection, location: NewLocation) -> Location {
 }
 
 /// Save an updated location in the database.
-pub fn update_location(conn: &PgConnection, location: &Location) {
+pub fn update_location(conn: &mut PgConnection, location: &Location) {
     diesel::update(location)
         .set(location)
         .execute(conn)
@@ -473,21 +478,21 @@ pub fn update_location(conn: &PgConnection, location: &Location) {
 }
 
 /// Delete a location by ID.
-pub fn delete_location_by_id(conn: &PgConnection, id: i32) -> QueryResult<()> {
+pub fn delete_location_by_id(conn: &mut PgConnection, id: i32) -> QueryResult<()> {
     let delete_count = diesel::delete(locations::table.filter(locations::id.eq(&id))).execute(conn)?;
     assert_eq!(delete_count, 1); // Sanity check
     Ok(())
 }
 
 /// Create a new glider.
-pub fn create_glider(conn: &PgConnection, glider: NewGlider) -> QueryResult<Glider> {
+pub fn create_glider(conn: &mut PgConnection, glider: NewGlider) -> QueryResult<Glider> {
     diesel::insert_into(gliders::table)
         .values(glider)
         .get_result(conn)
 }
 
 /// Save an updated glider in the database.
-pub fn update_glider(conn: &PgConnection, glider: &Glider) {
+pub fn update_glider(conn: &mut PgConnection, glider: &Glider) {
     diesel::update(glider)
         .set(glider)
         .execute(conn)
@@ -495,7 +500,7 @@ pub fn update_glider(conn: &PgConnection, glider: &Glider) {
 }
 
 /// Update the "last glider" of a user.
-pub fn update_user_last_glider(conn: &PgConnection, user: &User, glider_id: i32) {
+pub fn update_user_last_glider(conn: &mut PgConnection, user: &User, glider_id: i32) {
     diesel::update(user)
         .set(users::last_glider_id.eq(glider_id))
         .execute(conn)
@@ -504,14 +509,14 @@ pub fn update_user_last_glider(conn: &PgConnection, user: &User, glider_id: i32)
 
 #[derive(Debug, QueryableByName)]
 pub struct FlightCount {
-    #[sql_type = "SmallInt"]
+    #[diesel(sql_type = SmallInt)]
     pub year: i16,
-    #[sql_type = "BigInt"]
+    #[diesel(sql_type = BigInt)]
     pub count: i64,
 }
 
 /// Get flight count per year for the specified user.
-pub fn get_flight_count_per_year_for_user(conn: &PgConnection, user: &User) -> Vec<FlightCount> {
+pub fn get_flight_count_per_year_for_user(conn: &mut PgConnection, user: &User) -> Vec<FlightCount> {
     sql_query(
         "SELECT date_part('year', launch_time)::smallint as year,
                 count(*) as count
@@ -527,7 +532,7 @@ pub fn get_flight_count_per_year_for_user(conn: &PgConnection, user: &User) -> V
 }
 
 /// Get hike&fly count per year for the specified user.
-pub fn get_hikeandfly_count_per_year_for_user(conn: &PgConnection, user: &User) -> Vec<FlightCount> {
+pub fn get_hikeandfly_count_per_year_for_user(conn: &mut PgConnection, user: &User) -> Vec<FlightCount> {
     sql_query(
         "SELECT date_part('year', launch_time)::smallint as year,
                 count(*) as count
@@ -545,14 +550,14 @@ pub fn get_hikeandfly_count_per_year_for_user(conn: &PgConnection, user: &User) 
 
 #[derive(Debug, QueryableByName)]
 pub struct FlightTime {
-    #[sql_type = "SmallInt"]
+    #[diesel(sql_type = SmallInt)]
     pub year: i16,
-    #[sql_type = "BigInt"]
+    #[diesel(sql_type = BigInt)]
     pub seconds: i64,
 }
 
 /// Get flight hours per year for the specified user.
-pub fn get_flight_time_per_year_for_user(conn: &PgConnection, user: &User) -> Vec<FlightTime> {
+pub fn get_flight_time_per_year_for_user(conn: &mut PgConnection, user: &User) -> Vec<FlightTime> {
     sql_query(
         "SELECT date_part('year', launch_time)::smallint as year,
                 extract(epoch from sum(landing_time - launch_time))::bigint as seconds
@@ -567,7 +572,7 @@ pub fn get_flight_time_per_year_for_user(conn: &PgConnection, user: &User) -> Ve
     .expect("Error loading flight time stats")
 }
 
-pub fn get_flight_count_without_launch_time(conn: &PgConnection, user: &User) -> i64 {
+pub fn get_flight_count_without_launch_time(conn: &mut PgConnection, user: &User) -> i64 {
     Flight::belonging_to(user)
         .filter(flights::launch_time.is_null())
         .select(count(flights::id))
@@ -577,20 +582,20 @@ pub fn get_flight_count_without_launch_time(conn: &PgConnection, user: &User) ->
 
 #[derive(Debug, QueryableByName, Serialize)]
 pub struct FlightDistance {
-    #[sql_type = "SmallInt"]
+    #[diesel(sql_type = SmallInt)]
     pub year: i16,
-    #[sql_type = "Nullable<Integer>"]
+    #[diesel(sql_type = Nullable<Integer>)]
     pub track: Option<i32>,
-    #[sql_type = "Bool"]
+    #[diesel(sql_type = Bool)]
     pub track_incomplete: bool,
-    #[sql_type = "Nullable<Integer>"]
+    #[diesel(sql_type = Nullable<Integer>)]
     pub scored: Option<i32>,
-    #[sql_type = "Bool"]
+    #[diesel(sql_type = Bool)]
     pub scored_incomplete: bool,
 }
 
 /// Get flight distance per year for the specified user.
-pub fn get_flight_distance_per_year_for_user(conn: &PgConnection, user: &User) -> Vec<FlightDistance> {
+pub fn get_flight_distance_per_year_for_user(conn: &mut PgConnection, user: &User) -> Vec<FlightDistance> {
     sql_query(
         "SELECT date_part('year', launch_time)::smallint as year,
                 sum(track_distance)::int as track,
@@ -643,7 +648,7 @@ mod tests {
     ) {
         let ctx = test_utils::DbTestContext::new();
         assert_eq!(
-            validate_unique_registration_fields(&*ctx.force_get_conn(), email, username),
+            validate_unique_registration_fields(&mut ctx.force_get_conn(), email, username),
             result
         );
     }
@@ -682,7 +687,7 @@ mod tests {
         let ctx = test_utils::DbTestContext::new();
 
         // No flights
-        let n = get_max_flight_number_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        let n = get_max_flight_number_for_user(&mut ctx.force_get_conn(), &ctx.testuser1.user);
         assert_eq!(n, None);
 
         // Single flight, no number
@@ -692,9 +697,9 @@ mod tests {
                 user_id: ctx.testuser1.user.id,
                 ..Default::default()
             })
-            .execute(&*ctx.force_get_conn())
+            .execute(&mut *ctx.force_get_conn())
             .expect("Could not create flight");
-        let n = get_max_flight_number_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        let n = get_max_flight_number_for_user(&mut ctx.force_get_conn(), &ctx.testuser1.user);
         assert_eq!(n, None);
 
         // Now insert some flights with a flight number
@@ -726,13 +731,13 @@ mod tests {
                     ..Default::default()
                 },
             ])
-            .execute(&*ctx.force_get_conn())
+            .execute(&mut *ctx.force_get_conn())
             .expect("Could not create flight");
-        let n = get_max_flight_number_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        let n = get_max_flight_number_for_user(&mut ctx.force_get_conn(), &ctx.testuser1.user);
         assert_eq!(n, Some(7));
 
         // The user id is properly taken into account
-        let n = get_max_flight_number_for_user(&*ctx.force_get_conn(), &ctx.testuser2.user);
+        let n = get_max_flight_number_for_user(&mut ctx.force_get_conn(), &ctx.testuser2.user);
         assert_eq!(n, None);
     }
 
@@ -741,7 +746,7 @@ mod tests {
         let ctx = test_utils::DbTestContext::new();
 
         // No gliders
-        let a = get_gliders_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        let a = get_gliders_for_user(&mut ctx.force_get_conn(), &ctx.testuser1.user);
         assert_eq!(a.len(), 0);
 
         // Create some gliders
@@ -766,11 +771,11 @@ mod tests {
                     ..Default::default()
                 },
             ])
-            .execute(&*ctx.force_get_conn())
+            .execute(&mut *ctx.force_get_conn())
             .expect("Could not create gliders");
 
-        let a1 = get_gliders_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
-        let a2 = get_gliders_for_user(&*ctx.force_get_conn(), &ctx.testuser2.user);
+        let a1 = get_gliders_for_user(&mut ctx.force_get_conn(), &ctx.testuser1.user);
+        let a2 = get_gliders_for_user(&mut ctx.force_get_conn(), &ctx.testuser2.user);
         assert_eq!(
             a1.iter().map(|a| a.model.clone()).collect::<Vec<_>>(),
             vec!["Epsilon 8 23".to_string(), "Green S".to_string()],
@@ -785,7 +790,7 @@ mod tests {
     fn validate_login_invalid_no_user() {
         let ctx = test_utils::DbTestContext::new();
         // No user exists, this must fail
-        let user = validate_login(&*ctx.force_get_conn(), "foobar", "bazbong");
+        let user = validate_login(&mut ctx.force_get_conn(), "foobar", "bazbong");
         assert!(user.is_none());
     }
 
@@ -793,7 +798,7 @@ mod tests {
     fn validate_login_invalid_bad_password() {
         let ctx = test_utils::DbTestContext::new();
         // Wrong password, this must fail
-        let user = validate_login(&*ctx.force_get_conn(), &ctx.testuser1.user.username, "bazbong");
+        let user = validate_login(&mut ctx.force_get_conn(), &ctx.testuser1.user.username, "bazbong");
         assert!(user.is_none());
     }
 
@@ -802,7 +807,7 @@ mod tests {
         let ctx = test_utils::DbTestContext::new();
         // Correct password, this should succeed
         let user = validate_login(
-            &*ctx.force_get_conn(),
+            &mut ctx.force_get_conn(),
             &ctx.testuser1.user.username,
             &ctx.testuser1.password,
         );
@@ -819,18 +824,18 @@ mod tests {
         assert_ne!(oldpass, newpass);
 
         // Correct password, this should succeed
-        let user = validate_login(&*ctx.force_get_conn(), &ctx.testuser1.user.username, &oldpass);
+        let user = validate_login(&mut ctx.force_get_conn(), &ctx.testuser1.user.username, &oldpass);
         assert!(user.is_some());
 
         // Change password
-        update_password(&*ctx.force_get_conn(), &user.unwrap(), &newpass);
+        update_password(&mut ctx.force_get_conn(), &user.unwrap(), &newpass);
 
         // Old password should not work anymore
-        let user2 = validate_login(&*ctx.force_get_conn(), &ctx.testuser1.user.username, &oldpass);
+        let user2 = validate_login(&mut ctx.force_get_conn(), &ctx.testuser1.user.username, &oldpass);
         assert!(user2.is_none());
 
         // New password should work
-        let user3 = validate_login(&*ctx.force_get_conn(), &ctx.testuser1.user.username, &newpass);
+        let user3 = validate_login(&mut ctx.force_get_conn(), &ctx.testuser1.user.username, &newpass);
         assert!(user3.is_some());
     }
 
@@ -840,7 +845,7 @@ mod tests {
 
         // No locations
         let l = get_visited_locations_with_stats_for_user(
-            &*ctx.force_get_conn(),
+            &mut ctx.force_get_conn(),
             &ctx.testuser1.user,
             LocationAggregateBy::Launches,
             99,
@@ -881,10 +886,10 @@ mod tests {
                     ..Default::default()
                 },
             ])
-            .get_results::<Location>(&*ctx.force_get_conn())
+            .get_results::<Location>(&mut *ctx.force_get_conn())
             .expect("Could not create flight");
         let l = get_visited_locations_with_stats_for_user(
-            &*ctx.force_get_conn(),
+            &mut ctx.force_get_conn(),
             &ctx.testuser1.user,
             LocationAggregateBy::Launches,
             99,
@@ -937,10 +942,10 @@ mod tests {
                     ..Default::default()
                 },
             ])
-            .execute(&*ctx.force_get_conn())
+            .execute(&mut *ctx.force_get_conn())
             .expect("Could not create flight");
         let l_launches = get_visited_locations_with_stats_for_user(
-            &*ctx.force_get_conn(),
+            &mut ctx.force_get_conn(),
             &ctx.testuser1.user,
             LocationAggregateBy::Launches,
             99,
@@ -950,7 +955,7 @@ mod tests {
         .collect::<Vec<_>>();
         assert_eq!(l_launches, vec![("Selun".into(), 3), ("Etzel".into(), 2)]);
         let l_landings = get_visited_locations_with_stats_for_user(
-            &*ctx.force_get_conn(),
+            &mut ctx.force_get_conn(),
             &ctx.testuser1.user,
             LocationAggregateBy::Landings,
             99,
@@ -966,7 +971,7 @@ mod tests {
         let ctx = test_utils::DbTestContext::new();
 
         // No flights with IGC
-        let ids = get_flight_ids_with_igc_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        let ids = get_flight_ids_with_igc_for_user(&mut ctx.force_get_conn(), &ctx.testuser1.user);
         assert_eq!(ids.len(), 0);
 
         // Add some flights
@@ -989,27 +994,27 @@ mod tests {
                     ..Default::default()
                 },
             ])
-            .get_results::<Flight>(&*ctx.force_get_conn())
+            .get_results::<Flight>(&mut *ctx.force_get_conn())
             .expect("Could not create flights");
 
         // Still no flights with IGC
-        let ids = get_flight_ids_with_igc_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        let ids = get_flight_ids_with_igc_for_user(&mut ctx.force_get_conn(), &ctx.testuser1.user);
         assert_eq!(ids.len(), 0);
 
         // Add some IGC files
         for i in &[0, 2, 3] {
             diesel::insert_into(igcs::table)
                 .values(&(igcs::flight_id.eq(flights[*i].id), igcs::data.eq(vec![1, 2, 3])))
-                .execute(&*ctx.force_get_conn())
+                .execute(&mut *ctx.force_get_conn())
                 .expect("Could not create IGC entry");
         }
 
         // Two IGC files for user 1
-        let result = get_flight_ids_with_igc_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        let result = get_flight_ids_with_igc_for_user(&mut ctx.force_get_conn(), &ctx.testuser1.user);
         assert_eq!(result, vec![flights[0].id, flights[2].id]);
 
         // One IGC file for user 2
-        let result = get_flight_ids_with_igc_for_user(&*ctx.force_get_conn(), &ctx.testuser2.user);
+        let result = get_flight_ids_with_igc_for_user(&mut ctx.force_get_conn(), &ctx.testuser2.user);
         assert_eq!(result, vec![flights[3].id]);
     }
 }

@@ -7,7 +7,7 @@ use serde::Serialize;
 use crate::schema::{flights, gliders, igcs, locations, users};
 
 #[derive(Identifiable, Queryable, Serialize, PartialEq, Debug, Clone)]
-#[table_name = "users"]
+#[diesel(table_name = users)]
 pub struct User {
     pub id: i32,
     pub username: String,
@@ -23,8 +23,8 @@ pub struct User {
 }
 
 #[derive(Identifiable, Queryable, Associations, AsChangeset, Serialize, PartialEq, Debug, Clone)]
-#[belongs_to(User, foreign_key = "user_id")]
-#[table_name = "gliders"]
+#[diesel(belongs_to(User, foreign_key = user_id))]
+#[diesel(table_name = gliders)]
 pub struct Glider {
     pub id: i32,
     pub user_id: i32,
@@ -45,37 +45,37 @@ pub struct Glider {
 }
 
 #[derive(Debug, QueryableByName, Serialize)]
-#[table_name = "gliders"]
+#[diesel(table_name = gliders)]
 pub struct GliderWithStats {
     // For field descriptions, see `Glider` model
-    #[sql_type = "Integer"]
+    #[diesel(sql_type = Integer)]
     pub id: i32,
-    #[sql_type = "Integer"]
+    #[diesel(sql_type = Integer)]
     pub user_id: i32,
-    #[sql_type = "Text"]
+    #[diesel(sql_type = Text)]
     pub model: String,
-    #[sql_type = "Text"]
+    #[diesel(sql_type = Text)]
     pub manufacturer: String,
-    #[sql_type = "Nullable<Date>"]
+    #[diesel(sql_type = Nullable<Date>)]
     pub since: Option<NaiveDate>,
-    #[sql_type = "Nullable<Date>"]
+    #[diesel(sql_type = Nullable<Date>)]
     pub until: Option<NaiveDate>,
-    #[sql_type = "Nullable<Text>"]
+    #[diesel(sql_type = Nullable<Text>)]
     pub source: Option<String>,
-    #[sql_type = "Nullable<Integer>"]
+    #[diesel(sql_type = Nullable<Integer>)]
     pub cost: Option<i32>,
-    #[sql_type = "Nullable<Text>"]
+    #[diesel(sql_type = Nullable<Text>)]
     pub comment: Option<String>,
-    #[sql_type = "BigInt"]
+    #[diesel(sql_type = BigInt)]
     pub flights: i64,
-    #[sql_type = "BigInt"]
+    #[diesel(sql_type = BigInt)]
     pub seconds: i64,
-    #[sql_type = "Bool"]
+    #[diesel(sql_type = Bool)]
     pub seconds_complete: bool,
 }
 
 #[derive(Insertable, Default)]
-#[table_name = "gliders"]
+#[diesel(table_name = gliders)]
 pub struct NewGlider {
     pub user_id: i32,
     pub model: String,
@@ -88,8 +88,8 @@ pub struct NewGlider {
 }
 
 #[derive(Identifiable, Queryable, Associations, AsChangeset, Serialize, PartialEq, Debug, Clone)]
-#[belongs_to(User, foreign_key = "user_id")]
-#[table_name = "locations"]
+#[diesel(belongs_to(User, foreign_key = user_id))]
+#[diesel(table_name = locations)]
 pub struct Location {
     pub id: i32,
     pub name: String,
@@ -100,7 +100,7 @@ pub struct Location {
 }
 
 #[derive(Insertable, Default)]
-#[table_name = "locations"]
+#[diesel(table_name = locations)]
 pub struct NewLocation {
     pub name: String,
     pub country: String,
@@ -111,45 +111,45 @@ pub struct NewLocation {
 
 #[derive(QueryableByName, PartialEq, Debug, Clone)]
 pub struct LocationWithDistance {
-    #[sql_type = "Integer"]
+    #[diesel(sql_type = Integer)]
     pub id: i32,
-    #[sql_type = "Text"]
+    #[diesel(sql_type = Text)]
     pub name: String,
-    #[sql_type = "Text"]
+    #[diesel(sql_type = Text)]
     pub country: String,
-    #[sql_type = "Integer"]
+    #[diesel(sql_type = Integer)]
     pub elevation: i32,
-    #[sql_type = "Integer"]
+    #[diesel(sql_type = Integer)]
     pub user_id: i32,
-    #[sql_type = "Geography"]
+    #[diesel(sql_type = Geography)]
     pub geog: GeogPoint,
-    #[sql_type = "Double"]
+    #[diesel(sql_type = Double)]
     pub distance: f64,
 }
 
 /// Locations with a count (e.g. landing count).
 #[derive(QueryableByName, Serialize, PartialEq, Debug, Clone)]
 pub struct LocationWithCount {
-    #[sql_type = "Integer"]
+    #[diesel(sql_type = Integer)]
     pub id: i32,
-    #[sql_type = "Text"]
+    #[diesel(sql_type = Text)]
     pub name: String,
-    #[sql_type = "Text"]
+    #[diesel(sql_type = Text)]
     pub country: String,
-    #[sql_type = "Integer"]
+    #[diesel(sql_type = Integer)]
     pub elevation: i32,
-    #[sql_type = "Integer"]
+    #[diesel(sql_type = Integer)]
     pub user_id: i32,
-    #[sql_type = "Nullable<Geography>"]
+    #[diesel(sql_type = Nullable<Geography>)]
     pub geog: Option<GeogPoint>,
-    #[sql_type = "BigInt"]
+    #[diesel(sql_type = BigInt)]
     pub count: i64,
 }
 
 #[derive(Identifiable, Queryable, Associations, AsChangeset, Serialize, PartialEq, Debug, Clone)]
-#[belongs_to(User, foreign_key = "user_id")]
-#[belongs_to(Glider, foreign_key = "glider_id")]
-#[table_name = "flights"]
+#[diesel(belongs_to(User, foreign_key = user_id))]
+#[diesel(belongs_to(Glider, foreign_key = glider_id))]
+#[diesel(table_name = flights)]
 pub struct Flight {
     /// Primary key
     pub id: i32,
@@ -186,7 +186,7 @@ pub struct Flight {
 }
 
 #[derive(Insertable, Default)]
-#[table_name = "flights"]
+#[diesel(table_name = flights)]
 pub struct NewFlight {
     /// The user-defined flight number
     pub number: Option<i32>,
@@ -219,8 +219,8 @@ pub struct NewFlight {
 }
 
 #[derive(Identifiable, Queryable, Insertable, PartialEq, Debug, Clone)]
-#[primary_key(flight_id)]
-#[table_name = "igcs"]
+#[diesel(primary_key(flight_id))]
+#[diesel(table_name = igcs)]
 pub struct Igc {
     /// The flight
     pub flight_id: i32,

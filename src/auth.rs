@@ -6,16 +6,17 @@ use log::error;
 use rocket::{
     form::Form,
     get,
-    http::{Cookie, CookieJar},
+    http::{Cookie, CookieJar, Status},
     outcome::Outcome,
     post,
     request::{self, FlashMessage, FromRequest, Request},
     response::{Flash, Redirect},
-    routes, uri, FromForm, Route,
+    routes,
+    time::{Duration, OffsetDateTime},
+    uri, FromForm, Route,
 };
 use rocket_dyn_templates::Template;
 use serde::Serialize;
-use time::{Duration, OffsetDateTime};
 
 use crate::{
     data::{self, Database},
@@ -43,7 +44,7 @@ impl<'r> FromRequest<'r> for AuthUser {
     async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
         // Get database access
         let database = match Database::from_request(request).await {
-            Outcome::Failure(f) => return Outcome::Failure(f),
+            Outcome::Error(f) => return Outcome::Error(f),
             Outcome::Forward(f) => return Outcome::Forward(f),
             Outcome::Success(database) => database,
         };
@@ -52,20 +53,20 @@ impl<'r> FromRequest<'r> for AuthUser {
         let cookies = request.cookies();
         let user_cookie = match cookies.get_private(USER_COOKIE_ID) {
             Some(cookie) => cookie,
-            None => return Outcome::Forward(()),
+            None => return Outcome::Forward(Status::Unauthorized),
         };
 
         // A login cookie was found. Look up the corresponding database user.
         let id: i32 = match user_cookie.value().parse() {
             Ok(int) => int,
-            Err(_) => return Outcome::Forward(()),
+            Err(_) => return Outcome::Forward(Status::Unauthorized),
         };
         match database.run(move |db| data::get_user(db, id)).await {
             Some(user) => Outcome::Success(AuthUser(user)),
             None => {
                 error!("Login cookie with invalid user id found. Removing cookie.");
                 cookies.remove_private(user_cookie);
-                Outcome::Forward(())
+                Outcome::Forward(Status::Unauthorized)
             }
         }
     }
@@ -113,7 +114,7 @@ pub async fn login(
 /// Logout handler.
 #[get("/auth/logout")]
 pub fn logout(cookies: &CookieJar<'_>) -> Redirect {
-    cookies.remove_private(Cookie::named(USER_COOKIE_ID));
+    cookies.remove_private(Cookie::from(USER_COOKIE_ID));
     Redirect::to("/")
 }
 
@@ -395,7 +396,12 @@ mod tests {
 
         macro_rules! password_valid {
             ($pw:expr) => {
-                data::validate_login(&*ctx.force_get_conn(), &ctx.testuser1.user.username, $pw).is_some()
+                data::validate_login(
+                    &mut *ctx.force_get_conn(),
+                    &ctx.testuser1.user.username,
+                    $pw,
+                )
+                .is_some()
             };
         }
 

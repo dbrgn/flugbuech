@@ -30,7 +30,7 @@ struct StatsContext {
     user: User,
     launch_locations: Vec<LocationWithCount>,
     landing_locations: Vec<LocationWithCount>,
-    yearly_stats: BTreeMap<u16, YearStats>,
+    yearly_stats: BTreeMap<String, YearStats>,
     flight_count_total: u32,
     hikeandfly_count_total: u32,
     flight_time_total: u64,
@@ -53,21 +53,24 @@ pub async fn stats(database: data::Database, user: auth::AuthUser) -> Template {
                 data::get_visited_locations_with_stats_for_user(db, &user, LocationAggregateBy::Landings, 10);
 
             // Yearly stats map
-            let mut yearly_stats: BTreeMap<u16, YearStats> = BTreeMap::new();
+            let mut yearly_stats: BTreeMap<String, YearStats> = BTreeMap::new();
 
             // Determine data completeness
             let flights_without_launch_time = data::get_flight_count_without_launch_time(db, &user) as u64;
 
             // Get flight count per year
             for count in data::get_flight_count_per_year_for_user(db, &user) {
-                yearly_stats.entry(count.year as u16).or_default().flight_count = Some(count.count as u32);
+                yearly_stats
+                    .entry(count.year.to_string())
+                    .or_default()
+                    .flight_count = Some(count.count as u32);
             }
             let flight_count_total = yearly_stats.values().filter_map(|s| s.flight_count).sum();
 
             // Get hike&fly count per year
             for count in data::get_hikeandfly_count_per_year_for_user(db, &user) {
                 yearly_stats
-                    .entry(count.year as u16)
+                    .entry(count.year.to_string())
                     .or_default()
                     .hikeandfly_count = Some(count.count as u32);
             }
@@ -75,13 +78,16 @@ pub async fn stats(database: data::Database, user: auth::AuthUser) -> Template {
 
             // Get hours per year
             for time in data::get_flight_time_per_year_for_user(db, &user) {
-                yearly_stats.entry(time.year as u16).or_default().flight_seconds = Some(time.seconds as u64);
+                yearly_stats
+                    .entry(time.year.to_string())
+                    .or_default()
+                    .flight_seconds = Some(time.seconds as u64);
             }
             let flight_time_total = yearly_stats.values().filter_map(|s| s.flight_seconds).sum();
 
             // Get km per year
             for distance in data::get_flight_distance_per_year_for_user(db, &user) {
-                let mut stats = yearly_stats.entry(distance.year as u16).or_default();
+                let stats = yearly_stats.entry(distance.year.to_string()).or_default();
                 stats.distance_track = distance.track;
                 stats.distance_track_incomplete = distance.track_incomplete;
                 stats.distance_scored = distance.scored;

@@ -5,13 +5,16 @@ use std::{
 };
 
 use diesel::{connection::SimpleConnection, pg::PgConnection, prelude::*};
-use diesel_migrations;
+use diesel_migrations::MigrationHarness;
 use dotenv;
 use lazy_static::lazy_static;
 use log::debug;
 use rocket::{config::Config, figment::Figment, http::Cookie};
 
-use crate::{data::create_user, models::User};
+use crate::{
+    data::{self, create_user},
+    models::User,
+};
 
 lazy_static! {
     static ref DB_MUTEX: Mutex<()> = Mutex::new(());
@@ -53,7 +56,7 @@ impl<'a> DbTestContext<'a> {
         // Connect to test database
         debug!("Connecting to test database...");
         let database_url = env::var("TEST_DATABASE_URL").expect("TEST_DATABASE_URL must be set");
-        let conn = PgConnection::establish(&database_url).expect(&format!(
+        let mut conn = PgConnection::establish(&database_url).expect(&format!(
             "Could not establish database connection with \"{}\"",
             database_url
         ));
@@ -64,11 +67,12 @@ impl<'a> DbTestContext<'a> {
             .expect("Could not clean up test database");
 
         // Run migrations
-        diesel_migrations::run_pending_migrations(&conn).expect("Could not run database migrations");
+        conn.run_pending_migrations(data::MIGRATIONS)
+            .expect("Could not run database migrations");
 
         // Create test user
-        let testuser1 = create_user(&conn, "testuser1", "testpass", "user1@example.com");
-        let testuser2 = create_user(&conn, "testuser2", "testpass", "user2@example.com");
+        let testuser1 = create_user(&mut conn, "testuser1", "testpass", "user1@example.com");
+        let testuser2 = create_user(&mut conn, "testuser2", "testpass", "user2@example.com");
 
         DbTestContext {
             conn: Mutex::new(conn),

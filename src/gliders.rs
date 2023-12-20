@@ -95,7 +95,7 @@ pub fn add_form_nologin() -> Redirect {
 ///
 /// TODO: Generalize this and move it into a helper module.
 pub enum ValidationResult {
-    Success(Redirect),
+    Success(Box<Redirect>),
     Invalid(Template, Status),
 }
 
@@ -145,7 +145,7 @@ pub async fn add(user: auth::AuthUser, database: data::Database, data: Form<Glid
         Ok(_) => {
             // Glider created, redirect to glider list
             log::info!("Created glider for user {}", user.id);
-            ValidationResult::Success(Redirect::to(uri!(list)))
+            ValidationResult::Success(Box::new(Redirect::to(uri!(list))))
         }
         Err(DieselError::DatabaseError(DatabaseErrorKind::UniqueViolation, _info)) => {
             ValidationResult::Invalid(
@@ -263,7 +263,7 @@ mod tests {
         let client = make_client();
 
         // No gliders
-        let g = data::get_gliders_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        let g = data::get_gliders_for_user(&mut *ctx.force_get_conn(), &ctx.testuser1.user);
         assert_eq!(g.len(), 0);
 
         macro_rules! add_glider {
@@ -282,7 +282,7 @@ mod tests {
         assert_eq!(resp.status(), Status::SeeOther);
 
         // Verify database
-        let g = data::get_gliders_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        let g = data::get_gliders_for_user(&mut *ctx.force_get_conn(), &ctx.testuser1.user);
         assert_eq!(g.len(), 1);
         assert_eq!(g[0].manufacturer, "Advance");
         assert_eq!(g[0].model, "Epsilon 8");
@@ -291,19 +291,19 @@ mod tests {
         let resp = add_glider!("manufacturer=Advance&model=Epsilon%208", ctx.auth_cookie_user1());
         assert_eq!(resp.status(), Status::Conflict);
         assert_eq!(
-            data::get_gliders_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user).len(),
+            data::get_gliders_for_user(&mut *ctx.force_get_conn(), &ctx.testuser1.user).len(),
             1,
         );
 
         // ...but another user can!
         assert_eq!(
-            data::get_gliders_for_user(&*ctx.force_get_conn(), &ctx.testuser2.user).len(),
+            data::get_gliders_for_user(&mut *ctx.force_get_conn(), &ctx.testuser2.user).len(),
             0,
         );
         let resp = add_glider!("manufacturer=Advance&model=Epsilon%208", ctx.auth_cookie_user2());
         assert_eq!(resp.status(), Status::SeeOther);
         assert_eq!(
-            data::get_gliders_for_user(&*ctx.force_get_conn(), &ctx.testuser2.user).len(),
+            data::get_gliders_for_user(&mut *ctx.force_get_conn(), &ctx.testuser2.user).len(),
             1,
         );
     }
@@ -314,7 +314,7 @@ mod tests {
         let client = make_client();
 
         // No gliders
-        let g = data::get_gliders_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        let g = data::get_gliders_for_user(&mut *ctx.force_get_conn(), &ctx.testuser1.user);
         assert_eq!(g.len(), 0);
 
         macro_rules! add_glider {
@@ -336,12 +336,12 @@ mod tests {
         assert_eq!(resp.status(), Status::SeeOther);
 
         // Verify database
-        let g = data::get_gliders_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        let g = data::get_gliders_for_user(&mut *ctx.force_get_conn(), &ctx.testuser1.user);
         assert_eq!(g.len(), 1);
         assert_eq!(g[0].manufacturer, "Ozone");
         assert_eq!(g[0].model, "Enzo 2");
-        assert_eq!(g[0].since, Some(NaiveDate::from_ymd(2019, 2, 3)));
-        assert_eq!(g[0].until, Some(NaiveDate::from_ymd(2019, 11, 20)));
+        assert_eq!(g[0].since, Some(NaiveDate::from_ymd_opt(2019, 2, 3).unwrap()));
+        assert_eq!(g[0].until, Some(NaiveDate::from_ymd_opt(2019, 11, 20).unwrap()));
         assert_eq!(g[0].source, Some("Flycenter".into()));
         assert_eq!(g[0].cost, Some(3344));
         assert_eq!(g[0].comment, Some("Sold it to Joe.".into()));
@@ -377,7 +377,7 @@ mod tests {
         }
 
         // No gliders
-        let g = data::get_gliders_with_stats_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        let g = data::get_gliders_with_stats_for_user(&mut *ctx.force_get_conn(), &ctx.testuser1.user);
         assert_eq!(g.len(), 0);
 
         // Add gliders
@@ -385,7 +385,7 @@ mod tests {
         assert_eq!(resp.status(), Status::SeeOther);
 
         // One glider, no flights
-        let g = data::get_gliders_with_stats_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        let g = data::get_gliders_with_stats_for_user(&mut *ctx.force_get_conn(), &ctx.testuser1.user);
         assert_eq!(1, g.len(), "No gliders found");
         assert_eq!(g[0].manufacturer, "A");
         assert_eq!(g[0].model, "1");
@@ -396,7 +396,7 @@ mod tests {
         // Add a flight, without launch/landing time
         let resp = add_flight!(g[0].id, "", "", "", ctx.auth_cookie_user1());
         assert_eq!(resp.status(), Status::SeeOther);
-        let g = data::get_gliders_with_stats_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        let g = data::get_gliders_with_stats_for_user(&mut *ctx.force_get_conn(), &ctx.testuser1.user);
         assert_eq!(1, g.len(), "No gliders found");
         assert_eq!(g[0].flights, 1);
         assert_eq!(g[0].seconds, 0);
@@ -419,7 +419,7 @@ mod tests {
             ctx.auth_cookie_user1()
         );
         assert_eq!(resp.status(), Status::SeeOther);
-        let g = data::get_gliders_with_stats_for_user(&*ctx.force_get_conn(), &ctx.testuser1.user);
+        let g = data::get_gliders_with_stats_for_user(&mut *ctx.force_get_conn(), &ctx.testuser1.user);
         assert_eq!(1, g.len(), "No gliders found");
         assert_eq!(g[0].flights, 3);
         assert_eq!(g[0].seconds, 3600 + 300);

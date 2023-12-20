@@ -1,6 +1,7 @@
+#![allow(clippy::needless_borrow)]
+
 #[macro_use]
 extern crate diesel;
-#[macro_use]
 extern crate diesel_migrations;
 
 mod auth;
@@ -22,7 +23,7 @@ mod templates;
 mod test_utils;
 
 use anyhow::{Context, Result};
-use clap::{App, Arg};
+use clap::{Arg, ArgAction, Command};
 use rocket::{
     catch, catchers,
     fs::FileServer,
@@ -103,18 +104,19 @@ async fn main() -> Result<()> {
     let _ = dotenv::dotenv();
 
     // Parse args
-    let args = App::new(NAME)
+    let args = Command::new(NAME)
         .about(DESCRIPTION)
         .version(VERSION)
         .arg(
-            Arg::with_name("migrate")
+            Arg::new("migrate")
                 .long("migrate")
+                .action(ArgAction::SetTrue)
                 .help("Run database migrations before starting"),
         )
         .get_matches();
 
     // Decide whether migrations should be run
-    let migrate = args.is_present("migrate");
+    let migrate = args.get_flag("migrate");
     if migrate {
         println!("Running database migrations...");
         data::run_migrations().unwrap();

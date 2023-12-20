@@ -1,6 +1,6 @@
 # Flugbuech
 
-[![Build status](https://img.shields.io/github/workflow/status/dbrgn/flugbuech/CI/main)](https://github.com/dbrgn/flugbuech/actions?query=workflow%3ACI)
+[![Build status](https://github.com/dbrgn/flugbuech/workflows/CI/badge.svg)](https://github.com/dbrgn/flugbuech/actions?query=branch%3Amaster)
 [![Docker image](https://img.shields.io/badge/docker%20image-dbrgn%2Fflugbuech-blue)](https://hub.docker.com/r/dbrgn/flugbuech/)
 
 Personal flight log for paragliding pilots. Written with
@@ -61,14 +61,18 @@ Install `diesel_cli`:
 
     cargo install -f diesel_cli --no-default-features --features postgres
 
-Set up PostgreSQL database:
+Start PostGIS database:
 
-    createdb flugbuech
+    docker run -d --name flugbuech-pg \
+      -e POSTGRES_DB=flugbuech \
+      -e POSTGRES_USER=flugbuech \
+      -e POSTGRES_PASSWORD=flugbuech-dev-password \
+      -p 127.0.0.1:5432:5432 \
+      docker.io/postgis/postgis:15-3.4-alpine
+
+Prepare database and run migrations:
+
     diesel setup
-
-Run database migrations:
-
-    diesel migration run
 
 (Note: You can also apply migrations by starting with the `--migrate` flag)
 
@@ -97,7 +101,7 @@ a welcome message bearing your username.
 
 First, set up a test database:
 
-    createdb flugbuech_test
+    docker exec flugbuech-pg createdb -U flugbuech flugbuech_test
 
 Run tests:
 

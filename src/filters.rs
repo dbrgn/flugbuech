@@ -45,5 +45,5 @@ pub fn linebreaksbr(value: &Value, _: &HashMap<String, Value>) -> tera::Result<V
     } else {
         return Err("The linebreaksbr filter can only be applied to strings".into());
     };
-    Ok(Value::String(text.replace("\r\n", "<br>").replace("\n", "<br>")))
+    Ok(Value::String(text.replace("\r\n", "<br>").replace('\n', "<br>")))
 }

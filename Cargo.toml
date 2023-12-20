@@ -7,24 +7,23 @@ license = "AGPL-3.0"
 
 [dependencies]
 anyhow = "1"
-base64 = "0.13"
+base64 = "0.21"
 chrono = { version = "0.4", features = ["serde"] }
-clap = "2"
-diesel = { version = "1.4", features = ["postgres", "chrono"] }
-diesel-geography = { version = "0.2", features = ["serde"], git = "https://github.com/Boscop/diesel-geography", branch = "master" }
-diesel_migrations = { version = "1.4", features = ["postgres"] }
+clap = "4"
+diesel = { version = "2.1.4", features = ["postgres", "chrono"] }
+diesel-geography = { version = "0.2", features = ["serde"], git = "https://github.com/66np/diesel-geography", rev = "059c553" }
+diesel_migrations = { version = "2", features = ["postgres"] }
 dotenv = "0.15"
 flat_projection = "0.4"
 igc = "0.2"
 log = "0.4"
 num-traits = "0.2"
 regex = "1.5.5"
-rocket = { version = "0.5.0-rc.1", features = ["secrets", "json"], default-features = false }
-rocket_dyn_templates = { version = "0.1.0-rc.1", features = ["tera"], default-features = false }
-rocket_sync_db_pools = { version = "0.1.0-rc.1", features = ["diesel_postgres_pool"], default-features = false }
+rocket = { version = "0.5.0", features = ["secrets", "json"], default-features = false }
+rocket_dyn_templates = { version = "0.1.0", features = ["tera"], default-features = false }
+rocket_sync_db_pools = { version = "0.1.0", features = ["diesel_postgres_pool"], default-features = false }
 serde = { version = "1", features = ["derive"] }
-time = "0.2"
 
 [dev-dependencies]
 lazy_static = "1"
-rstest = "0.12"
+rstest = "0.18"
