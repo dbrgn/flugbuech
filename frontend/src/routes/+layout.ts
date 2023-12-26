@@ -15,7 +15,7 @@ interface LayoutData {
 }
 
 export async function load(): Promise<LayoutData> {
-    const cookies = getCookiesMap();
+    const cookies = getCookiesMap(document.cookie);
 
     return {
         username: cookies['user_name'],
