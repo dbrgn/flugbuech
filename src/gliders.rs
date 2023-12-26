@@ -273,6 +273,7 @@ mod tests {
                     .header(ContentType::Form)
                     .body($body)
                     .private_cookie($cookie)
+                    .cookie(ctx.username_cookie())
                     .dispatch()
             };
         }
@@ -324,6 +325,7 @@ mod tests {
                     .header(ContentType::Form)
                     .body($body)
                     .private_cookie($cookie)
+                    .cookie(ctx.username_cookie())
                     .dispatch()
             };
         }
@@ -359,6 +361,7 @@ mod tests {
                     .header(ContentType::Form)
                     .body($body)
                     .private_cookie($cookie)
+                    .cookie(ctx.username_cookie())
                     .dispatch()
             };
         }
@@ -372,6 +375,7 @@ mod tests {
                         $glider, $launch_date, $launch_time, $landing_time,
                     ))
                     .private_cookie($cookie)
+                    .cookie(ctx.username_cookie())
                     .dispatch()
             };
         }

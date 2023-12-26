@@ -25,6 +25,7 @@ use crate::{
 };
 
 pub const USER_COOKIE_ID: &str = "user_id";
+pub const USER_COOKIE_NAME: &str = "user_name";
 
 #[derive(FromForm)]
 pub struct Login {
@@ -35,6 +36,30 @@ pub struct Login {
 /// User newtype, wraps the user model, provides guard transparency.
 #[derive(Debug)]
 pub struct AuthUser(User);
+
+fn make_cookie(name: &'static str, value: String) -> Cookie {
+    // Cookie expiration: 1 year
+    let mut expiration = OffsetDateTime::now_utc();
+    expiration += Duration::weeks(52);
+
+    // Create cookie
+    let mut cookie = Cookie::new(name, value);
+    cookie.set_expires(expiration);
+
+    cookie
+}
+
+/// Add auth cookies to the specified cookie jar.
+fn add_auth_cookies(cookies: &CookieJar, user: &User) {
+    cookies.add_private(make_cookie(USER_COOKIE_ID, user.id.to_string()));
+    cookies.add(make_cookie(USER_COOKIE_NAME, user.username.clone()));
+}
+
+/// Remove auth cookies from the specified cookie jar.
+fn remove_auth_cookies(cookies: &CookieJar) {
+    cookies.remove_private(Cookie::from(USER_COOKIE_ID));
+    cookies.remove(Cookie::from(USER_COOKIE_NAME));
+}
 
 /// Get the user model from a request cookie.
 #[rocket::async_trait]
@@ -49,23 +74,32 @@ impl<'r> FromRequest<'r> for AuthUser {
             Outcome::Success(database) => database,
         };
 
-        // Get login cookie
+        // Look up login cookie
         let cookies = request.cookies();
         let user_cookie = match cookies.get_private(USER_COOKIE_ID) {
             Some(cookie) => cookie,
             None => return Outcome::Forward(Status::Unauthorized),
         };
 
-        // A login cookie was found. Look up the corresponding database user.
-        let id: i32 = match user_cookie.value().parse() {
+        // Extract user ID
+        let user_id: i32 = match user_cookie.value().parse() {
             Ok(int) => int,
             Err(_) => return Outcome::Forward(Status::Unauthorized),
         };
-        match database.run(move |db| data::get_user(db, id)).await {
+
+        // Ensure that username cookie is set as well
+        if cookies.get(USER_COOKIE_NAME).is_none() {
+            error!("Login cookie but no username cookie found. Removing auth cookies.");
+            remove_auth_cookies(cookies);
+            return Outcome::Forward(Status::Unauthorized);
+        }
+
+        // A login cookie was found. Look up the corresponding database user.
+        match database.run(move |db| data::get_user(db, user_id)).await {
             Some(user) => Outcome::Success(AuthUser(user)),
             None => {
                 error!("Login cookie with invalid user id found. Removing cookie.");
-                cookies.remove_private(user_cookie);
+                remove_auth_cookies(cookies);
                 Outcome::Forward(Status::Unauthorized)
             }
         }
@@ -91,17 +125,7 @@ pub async fn login(
         .await
     {
         Some(user) => {
-            // Auth cookie expiration: 1 year
-            let mut expiration = OffsetDateTime::now_utc();
-            expiration += Duration::weeks(52);
-
-            // Create cookie
-            let mut cookie = Cookie::new(USER_COOKIE_ID, user.id.to_string());
-            cookie.set_expires(expiration);
-
-            // Add cookie to response
-            cookies.add_private(cookie);
-
+            add_auth_cookies(cookies, &user);
             Ok(Redirect::to("/"))
         }
         None => Err(Flash::error(
@@ -114,7 +138,7 @@ pub async fn login(
 /// Logout handler.
 #[get("/auth/logout")]
 pub fn logout(cookies: &CookieJar<'_>) -> Redirect {
-    cookies.remove_private(Cookie::from(USER_COOKIE_ID));
+    remove_auth_cookies(cookies);
     Redirect::to("/")
 }
 
@@ -197,7 +221,7 @@ pub async fn registration(
                     )
                 })
                 .await;
-            cookies.add_private(Cookie::new(USER_COOKIE_ID, new_user.id.to_string()));
+            add_auth_cookies(cookies, &new_user);
             Ok(Flash::success(
                 Redirect::to("/"),
                 "Your account was successfully created",
@@ -352,6 +376,56 @@ mod tests {
         Client::tracked(app).expect("valid rocket instance")
     }
 
+    #[test]
+    fn login_wrong() {
+        let ctx = DbTestContext::new();
+        let client = make_client();
+        let resp = client
+            .post("/auth/login")
+            .header(ContentType::Form)
+            .body(&format!(
+                "username={}&password=WRONG",
+                ctx.testuser1.user.username,
+            ))
+            .dispatch();
+
+        // Login wrong: No cookies, redirect to login screen
+        assert_eq!(resp.cookies().get_private(USER_COOKIE_ID), None);
+        assert_eq!(resp.cookies().get(USER_COOKIE_NAME), None);
+        assert_eq!(resp.status(), Status::SeeOther);
+        assert_eq!(
+            resp.headers()
+                .get_one("location")
+                .map(|header| header.to_string()),
+            Some("/auth/login".to_string()),
+        );
+    }
+
+    #[test]
+    fn login_success() {
+        let ctx = DbTestContext::new();
+        let client = make_client();
+        let resp = client
+            .post("/auth/login")
+            .header(ContentType::Form)
+            .body(&format!(
+                "username={}&password={}",
+                ctx.testuser1.user.username, &ctx.testuser1.password,
+            ))
+            .dispatch();
+
+        // Login successful: Cookies set, redirect to home
+        assert!(resp.cookies().get_private(USER_COOKIE_ID).is_some());
+        assert!(resp.cookies().get(USER_COOKIE_NAME).is_some());
+        assert_eq!(resp.status(), Status::SeeOther);
+        assert_eq!(
+            resp.headers()
+                .get_one("location")
+                .map(|header| header.to_string()),
+            Some("/".to_string()),
+        );
+    }
+
     #[derive(Debug)]
     struct ChangeResult {
         redirect_url: String,
@@ -371,6 +445,7 @@ mod tests {
             .header(ContentType::Form)
             .body(&format!("current={}&new1={}&new2={}", current, new1, new2))
             .private_cookie(ctx.auth_cookie_user1())
+            .cookie(ctx.username_cookie())
             .dispatch();
         assert_eq!(resp1.status(), Status::SeeOther);
         let redirect_url = resp1
@@ -381,6 +456,7 @@ mod tests {
         let resp2 = client
             .get(redirect_url.clone())
             .private_cookie(ctx.auth_cookie_user1())
+            .cookie(ctx.username_cookie())
             .dispatch();
         assert_eq!(resp2.status(), Status::Ok);
         ChangeResult {
@@ -390,7 +466,7 @@ mod tests {
     }
 
     #[test]
-    fn password_change_error() {
+    fn password_change() {
         let ctx = DbTestContext::new();
         let mut client = make_client();
 

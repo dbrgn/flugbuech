@@ -110,6 +110,11 @@ impl<'a> DbTestContext<'a> {
     pub fn auth_cookie_user2(&self) -> Cookie<'static> {
         self.auth_cookie(&self.testuser2)
     }
+
+    /// Create a generic username cookie.
+    pub fn username_cookie(&self) -> Cookie<'static> {
+        Cookie::new(crate::auth::USER_COOKIE_NAME, "testuser".to_string())
+    }
 }
 
 pub fn make_test_config() -> rocket::figment::Figment {
