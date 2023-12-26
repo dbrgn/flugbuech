@@ -1,6 +1,12 @@
-import { expect, test } from '@playwright/test';
+import {expect, test} from '@playwright/test';
 
-test('index page has expected h1', async ({ page }) => {
-	await page.goto('/');
-	await expect(page.getByRole('heading', { name: 'Welcome to SvelteKit' })).toBeVisible();
+test('index page welcomes guest when not logged in', async ({page}) => {
+    await page.goto('/');
+    await expect(page.getByText('Welcome, Guest')).toBeVisible();
+});
+
+test('index page welcomes user when logged in', async ({page, context}) => {
+    context.addCookies([{name: 'user_name', value: 'Chrigel', domain: 'localhost', path: '/'}]);
+    await page.goto('/');
+    await expect(page.getByText('Welcome, Chrigel')).toBeVisible();
 });
