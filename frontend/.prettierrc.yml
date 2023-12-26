@@ -1,0 +1,26 @@
+plugins:
+  - 'prettier-plugin-svelte'
+
+# Global rules
+arrowParens: always
+bracketSpacing: false
+endOfLine: lf
+printWidth: 100
+quoteProps: consistent
+singleQuote: true
+tabWidth: 4
+
+# Global svelte rules
+svelteSortOrder: options-scripts-markup-styles
+
+# Global XML rules
+xmlWhitespaceSensitivity: preserve
+
+# Overrides
+overrides:
+  - files: '*.{css,html,json,md,scss,svelte,yml}'
+    options:
+      tabWidth: 2
+  - files: '*.svelte'
+    options:
+      parser: svelte
