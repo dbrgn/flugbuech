@@ -13,12 +13,9 @@ tabWidth: 4
 # Global svelte rules
 svelteSortOrder: options-scripts-markup-styles
 
-# Global XML rules
-xmlWhitespaceSensitivity: preserve
-
 # Overrides
 overrides:
-  - files: '*.{css,html,json,md,scss,svelte,yml}'
+  - files: '*.{css,html,json,md,scss,yml,svelte}'
     options:
       tabWidth: 2
   - files: '*.svelte'

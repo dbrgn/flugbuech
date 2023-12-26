@@ -3,6 +3,9 @@
   "editor.formatOnSave": true,
   "editor.formatOnPaste": false,
   "editor.formatOnSaveMode": "file",
+  "[svelte]": {
+    "editor.defaultFormatter": "svelte.svelte-vscode"
+  },
   "files.exclude": {
     "**/node_modules": true
   },
