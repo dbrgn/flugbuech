@@ -1,0 +1,10 @@
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": false,
+  "editor.formatOnSaveMode": "file",
+  "files.exclude": {
+    "**/node_modules": true
+  },
+  "rewrap.wrappingColumn": 100
+}
