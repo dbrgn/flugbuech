@@ -1,2 +1,97 @@
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
+<script lang="ts">
+  import type {PageData} from './$types';
+
+  export let data: PageData;
+</script>
+
+<h2 class="title is-size-2">Overview</h2>
+
+<p class="content">
+  Welcome to Flugbuech! This is a free, open source and ad-free platform for keeping track of your
+  free flights (paragliding or hang gliding).
+</p>
+
+<p class="content">
+  The software is mostly aimed at pilots that track their flights using a flight computer which
+  generates IGC files, but it can also be used without an IGC file for every flight. My goal is to
+  extract as much flight data from the IGC file as possible (e.g. launch site, landing site,
+  distance, etc), so that you don't need to enter that data manually. The IGC files are stored
+  together with the flight data.
+</p>
+
+<p class="content">
+  You can find the list of features and the current project status <a
+    href="https://github.com/dbrgn/flugbuech#status">on the project GitHub page</a
+  >.
+</p>
+
+<h3 class="title is-size-3">FAQ</h3>
+
+<h4 class="title is-size-5">Is it free?</h4>
+<p class="content">
+  Yes, and there are no ads and no user tracking! Usually free things have a catch, but in this case
+  I'm developing the flight log for my own needs, and others may use it too.
+</p>
+
+<h4 class="title is-size-5">Can I sign up?</h4>
+<p class="content">Sure thing! Feel free to <a href="/auth/registration"> create an account</a>.</p>
+<p class="content">
+  Keep in mind that this is still beta software and that there may be bugs. If you notice any
+  problems or have ideas for new features, please let me know at
+  <a href="mailto:flugbuech@bargen.dev">flugbuech@bargen.dev</a>.
+</p>
+
+<h4 class="title is-size-5">Where can I find the source code or report bugs?</h4>
+<p class="content">On <a href="https://github.com/dbrgn/flugbuech">GitHub</a>.</p>
+
+<h4 class="title is-size-5">What does &laquo;Flugbuech&raquo; mean?</h4>
+<p class="content">
+  It's <a href="https://en.wikipedia.org/wiki/Swiss_German">Swiss German</a> for &laquo;Flight Log&raquo;.
+  Sorry for not being more creative.
+</p>
+
+<h3 class="title is-size-3">News</h3>
+<ul class="content">
+  <li><strong>2021-09-20:</strong> User registration is implemented</li>
+  <li>
+    <strong>2021-04-20:</strong> Locations can now be viewed and deleted, number of associated flights
+    is listed
+  </li>
+  <li>
+    <strong>2021-04-19:</strong> Location editing now supports
+    <a href="https://www.swisstopo.admin.ch/de/karten-daten-online/karten-geodaten-online.html"
+      >Swisstopo</a
+    > maps
+  </li>
+  <li><strong>2020-09-25:</strong> Show stats (flights, flight hours) for gliders</li>
+  <li>
+    <strong>2020-07-11:</strong> Allow marking flights as hike&amp;fly, allow deleting flights, enhance
+    stats
+  </li>
+  <li>
+    <strong>2020-07-10:</strong> Your own password
+    <a href="/auth/password/change">can now be changed</a>
+  </li>
+  <li><strong>2020-06-14:</strong> Allow editing your gliders</li>
+  <li>
+    <strong>2020-06-12:</strong> Statistics about your flights have been added! Check out
+    <a href="/stats/">/stats/</a>.
+  </li>
+  <li><strong>2019-12-18:</strong> IGC files from XContest can now be parsed properly</li>
+</ul>
+
+<h3 class="title is-size-3">Stats</h3>
+<table class="table is-bordered is-hoverable">
+  <tr>
+    <th>Registered Users</th>
+    <td>{data.userCount}</td>
+  </tr>
+  <tr>
+    <th>Registered Gliders</th>
+    <td>{data.gliderCount}</td>
+  </tr>
+  <tr>
+    <th>Total Flights</th>
+    <td>{data.flightCount}</td>
+  </tr>
+</table>
