@@ -1,5 +1,11 @@
+<script lang="ts">
+  import type {LayoutData} from './$types';
+
+  export let data: LayoutData;
+</script>
+
 <!-- Navbar -->
-<nav class="navbar" role="navigation" aria-label="main navigation">
+<nav class="navbar" aria-label="main navigation">
   <div class="navbar-brand">
     <div class="navbar-item">
       <span class="icon is-small fas fa-parachute-box"></span>
@@ -21,21 +27,23 @@
   <div id="navbar-contents" class="navbar-menu">
     <div class="navbar-start">
       <a class="navbar-item" href="/">Home</a>
-      TODO if user
-      <a class="navbar-item" href="/gliders/">My Gliders</a>
-      <a class="navbar-item" href="/locations/">My Locations</a>
-      <a class="navbar-item" href="/flights/">My Flights</a>
-      <a class="navbar-item" href="/stats/">Stats</a>
-      <a class="navbar-item" href="/flights/add/">Submit flight</a>
+      {#if data.username}
+        <a class="navbar-item" href="/gliders/">My Gliders</a>
+        <a class="navbar-item" href="/locations/">My Locations</a>
+        <a class="navbar-item" href="/flights/">My Flights</a>
+        <a class="navbar-item" href="/stats/">Stats</a>
+        <a class="navbar-item" href="/flights/add/">Submit flight</a>
+      {/if}
     </div>
     <div class="navbar-end">
       <div class="navbar-item">
         <div class="buttons">
-          TODO if user
-          <a class="button" href="/profile/">Profile</a>
-          <a class="button" href="/auth/logout/">Logout</a>
-          TODO else
-          <a class="button is-light" href="/auth/login/">Login</a>
+          {#if data.username}
+            <a class="button" href="/profile/">Profile</a>
+            <a class="button" href="/auth/logout/">Logout</a>
+          {:else}
+            <a class="button is-light" href="/auth/login/">Login</a>
+          {/if}
         </div>
       </div>
     </div>
@@ -47,7 +55,7 @@
   <header class="hero-body">
     <div class="container">
       <h1 class="title">Flugbuech</h1>
-      <p class="subtitle">Welcome, TODO!</p>
+      <p class="subtitle">Welcome, {data.username || 'Guest'}!</p>
     </div>
   </header>
 </section>
