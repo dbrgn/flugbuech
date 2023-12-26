@@ -6,6 +6,7 @@ extern crate diesel_migrations;
 
 mod auth;
 mod base64;
+mod cors;
 mod data;
 mod filters;
 mod flash;
@@ -44,8 +45,15 @@ pub const DESCRIPTION: &str = "Paragliding flight book.";
 #[derive(Debug, Deserialize, Clone, Default)]
 pub struct Config {
     pub static_files_dir: Option<String>,
+
     pub plausible_domain: Option<String>,
     pub plausible_url: Option<String>,
+
+    /// Allowed CORS origin.
+    ///
+    /// - Set to `*` to allow CORS requests from all origins
+    /// - Set to a specific origin to allow CORS requests from that origin
+    pub cors_allow_origin: Option<String>,
 }
 
 // Index
@@ -144,7 +152,8 @@ async fn main() -> Result<()> {
     // Attach fairings
     let app = app
         .attach(data::Database::fairing())
-        .attach(templates::fairing(&config));
+        .attach(templates::fairing(&config))
+        .attach(cors::Cors::from_config(config.cors_allow_origin.as_deref()));
 
     // Register custom error catchers
     let app = app.register("/", catchers![service_not_available]);
