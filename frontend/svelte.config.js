@@ -15,6 +15,8 @@ const config = {
             precompress: false,
             strict: true,
         }),
+
+        // TODO: CSP rules
     },
 };
 

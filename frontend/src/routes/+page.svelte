@@ -1,7 +1,15 @@
 <script lang="ts">
-  import type {PageData} from './$types';
+  import {onMount} from 'svelte';
+  import {writable} from 'svelte/store';
+  import {_loadApiStats, type GlobalStats} from './+page';
+  import {ResolvablePromise} from '$lib/resolvable-promise';
 
-  export let data: PageData;
+  let stats = new ResolvablePromise<GlobalStats>();
+
+  onMount(() => {
+    // Load stats from API
+    _loadApiStats().then((result) => stats.resolve(result));
+  });
 </script>
 
 <h2 class="title is-size-2">Overview</h2>
@@ -34,7 +42,9 @@
 </p>
 
 <h4 class="title is-size-5">Can I sign up?</h4>
-<p class="content">Sure thing! Feel free to <a href="/auth/registration"> create an account</a>.</p>
+<p class="content">
+  Sure thing! Feel free to <a href="https://example.com/auth/registration"> create an account</a>.
+</p>
 <p class="content">
   Keep in mind that this is still beta software and that there may be bugs. If you notice any
   problems or have ideas for new features, please let me know at
@@ -70,12 +80,12 @@
   </li>
   <li>
     <strong>2020-07-10:</strong> Your own password
-    <a href="/auth/password/change">can now be changed</a>
+    <a href="https://example.com/auth/password/change">can now be changed</a>
   </li>
   <li><strong>2020-06-14:</strong> Allow editing your gliders</li>
   <li>
     <strong>2020-06-12:</strong> Statistics about your flights have been added! Check out
-    <a href="/stats/">/stats/</a>.
+    <a href="https://example.com/stats/">/stats/</a>.
   </li>
   <li><strong>2019-12-18:</strong> IGC files from XContest can now be parsed properly</li>
 </ul>
@@ -84,14 +94,32 @@
 <table class="table is-bordered is-hoverable">
   <tr>
     <th>Registered Users</th>
-    <td>{data.userCount}</td>
+    <td>
+      {#await stats}
+        Loading...
+      {:then result}
+        {result.userCount}
+      {/await}
+    </td>
   </tr>
   <tr>
     <th>Registered Gliders</th>
-    <td>{data.gliderCount}</td>
+    <td>
+      {#await stats}
+        Loading...
+      {:then result}
+        {result.gliderCount}
+      {/await}
+    </td>
   </tr>
   <tr>
     <th>Total Flights</th>
-    <td>{data.flightCount}</td>
+    <td>
+      {#await stats}
+        Loading...
+      {:then result}
+        {result.flightCount}
+      {/await}
+    </td>
   </tr>
 </table>

@@ -203,6 +203,8 @@ async fn main() -> Result<()> {
         )
         // Auth routes
         .mount("/", auth::get_routes())
+        // API routes
+        .mount("/api/v1/", routes![stats::global_stats])
         // Static files
         .mount("/static", FileServer::from(static_files_dir));
 

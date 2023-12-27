@@ -1,7 +1,24 @@
 <script lang="ts">
-  import type {LayoutData} from './$types';
+  import {onMount, setContext} from 'svelte';
+  import {writable, type Writable} from 'svelte/store';
+  import {getCookiesMap} from '$lib/cookies';
 
-  export let data: LayoutData;
+  interface LoginState {
+    /**
+     * The username indicates (with some certainty) whether or not we are logged in.
+     */
+    readonly username: string | undefined;
+  }
+
+  // Store containing global user login state
+  const loginState: Writable<LoginState | undefined> = writable();
+  setContext('loginState', loginState);
+
+  onMount(() => {
+    // Update login state
+    const cookies = getCookiesMap(document.cookie);
+    loginState.set({username: cookies['user_name']});
+  });
 </script>
 
 <!-- Navbar -->
@@ -27,22 +44,22 @@
   <div id="navbar-contents" class="navbar-menu">
     <div class="navbar-start">
       <a class="navbar-item" href="/">Home</a>
-      {#if data.username}
-        <a class="navbar-item" href="/gliders/">My Gliders</a>
-        <a class="navbar-item" href="/locations/">My Locations</a>
-        <a class="navbar-item" href="/flights/">My Flights</a>
-        <a class="navbar-item" href="/stats/">Stats</a>
-        <a class="navbar-item" href="/flights/add/">Submit flight</a>
+      {#if $loginState?.username}
+        <a class="navbar-item" href="https://example.com/gliders/">My Gliders</a>
+        <a class="navbar-item" href="https://example.com/locations/">My Locations</a>
+        <a class="navbar-item" href="https://example.com/flights/">My Flights</a>
+        <a class="navbar-item" href="https://example.com/stats/">Stats</a>
+        <a class="navbar-item" href="https://example.com/flights/add/">Submit flight</a>
       {/if}
     </div>
     <div class="navbar-end">
       <div class="navbar-item">
         <div class="buttons">
-          {#if data.username}
-            <a class="button" href="/profile/">Profile</a>
-            <a class="button" href="/auth/logout/">Logout</a>
+          {#if $loginState?.username}
+            <a class="button" href="https://example.com/profile/">Profile</a>
+            <a class="button" href="https://example.com/auth/logout/">Logout</a>
           {:else}
-            <a class="button is-light" href="/auth/login/">Login</a>
+            <a class="button is-light" href="https://example.com/auth/login/">Login</a>
           {/if}
         </div>
       </div>
@@ -55,7 +72,7 @@
   <header class="hero-body">
     <div class="container">
       <h1 class="title">Flugbuech</h1>
-      <p class="subtitle">Welcome, {data.username || 'Guest'}!</p>
+      <p class="subtitle">Welcome, {$loginState?.username || 'Guest'}!</p>
     </div>
   </header>
 </section>

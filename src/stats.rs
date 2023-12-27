@@ -2,9 +2,12 @@
 
 use std::collections::BTreeMap;
 
-use rocket::{get, response::Redirect};
+use rocket::{
+    get,
+    response::Redirect,
+    serde::{json::Json, Serialize},
+};
 use rocket_dyn_templates::Template;
-use serde::Serialize;
 
 use crate::{
     auth,
@@ -118,4 +121,31 @@ pub async fn stats(database: data::Database, user: auth::AuthUser) -> Template {
 #[get("/stats", rank = 2)]
 pub fn stats_nologin() -> Redirect {
     Redirect::to("/auth/login")
+}
+
+// API Endpoints
+
+#[derive(Serialize)]
+pub struct GlobalStats {
+    user_count: i64,
+    glider_count: i64,
+    flight_count: i64,
+}
+
+#[get("/global-stats")]
+pub async fn global_stats(database: data::Database) -> Json<GlobalStats> {
+    let (user_count, glider_count, flight_count) = database
+        .run(|db| {
+            (
+                data::get_user_count(db),
+                data::get_glider_count(db),
+                data::get_flight_count(db),
+            )
+        })
+        .await;
+    Json(GlobalStats {
+        user_count,
+        glider_count,
+        flight_count,
+    })
 }
