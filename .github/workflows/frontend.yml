@@ -1,0 +1,32 @@
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  schedule:
+    - cron: '30 3 * * 2'
+
+name: Frontend
+
+jobs:
+  frontend:
+    name: Build frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: cd frontend && npm install
+      - run: cd frontend && npm run build
+
+  #eslint: Disabled until https://github.com/sveltejs/eslint-plugin-svelte3/issues/10 is fixed
+  #  name: Run eslint
+  #  runs-on: ubuntu-latest
+  #  steps:
+  #    - uses: actions/checkout@v4
+  #    - uses: actions/setup-node@v4
+  #      with:
+  #        node-version: '12'
+  #    - run: npm install
+  #    - run: npm run lint

@@ -6,10 +6,9 @@ on:
   schedule:
     - cron: '30 3 * * 2'
 
-name: CI
+name: Backend
 
 jobs:
-
   backend:
     name: Build and test backend
     runs-on: ubuntu-latest
@@ -36,17 +35,6 @@ jobs:
         env:
           TEST_DATABASE_URL: 'postgres://flugbuech:flugbuech@localhost:5432/flugbuech_test'
 
-  frontend:
-    name: Build frontend
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - run: cd frontend && npm install
-      - run: cd frontend && npm run build
-
   clippy:
     name: Run clippy
     runs-on: ubuntu-latest
@@ -67,34 +55,3 @@ jobs:
         with:
           components: rustfmt
       - run: cargo fmt -- --check
-
-  #eslint: Disabled until https://github.com/sveltejs/eslint-plugin-svelte3/issues/10 is fixed
-  #  name: Run eslint
-  #  runs-on: ubuntu-latest
-  #  steps:
-  #    - uses: actions/checkout@v4
-  #    - uses: actions/setup-node@v4
-  #      with:
-  #        node-version: '12'
-  #    - run: npm install
-  #    - run: npm run lint
-
-  docker_image:
-    name: Build Docker image
-    runs-on: ubuntu-latest
-    needs: [backend, frontend]
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build Docker image
-        run: |
-          docker build \
-            --no-cache \
-            -t dbrgn/flugbuech:latest \
-            -t dbrgn/flugbuech:main \
-            .
-      - name: Push Docker image
-        run: |
-          docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}" && \
-          docker push dbrgn/flugbuech:main && \
-          docker push dbrgn/flugbuech:latest

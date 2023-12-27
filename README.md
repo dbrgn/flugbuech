@@ -1,6 +1,7 @@
 # Flugbuech
 
-[![Build status](https://github.com/dbrgn/flugbuech/workflows/CI/badge.svg)](https://github.com/dbrgn/flugbuech/actions?query=branch%3Amaster)
+[![Build status: Backend](https://github.com/dbrgn/flugbuech/workflows/backend/badge.svg)](https://github.com/dbrgn/flugbuech/actions?query=branch%3Amaster)
+[![Build status: Frontend](https://github.com/dbrgn/flugbuech/workflows/frontend/badge.svg)](https://github.com/dbrgn/flugbuech/actions?query=branch%3Amaster)
 [![Docker image](https://img.shields.io/badge/docker%20image-dbrgn%2Fflugbuech-blue)](https://hub.docker.com/r/dbrgn/flugbuech/)
 
 Personal flight log for paragliding pilots. Written with
