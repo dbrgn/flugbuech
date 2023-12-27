@@ -1,12 +1,17 @@
 {
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": false,
+  "editor.formatOnSaveMode": "file",
   "[rust]": {
-    "editor.defaultFormatter": "rust-lang.rust-analyzer",
-    "editor.formatOnSave": true,
-    "editor.formatOnPaste": false,
-    "editor.formatOnSaveMode": "file"
+    "editor.defaultFormatter": "rust-lang.rust-analyzer"
+  },
+  "[svelte]": {
+    "editor.defaultFormatter": "svelte.svelte-vscode"
   },
   "files.exclude": {
-    "**/target": true
+    "**/target": true,
+    "**/node_modules": true
   },
   "rewrap.wrappingColumn": 100,
   "rust-analyzer.cargo.features": "all"

@@ -1,8 +1,11 @@
 {
   "recommendations": [
-    "rust-lang.rust-analyzer",
+    "esbenp.prettier-vscode",
     "stkb.rewrap",
-    "editorconfig.editorconfig",
-    "karunamurti.tera"
+
+    "rust-lang.rust-analyzer",
+
+    "dbaeumer.vscode-eslint",
+    "svelte.svelte-vscode"
   ]
 }

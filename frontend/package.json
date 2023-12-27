@@ -1,7 +1,15 @@
 {
   "name": "flugbuech-frontend",
   "version": "0.0.1",
+  "description": "Web based flight log for paragliding pilots",
+  "author": "Danilo Bargen <mail@dbrgn.ch> (https://dbrgn.ch/)",
+  "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/dbrgn/flugbuech/issues"
+  },
+  "homepage": "https://github.com/dbrgn/flugbuech#readme",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
@@ -34,6 +42,5 @@
     "vite": "^5.0.3",
     "vitest": "^1.0.0",
     "zod": "^3.22.4"
-  },
-  "type": "module"
+  }
 }

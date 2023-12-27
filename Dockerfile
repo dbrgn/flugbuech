@@ -1,10 +1,10 @@
 ###### FRONTEND ######
 
 # Build frontend resources in node container
-FROM node:16-slim AS frontend-build
+FROM node:20-slim AS frontend-build
 
 # Build with npm
-COPY . /build/flugbuech/
+COPY frontend /build/flugbuech/
 RUN cd /build/flugbuech && npm install && npm run build
 
 
