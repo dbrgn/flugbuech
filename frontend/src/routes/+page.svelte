@@ -1,6 +1,5 @@
 <script lang="ts">
   import {onMount} from 'svelte';
-  import {writable} from 'svelte/store';
   import {_loadApiStats, type GlobalStats} from './+page';
   import {ResolvablePromise} from '$lib/resolvable-promise';
 
