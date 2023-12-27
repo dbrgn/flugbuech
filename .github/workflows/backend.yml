@@ -9,8 +9,8 @@ on:
 name: Backend
 
 jobs:
-  backend:
-    name: Build and test backend
+  build_and_test:
+    name: Build and test
     runs-on: ubuntu-latest
     services:
       postgres:

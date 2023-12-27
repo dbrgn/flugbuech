@@ -8,25 +8,42 @@ on:
 
 name: Frontend
 
+env:
+  NODE_VERSION: '20'
+
 jobs:
-  frontend:
-    name: Build frontend
+  build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - run: cd frontend && npm install
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install npm dependencies
+        run: cd frontend && npm ci
       - run: cd frontend && npm run build
 
-  #eslint: Disabled until https://github.com/sveltejs/eslint-plugin-svelte3/issues/10 is fixed
-  #  name: Run eslint
-  #  runs-on: ubuntu-latest
-  #  steps:
-  #    - uses: actions/checkout@v4
-  #    - uses: actions/setup-node@v4
-  #      with:
-  #        node-version: '12'
-  #    - run: npm install
-  #    - run: npm run lint
+  eslint:
+    name: Run eslint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install npm dependencies
+        run: cd frontend && npm ci
+      - run: cd frontend && npm run lint:eslint
+
+  prettier:
+    name: Check code formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install npm dependencies
+        run: cd frontend && npm ci
+      - run: cd frontend && npm run lint:prettier
