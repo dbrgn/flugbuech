@@ -96,3 +96,21 @@
     | <a href="mailto:flugbuech@bargen.dev">Contact</a>
   </div>
 </footer>
+
+<style>
+  .main-header {
+    background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)), url('/img/bg.jpg');
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+  }
+
+  .main-header h1 {
+    font-size: 4em;
+    color: #eee;
+  }
+
+  .main-header .subtitle {
+    color: #eee;
+  }
+</style>
