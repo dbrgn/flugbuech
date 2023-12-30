@@ -1,5 +1,3 @@
-import {PUBLIC_API_URL} from '$env/static/public';
-
 import {z} from 'zod';
 
 // Disable server-side rendering for this page
@@ -27,7 +25,7 @@ type Locations = z.infer<typeof SCHEMA_API_LOCATIONS>;
  * Load locations from API.
  */
 async function loadApiLocations(): Promise<Locations> {
-    const res = await fetch(new URL('locations', PUBLIC_API_URL), {credentials: 'include'});
+    const res = await fetch('/api/v1/locations', {credentials: 'include'});
     if (res.status !== 200) {
         // TODO: Better error handling
         throw new Error(`Could not fetch locations from API: HTTP ${res.status}`);

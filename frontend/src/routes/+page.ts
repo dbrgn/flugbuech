@@ -1,7 +1,5 @@
 import {z} from 'zod';
 
-import {PUBLIC_API_URL} from '$env/static/public';
-
 // Prerender this page
 export const prerender = true;
 
@@ -30,7 +28,7 @@ const SCHEMA_API_STATS = z.object({
  * Load global stats from API.
  */
 export async function _loadApiStats(): Promise<GlobalStats> {
-    const res = await fetch(new URL('global-stats', PUBLIC_API_URL));
+    const res = await fetch('/api/v1/global-stats');
     if (res.status !== 200) {
         // TODO: Better error handling
         throw new Error(`Could not reach API: HTTP ${res.status}`);
