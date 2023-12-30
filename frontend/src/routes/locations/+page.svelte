@@ -40,29 +40,29 @@
           <td>{location.flightCount}</td>
           <td>
             <a class="icon" title="View Location" href="/locations/{location.id}"
-              ><i class="fas fa-eye"></i></a
+              ><i class="fa-solid fa-eye"></i></a
             >
             <a href="/locations/{location.id}/edit/">
-              <span class="icon"><i class="fas fa-pen-square"></i></span>
+              <span class="icon"><i class="fa-solid fa-pen-square"></i></span>
             </a>
             {#if location.flightCount === 0}
               <a
                 class="icon has-text-danger"
                 title="Delete Location"
-                href="/locations/{location.id}/delete"><i class="fas fa-trash-alt"></i></a
+                href="/locations/{location.id}/delete"><i class="fa-solid fa-trash-alt"></i></a
               >
             {/if}
             {#if location.coordinates !== undefined}
               {@const lon = location.coordinates.lon}
               {@const lat = location.coordinates.lat}
               <a href="https://www.google.com/maps/place/{lat},{lon}/" title="View in Google Maps">
-                <span class="icon"><i class="fas fa-map-marker-alt"></i></span>
+                <span class="icon"><i class="fa-solid fa-map-marker-alt"></i></span>
               </a>
               <a
                 href="https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=16/{lat}/{lon}"
                 title="View in OpenStreetMap"
               >
-                <span class="icon"><i class="fas fa-map-pin"></i></span>
+                <span class="icon"><i class="fa-solid fa-map-pin"></i></span>
               </a>
             {/if}
           </td>

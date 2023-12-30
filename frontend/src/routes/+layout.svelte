@@ -25,7 +25,7 @@
 <nav class="navbar" aria-label="main navigation">
   <div class="navbar-brand">
     <div class="navbar-item">
-      <span class="icon is-small fas fa-parachute-box"></span>
+      <span class="icon is-small fa-solid fa-parachute-box"></span>
     </div>
 
     <a
