@@ -1,4 +1,5 @@
 <script lang="ts">
+  import CountryFlag from '$lib/components/CountryFlag.svelte';
   import type {Data} from './+page';
 
   export let data: Data;
@@ -7,7 +8,7 @@
 <nav class="breadcrumb" aria-label="breadcrumbs">
   <ul>
     <li><a href="/">Home</a></li>
-    <li class="is-active"><a href="#" aria-current="page">Locations</a></li>
+    <li class="is-active"><a href="./" aria-current="page">Locations</a></li>
   </ul>
 </nav>
 
@@ -31,33 +32,42 @@
       </tr>
     </thead>
     <tbody>
-      <!--
-              {% for location in locations %}
-              <tr>
-                  <td>{{ location.name }}</td>
-                  <td>{{ macros::flag(country_code=location.country) }} {{ location.country }}</td>
-                  <td>{{ location.elevation }} m ASL</td>
-                  <td>{{ location.count }}</td>
-                  <td>
-                      <a class="icon" title="View Location" href="/locations/{{ location.id }}"><i class="fas fa-eye"></i></a>
-                      <a href="/locations/{{ location.id }}/edit/">
-                          <span class="icon"><i class="fas fa-pen-square"></i></span>
-                      </a>
-                      {% if location.count == 0 %}
-                          <a class="icon has-text-danger" title="Delete Location" href="/locations/{{ location.id }}/delete"><i class="fas fa-trash-alt"></i></a>
-                      {% endif %}
-                      {% if location.geog %}
-                      <a href="https://www.google.com/maps/place/{{ location.geog.y }},{{ location.geog.x }}/" title="View in Google Maps">
-                          <span class="icon"><i class="fas fa-map-marker-alt"></i></span>
-                      </a>
-                      <a href="https://www.openstreetmap.org/?mlat={{ location.geog.y }}&mlon={{ location.geog.x }}#map=16/{{ location.geog.y }}/{{ location.geog.x }}" title="View in OpenStreetMap">
-                          <span class="icon"><i class="fas fa-map-pin"></i></span>
-                      </a>
-                      {% endif %}
-                  </td>
-              </tr>
-              {% endfor %}
-              -->
+      {#each data.locations as location (location.id)}
+        <tr>
+          <td>{location.name}</td>
+          <td><CountryFlag countryCode={location.countryCode} /> {location.countryCode}</td>
+          <td>{location.elevation} m ASL</td>
+          <td>{location.flightCount}</td>
+          <td>
+            <a class="icon" title="View Location" href="/locations/{location.id}"
+              ><i class="fas fa-eye"></i></a
+            >
+            <a href="/locations/{location.id}/edit/">
+              <span class="icon"><i class="fas fa-pen-square"></i></span>
+            </a>
+            {#if location.flightCount === 0}
+              <a
+                class="icon has-text-danger"
+                title="Delete Location"
+                href="/locations/{location.id}/delete"><i class="fas fa-trash-alt"></i></a
+              >
+            {/if}
+            {#if location.coordinates !== undefined}
+              {@const lon = location.coordinates.lon}
+              {@const lat = location.coordinates.lat}
+              <a href="https://www.google.com/maps/place/{lat},{lon}/" title="View in Google Maps">
+                <span class="icon"><i class="fas fa-map-marker-alt"></i></span>
+              </a>
+              <a
+                href="https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=16/{lat}/{lon}"
+                title="View in OpenStreetMap"
+              >
+                <span class="icon"><i class="fas fa-map-pin"></i></span>
+              </a>
+            {/if}
+          </td>
+        </tr>
+      {/each}
     </tbody>
   </table>
 </section>

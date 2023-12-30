@@ -1,1 +1,3 @@
-// place files you want to import through the `$lib` alias in this folder.
+import type {RequestEvent} from '@sveltejs/kit';
+
+export type SvelteKitFetch = RequestEvent['fetch'];
