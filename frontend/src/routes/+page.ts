@@ -1,8 +1,5 @@
 import {z} from 'zod';
 
-// Prerender this page
-export const prerender = true;
-
 export interface GlobalStats {
     /**
      * Number of registered users.
