@@ -30,10 +30,6 @@ p + .spaced-headers {
   margin-top: 48px;
 }
 
-.flag {
-  height: 0.8em;
-}
-
 .map {
   height: 400px;
   position: relative;
