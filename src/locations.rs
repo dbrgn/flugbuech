@@ -1,13 +1,15 @@
 //! Location views.
 
+use std::convert::TryFrom;
+
 use diesel_geography::types::GeogPoint;
 use rocket::{
     form::{Form, FromForm},
     get,
     http::Status,
     post,
-    request::FlashMessage,
     response::{Flash, Redirect},
+    serde::json::Json,
     uri,
 };
 use rocket_dyn_templates::Template;
@@ -15,7 +17,6 @@ use serde::Serialize;
 
 use crate::{
     auth, data,
-    flash::flashes_from_flash_opt,
     models::{LocationWithCount, NewLocation, User},
 };
 
@@ -39,10 +40,26 @@ struct LocationContext {
 }
 
 #[derive(Serialize)]
-struct LocationsContext {
-    user: User,
-    locations: Vec<LocationWithCount>,
-    flashes: Vec<crate::flash::FlashMessage>,
+pub struct ApiCoordinates {
+    lon: f64,
+    lat: f64,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ApiLocation {
+    id: i32,
+    name: String,
+    country_code: String,
+    elevation: i32,
+    coordinates: Option<ApiCoordinates>,
+    flight_count: u64,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ApiLocations {
+    locations: Vec<ApiLocation>,
 }
 
 // Views
@@ -71,33 +88,29 @@ pub async fn view(user: auth::AuthUser, database: data::Database, id: i32) -> Re
 }
 
 #[get("/locations")]
-pub async fn list(
-    database: data::Database,
-    user: auth::AuthUser,
-    flash: Option<FlashMessage<'_>>,
-) -> Template {
+pub async fn list(database: data::Database, user: auth::AuthUser) -> Json<ApiLocations> {
     let user = user.into_inner();
 
-    // Get all locations
+    // Get all locations for user
     let locations = database
-        .run({
-            let user = user.clone();
-            move |db| data::get_all_locations_with_stats_for_user(db, &user)
+        .run(move |db| data::get_all_locations_with_stats_for_user(db, &user))
+        .await
+        .into_iter()
+        .map(|location| ApiLocation {
+            id: location.id,
+            name: location.name,
+            country_code: location.country,
+            elevation: location.elevation,
+            coordinates: location.geog.map(|geog| ApiCoordinates {
+                lon: geog.x,
+                lat: geog.y,
+            }),
+            flight_count: u64::try_from(location.count.max(0)).unwrap(),
         })
-        .await;
+        .collect();
 
     // Render template
-    let context = LocationsContext {
-        user,
-        locations,
-        flashes: flashes_from_flash_opt(flash),
-    };
-    Template::render("locations", &context)
-}
-
-#[get("/locations", rank = 2)]
-pub fn list_nologin() -> Redirect {
-    Redirect::to("/auth/login")
+    Json(ApiLocations { locations })
 }
 
 #[get("/locations/add")]

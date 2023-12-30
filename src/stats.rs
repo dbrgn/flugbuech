@@ -126,14 +126,14 @@ pub fn stats_nologin() -> Redirect {
 // API Endpoints
 
 #[derive(Serialize)]
-pub struct GlobalStats {
+pub struct ApiGlobalStats {
     user_count: i64,
     glider_count: i64,
     flight_count: i64,
 }
 
 #[get("/global-stats")]
-pub async fn global_stats(database: data::Database) -> Json<GlobalStats> {
+pub async fn global_stats(database: data::Database) -> Json<ApiGlobalStats> {
     let (user_count, glider_count, flight_count) = database
         .run(|db| {
             (
@@ -143,7 +143,7 @@ pub async fn global_stats(database: data::Database) -> Json<GlobalStats> {
             )
         })
         .await;
-    Json(GlobalStats {
+    Json(ApiGlobalStats {
         user_count,
         glider_count,
         flight_count,

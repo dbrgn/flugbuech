@@ -185,8 +185,6 @@ async fn main() -> Result<()> {
                 gliders::edit_form,
                 gliders::edit,
                 locations::view,
-                locations::list,
-                locations::list_nologin,
                 locations::add_form,
                 locations::add_form_nologin,
                 locations::add,
@@ -204,7 +202,7 @@ async fn main() -> Result<()> {
         // Auth routes
         .mount("/", auth::get_routes())
         // API routes
-        .mount("/api/v1/", routes![stats::global_stats])
+        .mount("/api/v1/", routes![stats::global_stats, locations::list])
         // Static files
         .mount("/static", FileServer::from(static_files_dir));
 
