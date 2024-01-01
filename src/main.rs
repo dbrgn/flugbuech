@@ -17,6 +17,7 @@ mod models;
 mod optionresult;
 mod process_igc;
 mod profile;
+mod responders;
 mod schema;
 mod stats;
 mod templates;
@@ -185,11 +186,8 @@ async fn main() -> Result<()> {
                 gliders::edit_form,
                 gliders::edit,
                 locations::view,
-                locations::add_form,
-                locations::add_form_nologin,
                 locations::add,
                 locations::edit_form,
-                locations::edit,
                 locations::delete_form,
                 locations::delete,
                 process_igc::process_igc,
@@ -202,7 +200,15 @@ async fn main() -> Result<()> {
         // Auth routes
         .mount("/", auth::get_routes())
         // API routes
-        .mount("/api/v1/", routes![stats::global_stats, locations::list])
+        .mount(
+            "/api/v1/",
+            routes![
+                stats::global_stats,
+                locations::list,
+                locations::add,
+                locations::add_nologin
+            ],
+        )
         // Static files
         .mount("/static", FileServer::from(static_files_dir));
 

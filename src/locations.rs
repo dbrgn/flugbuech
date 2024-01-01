@@ -4,7 +4,6 @@ use std::convert::TryFrom;
 
 use diesel_geography::types::GeogPoint;
 use rocket::{
-    form::{Form, FromForm},
     get,
     http::Status,
     post,
@@ -13,33 +12,17 @@ use rocket::{
     uri,
 };
 use rocket_dyn_templates::Template;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     auth, data,
     models::{LocationWithCount, NewLocation, User},
+    responders::ApiError,
 };
 
-// Forms
+// API types
 
-#[derive(FromForm, Debug)]
-pub struct LocationForm {
-    name: String,
-    country: String,
-    elevation: i32,
-    lat: Option<f64>,
-    lng: Option<f64>,
-}
-
-// Contexts
-
-#[derive(Serialize)]
-struct LocationContext {
-    user: User,
-    location: LocationWithCount,
-}
-
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ApiCoordinates {
     lon: f64,
     lat: f64,
@@ -62,30 +45,26 @@ pub struct ApiLocations {
     locations: Vec<ApiLocation>,
 }
 
-// Views
+// Forms
 
-#[get("/locations/<id>")]
-pub async fn view(user: auth::AuthUser, database: data::Database, id: i32) -> Result<Template, Status> {
-    let user = user.into_inner();
-
-    // Get data
-    let location = match database
-        .run(move |db| data::get_location_with_flight_count_by_id(db, id))
-        .await
-    {
-        Some(location) => location,
-        None => return Err(Status::NotFound),
-    };
-
-    // Ownership check
-    if location.user_id != user.id {
-        return Err(Status::Forbidden);
-    }
-
-    // Render template
-    let context = LocationContext { user, location };
-    Ok(Template::render("location", context))
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct LocationCreateForm {
+    name: String,
+    country_code: String,
+    elevation: i32,
+    coordinates: Option<ApiCoordinates>,
 }
+
+// Contexts
+
+#[derive(Serialize)]
+struct LocationContext {
+    user: User,
+    location: LocationWithCount,
+}
+
+// API endpoints
 
 #[get("/locations")]
 pub async fn list(database: data::Database, user: auth::AuthUser) -> Json<ApiLocations> {
@@ -113,39 +92,28 @@ pub async fn list(database: data::Database, user: auth::AuthUser) -> Json<ApiLoc
     Json(ApiLocations { locations })
 }
 
-#[get("/locations/add")]
-pub fn add_form(user: auth::AuthUser) -> Template {
-    let context = auth::UserContext::new(user.into_inner());
-    Template::render("location_edit", &context)
-}
-
-#[get("/locations/add", rank = 2)]
-pub fn add_form_nologin() -> Redirect {
-    Redirect::to("/auth/login")
-}
-
-#[post("/locations/add", data = "<data>")]
-pub async fn add(user: auth::AuthUser, database: data::Database, data: Form<LocationForm>) -> Redirect {
+#[post("/locations", data = "<data>")]
+pub async fn add(user: auth::AuthUser, database: data::Database, data: Json<LocationCreateForm>) -> Status {
     log::debug!("locations::add");
     let user = user.into_inner();
 
-    let LocationForm {
+    // Unwrap form data
+    let LocationCreateForm {
         name,
-        country,
+        country_code,
         elevation,
-        lat,
-        lng,
+        coordinates,
     } = data.into_inner();
 
     // Create model
     let location = NewLocation {
         name,
-        country,
+        country: country_code,
         elevation,
         user_id: user.id,
-        geog: if let (Some(lat), Some(lng)) = (lat, lng) {
+        geog: if let Some(ApiCoordinates { lat, lon }) = coordinates {
             Some(GeogPoint {
-                x: lng,
+                x: lon,
                 y: lat,
                 srid: None,
             })
@@ -158,9 +126,37 @@ pub async fn add(user: auth::AuthUser, database: data::Database, data: Form<Loca
     // TODO: Error handling
     database.run(move |db| data::create_location(db, location)).await;
     log::info!("Created location for user {}", user.id);
+    Status::Created
+}
 
-    // Redirect to location list
-    Redirect::to(uri!(list))
+#[post("/locations", rank = 2)]
+pub fn add_nologin() -> ApiError {
+    ApiError::Authentication
+}
+
+// Views
+
+#[get("/locations/<id>")]
+pub async fn view(user: auth::AuthUser, database: data::Database, id: i32) -> Result<Template, Status> {
+    let user = user.into_inner();
+
+    // Get data
+    let location = match database
+        .run(move |db| data::get_location_with_flight_count_by_id(db, id))
+        .await
+    {
+        Some(location) => location,
+        None => return Err(Status::NotFound),
+    };
+
+    // Ownership check
+    if location.user_id != user.id {
+        return Err(Status::Forbidden);
+    }
+
+    // Render template
+    let context = LocationContext { user, location };
+    Ok(Template::render("location", context))
 }
 
 #[get("/locations/<id>/edit")]
@@ -186,54 +182,53 @@ pub async fn edit_form(user: auth::AuthUser, database: data::Database, id: i32) 
     Ok(Template::render("location_edit", &context))
 }
 
-#[post("/locations/<id>/edit", data = "<data>")]
-pub async fn edit(
-    user: auth::AuthUser,
-    database: data::Database,
-    id: i32,
-    data: Form<LocationForm>,
-) -> Result<Redirect, Status> {
-    let user = user.into_inner();
-
-    // Get location
-    let mut location = match database.run(move |db| data::get_location_by_id(db, id)).await {
-        Some(location) => location,
-        None => return Err(Status::NotFound),
-    };
-
-    // Ownership check
-    if location.user_id != user.id {
-        return Err(Status::Forbidden);
-    }
-
-    // Update model
-    let LocationForm {
-        name,
-        country,
-        elevation,
-        lat,
-        lng,
-    } = data.into_inner();
-    location.name = name;
-    location.country = country;
-    location.elevation = elevation;
-    if let (Some(lat), Some(lng)) = (lat, lng) {
-        location.geog = Some(GeogPoint {
-            x: lng,
-            y: lat,
-            srid: None,
-        });
-    } else {
-        location.geog = None;
-    }
-
-    // Update database
-    // TODO: Error handling
-    database.run(move |db| data::update_location(db, &location)).await;
-
-    // Render template
-    Ok(Redirect::to(uri!(list)))
-}
+//#[post("/locations/<id>/edit", data = "<data>")]
+//pub async fn edit(
+//    user: auth::AuthUser,
+//    database: data::Database,
+//    id: i32,
+//    data: Form<LocationCreateForm>,
+//) -> Result<Redirect, Status> {
+//    let user = user.into_inner();
+//
+//    // Get location
+//    let mut location = match database.run(move |db| data::get_location_by_id(db, id)).await {
+//        Some(location) => location,
+//        None => return Err(Status::NotFound),
+//    };
+//
+//    // Ownership check
+//    if location.user_id != user.id {
+//        return Err(Status::Forbidden);
+//    }
+//
+//    // Update model
+//    let LocationCreateForm {
+//        name,
+//        country_code,
+//        elevation,
+//        coordinates,
+//    } = data.into_inner();
+//    location.name = name;
+//    location.country = country_code;
+//    location.elevation = elevation;
+//    if let Some(ApiCoordinates { lat, lon }) = coordinates {
+//        location.geog = Some(GeogPoint {
+//            x: lon,
+//            y: lat,
+//            srid: None,
+//        });
+//    } else {
+//        location.geog = None;
+//    }
+//
+//    // Update database
+//    // TODO: Error handling
+//    database.run(move |db| data::update_location(db, &location)).await;
+//
+//    // Render template
+//    Ok(Redirect::to(uri!(list)))
+//}
 
 #[get("/locations/<id>/delete")]
 pub async fn delete_form(

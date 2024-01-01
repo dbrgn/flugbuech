@@ -15,6 +15,14 @@
 <h2 class="title is-2">Your Locations</h2>
 
 <section>
+  <article class="message is-info">
+    <div class="message-body">
+      <i class="fa-solid fa-circle-info" />&emsp;A location can be used both as launch location and
+      as landing location. Locations are not global, i.e. you are creating and maintaining your own
+      location database.
+    </div>
+  </article>
+
   <p class="content">
     You've been at {data.locations.length} location{data.locations.length === 1 ? '' : 's'} so far!
   </p>

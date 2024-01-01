@@ -329,13 +329,6 @@ pub struct UserContext {
 }
 
 impl UserContext {
-    pub fn new(user: User) -> Self {
-        Self {
-            user,
-            flashes: vec![],
-        }
-    }
-
     pub fn with_flash(user: User, flash: Option<FlashMessage>) -> Self {
         Self {
             user,

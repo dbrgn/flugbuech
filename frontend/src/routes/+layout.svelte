@@ -78,7 +78,6 @@
 </section>
 
 <!-- Content -->
-<!-- TODO <div class="section {% block sectionclass %}{% endblock %}"> -->
 <div class="section">
   <div class="container">
     <slot />
