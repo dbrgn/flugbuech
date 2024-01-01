@@ -20,4 +20,6 @@ cors_allow_origin = "*"
 
   [debug.databases.flugbuech]
   url = "postgres://flugbuech:flugbuech-dev-password@localhost/flugbuech"
+  min_connections = 2
+  max_connections = 8
   timeout = 5
