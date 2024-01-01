@@ -1,6 +1,7 @@
 <script lang="ts">
   import {goto} from '$app/navigation';
   import Flashes from '$lib/components/Flashes.svelte';
+  import MapComponent from '$lib/components/Map.svelte';
   import MessageModal from '$lib/components/MessageModal.svelte';
   import {addFlash} from '$lib/stores';
   import {reactive} from '$lib/svelte';
@@ -18,9 +19,12 @@
     countryCode = countryCode.toLocaleUpperCase();
   }
 
-  const fields = ['name', 'countryCode', 'elevation', 'latitude', 'longitude'] as const;
+  // Element references
+  let longitudeInput: HTMLInputElement | null;
+  let latitudeInput: HTMLInputElement | null;
 
   // Validation
+  const fields = ['name', 'countryCode', 'elevation', 'latitude', 'longitude'] as const;
   let fieldErrors: Record<(typeof fields)[number], string | undefined> = {
     name: undefined,
     countryCode: undefined,
@@ -259,6 +263,7 @@
           min="-90"
           max="90"
           step="0.000001"
+          bind:this={latitudeInput}
           bind:value={latitude}
           placeholder="47.29553"
         />
@@ -283,6 +288,7 @@
           min="-180"
           max="180"
           step="0.000001"
+          bind:this={longitudeInput}
           bind:value={longitude}
           placeholder="8.91927"
         />
@@ -295,7 +301,7 @@
       <div class="field-error">Error: {fieldErrors.longitude}</div>
     {/if}
 
-    <div id="mapContainer">TODO: Map</div>
+    <MapComponent latInput={latitudeInput} lngInput={longitudeInput} />
     <p><em>Note: Double-click on the map to update the location coordinates.</em></p>
 
     <div class="content control submitcontrols">
