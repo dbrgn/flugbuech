@@ -50,11 +50,11 @@
           <td>{location.elevation} m ASL</td>
           <td>{location.flightCount}</td>
           <td>
-            <a class="icon" title="View Location" href="/locations/{location.id}"
-              ><i class="fa-solid fa-eye"></i></a
-            >
-            <a href="/locations/{location.id}/edit/">
-              <span class="icon"><i class="fa-solid fa-pen-square"></i></span>
+            <a class="icon" title="View Location" href="/locations/{location.id}">
+              <i class="fa-solid fa-eye"></i>
+            </a>
+            <a class="icon" title="Edit Location" href="/locations/{location.id}/edit/">
+              <i class="fa-solid fa-pen-square"></i>
             </a>
             {#if location.flightCount === 0}
               <a
@@ -66,14 +66,19 @@
             {#if location.coordinates !== undefined}
               {@const lon = location.coordinates.lon}
               {@const lat = location.coordinates.lat}
-              <a href="https://www.google.com/maps/place/{lat},{lon}/" title="View in Google Maps">
-                <span class="icon"><i class="fa-solid fa-map-marker-alt"></i></span>
+              <a
+                class="icon"
+                href="https://www.google.com/maps/place/{lat},{lon}/"
+                title="View in Google Maps"
+              >
+                <i class="fa-solid fa-map-marker-alt"></i>
               </a>
               <a
+                class="icon"
                 href="https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=16/{lat}/{lon}"
                 title="View in OpenStreetMap"
               >
-                <span class="icon"><i class="fa-solid fa-map-pin"></i></span>
+                <i class="fa-solid fa-map-pin"></i>
               </a>
             {/if}
           </td>

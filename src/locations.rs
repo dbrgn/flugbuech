@@ -50,7 +50,7 @@ pub struct ApiLocations {
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct LocationCreateForm {
+pub struct LocationCreateUpdateForm {
     name: String,
     country_code: String,
     elevation: i32,
@@ -129,12 +129,16 @@ pub async fn get(
 }
 
 #[post("/locations", data = "<data>")]
-pub async fn add(user: auth::AuthUser, database: data::Database, data: Json<LocationCreateForm>) -> Status {
+pub async fn add(
+    user: auth::AuthUser,
+    database: data::Database,
+    data: Json<LocationCreateUpdateForm>,
+) -> Status {
     log::debug!("locations::add");
     let user = user.into_inner();
 
     // Unwrap form data
-    let LocationCreateForm {
+    let LocationCreateUpdateForm {
         name,
         country_code,
         elevation,
@@ -170,17 +174,17 @@ pub fn add_nologin() -> ApiError {
     ApiError::Authentication
 }
 
-// Views
-
-#[get("/locations/<id>/edit")]
-pub async fn edit_form(user: auth::AuthUser, database: data::Database, id: i32) -> Result<Template, Status> {
+#[post("/locations/<id>", data = "<data>")]
+pub async fn edit(
+    user: auth::AuthUser,
+    database: data::Database,
+    id: i32,
+    data: Json<LocationCreateUpdateForm>,
+) -> Result<Status, Status> {
     let user = user.into_inner();
 
     // Get location
-    let location = match database
-        .run(move |db| data::get_location_with_flight_count_by_id(db, id))
-        .await
-    {
+    let mut location = match database.run(move |db| data::get_location_by_id(db, id)).await {
         Some(location) => location,
         None => return Err(Status::NotFound),
     };
@@ -190,58 +194,35 @@ pub async fn edit_form(user: auth::AuthUser, database: data::Database, id: i32) 
         return Err(Status::Forbidden);
     }
 
+    // Update model
+    let LocationCreateUpdateForm {
+        name,
+        country_code,
+        elevation,
+        coordinates,
+    } = data.into_inner();
+    location.name = name;
+    location.country = country_code;
+    location.elevation = elevation;
+    if let Some(ApiCoordinates { lat, lon }) = coordinates {
+        location.geog = Some(GeogPoint {
+            x: lon,
+            y: lat,
+            srid: None,
+        });
+    } else {
+        location.geog = None;
+    }
+
+    // Update database
+    // TODO: Error handling
+    database.run(move |db| data::update_location(db, &location)).await;
+
     // Render template
-    let context = LocationContext { user, location };
-    Ok(Template::render("location_edit", &context))
+    Ok(Status::NoContent)
 }
 
-//#[post("/locations/<id>/edit", data = "<data>")]
-//pub async fn edit(
-//    user: auth::AuthUser,
-//    database: data::Database,
-//    id: i32,
-//    data: Form<LocationCreateForm>,
-//) -> Result<Redirect, Status> {
-//    let user = user.into_inner();
-//
-//    // Get location
-//    let mut location = match database.run(move |db| data::get_location_by_id(db, id)).await {
-//        Some(location) => location,
-//        None => return Err(Status::NotFound),
-//    };
-//
-//    // Ownership check
-//    if location.user_id != user.id {
-//        return Err(Status::Forbidden);
-//    }
-//
-//    // Update model
-//    let LocationCreateForm {
-//        name,
-//        country_code,
-//        elevation,
-//        coordinates,
-//    } = data.into_inner();
-//    location.name = name;
-//    location.country = country_code;
-//    location.elevation = elevation;
-//    if let Some(ApiCoordinates { lat, lon }) = coordinates {
-//        location.geog = Some(GeogPoint {
-//            x: lon,
-//            y: lat,
-//            srid: None,
-//        });
-//    } else {
-//        location.geog = None;
-//    }
-//
-//    // Update database
-//    // TODO: Error handling
-//    database.run(move |db| data::update_location(db, &location)).await;
-//
-//    // Render template
-//    Ok(Redirect::to(uri!(list)))
-//}
+// Views
 
 #[get("/locations/<id>/delete")]
 pub async fn delete_form(
@@ -342,7 +323,7 @@ mod tests {
         let app = rocket::custom(make_test_config())
             .attach(data::Database::fairing())
             .attach(templates::fairing(&Config::default()))
-            .mount("/", routes![list, get, add]);
+            .mount("/", routes![list, get, add, edit]);
         Client::untracked(app).expect("valid rocket instance")
     }
 
@@ -503,5 +484,65 @@ mod tests {
         assert_eq!(g.len(), 1);
         assert_eq!(g[0].name, "Testlocation");
         assert_eq!(g[0].country, "CH");
+    }
+
+    #[test]
+    fn edit_location() {
+        let ctx = DbTestContext::new();
+        let client = make_client();
+
+        macro_rules! update_location {
+            ($id:expr, $body:expr, $cookie:expr) => {
+                client
+                    .post(format!("/locations/{}", $id))
+                    .header(ContentType::JSON)
+                    .body($body)
+                    .private_cookie($cookie)
+                    .cookie(ctx.username_cookie())
+                    .dispatch()
+            };
+        }
+
+        // Add location
+        let location = data::create_location(
+            &mut *ctx.force_get_conn(),
+            NewLocation {
+                name: "Machu Picchu".into(),
+                country: "PE".into(),
+                elevation: 2430,
+                user_id: ctx.testuser1.user.id,
+                geog: Some(GeogPoint {
+                    x: -72.54525463360524,
+                    y: -13.163235172208347,
+                    srid: None,
+                }),
+            },
+        );
+
+        // The update JSON. Note: The "id" field must be ignored by the API endpoint!
+        let update_json = r#"{
+            "id": 9876,
+            "name": "Machu Picchu 2",
+            "countryCode": "XX",
+            "elevation": 999
+        }"#;
+
+        // Update location from user 1
+        let resp = update_location!(location.id, update_json, ctx.auth_cookie_user1());
+        assert_eq!(resp.status(), Status::NoContent);
+        let updated_location =
+            data::get_location_by_id(&mut *ctx.force_get_conn(), location.id).expect("Location not found");
+        assert_eq!(updated_location.name, "Machu Picchu 2");
+        assert_eq!(updated_location.country, "XX");
+        assert_eq!(updated_location.elevation, 999);
+        assert_eq!(updated_location.geog, None);
+
+        // Update location from user 2: Forbidden
+        let resp = update_location!(location.id, update_json, ctx.auth_cookie_user2());
+        assert_eq!(resp.status(), Status::Forbidden);
+
+        // Update non-existing location: Not found
+        let resp = update_location!(location.id + 9999, update_json, ctx.auth_cookie_user1());
+        assert_eq!(resp.status(), Status::NotFound);
     }
 }

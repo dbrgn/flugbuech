@@ -8,12 +8,18 @@
   import {addFlash} from '$lib/stores';
   import {reactive} from '$lib/svelte';
 
+  import {type Location} from './api';
+  import {SCHEMA_API_ERROR} from '$lib/error-handling';
+
+  // Props
+  export let location: Location | undefined = undefined;
+
   // Form values
-  let name: string = '';
-  let countryCode: string = '';
-  let elevation: number | null = null;
-  let latitude: number | null = null;
-  let longitude: number | null = null;
+  let name: string = location?.name ?? '';
+  let countryCode: string = location?.countryCode ?? '';
+  let elevation: number | null = location?.elevation ?? null;
+  let latitude: number | null = location?.coordinates?.lat ?? null;
+  let longitude: number | null = location?.coordinates?.lon ?? null;
 
   // Input transformations
   $: if (countryCode.length > 0) {
@@ -43,7 +49,6 @@
   function validateCountryCode(): void {
     fieldErrors = {
       ...fieldErrors,
-      // TODO: Ensure letters
       countryCode:
         countryCode.match(/^[A-Z]{2}$/u) === null ? 'Country code must have 2 letters' : undefined,
     };
@@ -98,7 +103,9 @@
     validateAll();
     if (Object.values(fieldErrors).every((error) => error === undefined)) {
       // All fields valid
-      console.log('Sending new location to API');
+      console.log(
+        location === undefined ? 'Sending new location to API' : 'Updating location via API',
+      );
       const requestBody = {
         name,
         countryCode,
@@ -107,18 +114,27 @@
           ? {coordinates: {lat: latitude, lon: longitude}}
           : {}),
       };
-      const response = await fetch('/api/v1/locations/', {
+      const url =
+        location === undefined ? '/api/v1/locations/' : `/api/v1/locations/${location.id}`;
+      const response = await fetch(url, {
         method: 'POST',
         cache: 'no-cache',
         credentials: 'include',
-        headers: {'content-type': 'application/json'},
+        headers: {
+          'content-type': 'application/json',
+          'accept': 'text/plain, application/json, */*;q=0.8',
+        },
         body: JSON.stringify(requestBody),
       });
       switch (response.status) {
         case 201:
+        case 204:
           // Success
           addFlash({
-            message: 'Location successfully added',
+            message:
+              location === undefined
+                ? `Location successfully added`
+                : `Location "${name}" successfully updated`,
             severity: 'success',
             icon: 'fa-circle-check',
           });
@@ -128,10 +144,17 @@
           submitError = {type: 'authentication'};
           break;
         default: {
-          const body = await response.text();
+          let message;
+          try {
+            const error = SCHEMA_API_ERROR.parse(await response.json());
+            message = `HTTP ${response.status} (${error.error.reason}): ${error.error.description}`;
+          } catch (error) {
+            console.warn('Failed to parse API response as error:', error);
+            message = `HTTP ${response.status}`;
+          }
           submitError = {
             type: 'api-error',
-            message: `HTTP ${response.status}${body.length > 0 ? ` ${body}` : ''}`,
+            message,
           };
           break;
         }
@@ -164,7 +187,9 @@
   <MessageModal
     type="error"
     title="API Error"
-    message="The location could not be added due to an error on the server: {submitError.message}"
+    message="The location could not be {location === undefined
+      ? 'added'
+      : 'updated'} due to an error on the server: {submitError.message}"
     showClose={true}
     on:closed={() => (submitError = undefined)}
   />
@@ -292,7 +317,12 @@
       <div class="field-error">Error: {fieldErrors.longitude}</div>
     {/if}
 
-    <MapComponent latInput={latitudeInput} lngInput={longitudeInput} />
+    <MapComponent
+      latInput={latitudeInput}
+      lngInput={longitudeInput}
+      position={location?.coordinates}
+      zoom={location?.coordinates !== undefined ? 13 : undefined}
+    />
 
     <p><em>Note: Double-click on the map to update the location coordinates.</em></p>
 

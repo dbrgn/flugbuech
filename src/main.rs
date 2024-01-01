@@ -186,7 +186,6 @@ async fn main() -> Result<()> {
                 gliders::edit_form,
                 gliders::edit,
                 locations::add,
-                locations::edit_form,
                 locations::delete_form,
                 locations::delete,
                 process_igc::process_igc,
@@ -206,7 +205,8 @@ async fn main() -> Result<()> {
                 locations::list,
                 locations::get,
                 locations::add,
-                locations::add_nologin
+                locations::add_nologin,
+                locations::edit,
             ],
         )
         // Static files
