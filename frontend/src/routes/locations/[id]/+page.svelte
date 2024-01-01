@@ -60,7 +60,7 @@
 
 {#if data.location.coordinates}
   <section class="map">
-    <MapComponent position={data.location.coordinates} zoom={13} />
+    <MapComponent lngInput={null} latInput={null} position={data.location.coordinates} zoom={13} />
   </section>
 {/if}
 
