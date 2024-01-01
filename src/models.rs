@@ -23,6 +23,7 @@ pub struct User {
 }
 
 #[derive(Identifiable, Queryable, Associations, AsChangeset, Serialize, PartialEq, Debug, Clone)]
+#[diesel(treat_none_as_null = true)]
 #[diesel(belongs_to(User, foreign_key = user_id))]
 #[diesel(table_name = gliders)]
 pub struct Glider {
@@ -88,6 +89,7 @@ pub struct NewGlider {
 }
 
 #[derive(Identifiable, Queryable, Associations, AsChangeset, Serialize, PartialEq, Debug, Clone)]
+#[diesel(treat_none_as_null = true)]
 #[diesel(belongs_to(User, foreign_key = user_id))]
 #[diesel(table_name = locations)]
 pub struct Location {
@@ -147,6 +149,7 @@ pub struct LocationWithCount {
 }
 
 #[derive(Identifiable, Queryable, Associations, AsChangeset, Serialize, PartialEq, Debug, Clone)]
+#[diesel(treat_none_as_null = true)]
 #[diesel(belongs_to(User, foreign_key = user_id))]
 #[diesel(belongs_to(Glider, foreign_key = glider_id))]
 #[diesel(table_name = flights)]
