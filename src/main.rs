@@ -185,7 +185,6 @@ async fn main() -> Result<()> {
                 gliders::add,
                 gliders::edit_form,
                 gliders::edit,
-                locations::view,
                 locations::add,
                 locations::edit_form,
                 locations::delete_form,
@@ -205,6 +204,7 @@ async fn main() -> Result<()> {
             routes![
                 stats::global_stats,
                 locations::list,
+                locations::get,
                 locations::add,
                 locations::add_nologin
             ],

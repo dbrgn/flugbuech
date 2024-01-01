@@ -93,6 +93,41 @@ pub async fn list(database: data::Database, user: auth::AuthUser) -> Json<ApiLoc
     Json(ApiLocations { locations })
 }
 
+#[get("/locations/<id>")]
+pub async fn get(
+    user: auth::AuthUser,
+    database: data::Database,
+    id: i32,
+) -> Result<Json<ApiLocation>, Status> {
+    let user = user.into_inner();
+
+    // Get data
+    let location = match database
+        .run(move |db| data::get_location_with_flight_count_by_id(db, id))
+        .await
+    {
+        Some(location) => location,
+        None => return Err(Status::NotFound),
+    };
+
+    // Ownership check
+    if location.user_id != user.id {
+        return Err(Status::Forbidden);
+    }
+
+    Ok(Json(ApiLocation {
+        id: location.id,
+        name: location.name,
+        country_code: location.country,
+        elevation: location.elevation,
+        coordinates: location.geog.map(|geog| ApiCoordinates {
+            lon: geog.x,
+            lat: geog.y,
+        }),
+        flight_count: u64::try_from(location.count.max(0)).unwrap(),
+    }))
+}
+
 #[post("/locations", data = "<data>")]
 pub async fn add(user: auth::AuthUser, database: data::Database, data: Json<LocationCreateForm>) -> Status {
     log::debug!("locations::add");
@@ -136,29 +171,6 @@ pub fn add_nologin() -> ApiError {
 }
 
 // Views
-
-#[get("/locations/<id>")]
-pub async fn view(user: auth::AuthUser, database: data::Database, id: i32) -> Result<Template, Status> {
-    let user = user.into_inner();
-
-    // Get data
-    let location = match database
-        .run(move |db| data::get_location_with_flight_count_by_id(db, id))
-        .await
-    {
-        Some(location) => location,
-        None => return Err(Status::NotFound),
-    };
-
-    // Ownership check
-    if location.user_id != user.id {
-        return Err(Status::Forbidden);
-    }
-
-    // Render template
-    let context = LocationContext { user, location };
-    Ok(Template::render("location", context))
-}
 
 #[get("/locations/<id>/edit")]
 pub async fn edit_form(user: auth::AuthUser, database: data::Database, id: i32) -> Result<Template, Status> {
@@ -330,7 +342,7 @@ mod tests {
         let app = rocket::custom(make_test_config())
             .attach(data::Database::fairing())
             .attach(templates::fairing(&Config::default()))
-            .mount("/", routes![list, add]);
+            .mount("/", routes![list, get, add]);
         Client::untracked(app).expect("valid rocket instance")
     }
 
@@ -402,6 +414,59 @@ mod tests {
 
         // Without login
         let resp = client.get("/locations").dispatch();
+        assert_eq!(resp.status(), Status::Unauthorized);
+    }
+
+    #[test]
+    fn get_location() {
+        let ctx = DbTestContext::new();
+        let client = make_client();
+
+        macro_rules! get_location {
+            ($id:expr, $cookie:expr) => {
+                client
+                    .get(format!("/locations/{}", $id))
+                    .private_cookie($cookie)
+                    .cookie(ctx.username_cookie())
+                    .dispatch()
+            };
+        }
+
+        // Add location
+        let location = data::create_location(
+            &mut *ctx.force_get_conn(),
+            NewLocation {
+                name: "Machu Picchu".into(),
+                country: "PE".into(),
+                elevation: 2430,
+                user_id: ctx.testuser1.user.id,
+                geog: Some(GeogPoint {
+                    x: -72.54525463360524,
+                    y: -13.163235172208347,
+                    srid: None,
+                }),
+            },
+        );
+
+        // Get location from user 1
+        let resp = get_location!(location.id, ctx.auth_cookie_user1());
+        assert_eq!(resp.status(), Status::Ok);
+        let body = resp.into_string().expect("Response body wasn't valid text");
+        assert_eq!(
+            body,
+            r#"{"id":1,"name":"Machu Picchu","countryCode":"PE","elevation":2430,"coordinates":{"lon":-72.54525463360524,"lat":-13.163235172208347},"flightCount":0}"#
+        );
+
+        // Get location from user 2: Forbidden
+        let resp = get_location!(location.id, ctx.auth_cookie_user2());
+        assert_eq!(resp.status(), Status::Forbidden);
+
+        // Get non-existing location: Not found
+        let resp = get_location!(location.id + 9999, ctx.auth_cookie_user1());
+        assert_eq!(resp.status(), Status::NotFound);
+
+        // Get location without login: Unauthorized
+        let resp = client.get(format!("/locations/{}", location.id)).dispatch();
         assert_eq!(resp.status(), Status::Unauthorized);
     }
 

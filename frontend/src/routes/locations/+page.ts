@@ -1,28 +1,14 @@
 import type {SvelteKitFetch} from '$lib';
 import {z} from 'zod';
 
+import {SCHEMA_API_LOCATION, type Location} from './types';
+
 // Disable server-side rendering for this page
 export const ssr = false;
-
-const SCHEMA_API_LOCATION = z.object({
-    id: z.number(),
-    name: z.string(),
-    countryCode: z.string(),
-    elevation: z.number(),
-    coordinates: z
-        .object({
-            lon: z.number(),
-            lat: z.number(),
-        })
-        .optional(),
-    flightCount: z.number(),
-});
 
 const SCHEMA_API_LOCATIONS_RESPONSE = z.object({
     locations: z.array(SCHEMA_API_LOCATION),
 });
-
-type Location = z.infer<typeof SCHEMA_API_LOCATION>;
 
 /**
  * Load locations from API.

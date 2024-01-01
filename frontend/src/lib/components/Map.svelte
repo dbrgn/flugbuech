@@ -2,8 +2,8 @@
   import {Map, NavigationControl, Marker, type LngLatLike} from 'maplibre-gl';
   import {onMount} from 'svelte';
 
-  export let lngInput: HTMLInputElement | null;
-  export let latInput: HTMLInputElement | null;
+  export let lngInput: HTMLInputElement | null = null;
+  export let latInput: HTMLInputElement | null = null;
   export let position: LngLatLike = {lng: 10, lat: 47};
   export let zoom: number = 6;
 
