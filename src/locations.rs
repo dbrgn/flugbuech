@@ -35,6 +35,7 @@ pub struct ApiLocation {
     name: String,
     country_code: String,
     elevation: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
     coordinates: Option<ApiCoordinates>,
     flight_count: u64,
 }
@@ -310,4 +311,132 @@ pub async fn delete(
                 format!("Could not delete location \"{}\"", location.name),
             ))
         })
+}
+
+#[cfg(test)]
+mod tests {
+    use rocket::{self, http::ContentType, local::blocking::Client, routes};
+
+    use crate::{
+        templates,
+        test_utils::{make_test_config, DbTestContext},
+        Config,
+    };
+
+    use super::*;
+
+    /// Create a new test client. Cookie tracking is disabled.
+    fn make_client() -> Client {
+        let app = rocket::custom(make_test_config())
+            .attach(data::Database::fairing())
+            .attach(templates::fairing(&Config::default()))
+            .mount("/", routes![list, add]);
+        Client::untracked(app).expect("valid rocket instance")
+    }
+
+    #[test]
+    fn list_locations() {
+        let ctx = DbTestContext::new();
+        let client = make_client();
+
+        macro_rules! get_locations {
+            ($cookie:expr) => {
+                client
+                    .get("/locations")
+                    .private_cookie($cookie)
+                    .cookie(ctx.username_cookie())
+                    .dispatch()
+            };
+        }
+
+        // No locations
+        let g = data::get_locations_for_user(&mut *ctx.force_get_conn(), &ctx.testuser1.user);
+        assert_eq!(g.len(), 0);
+
+        // Empty list
+        let resp = get_locations!(ctx.auth_cookie_user1());
+        assert_eq!(resp.status(), Status::Ok);
+        let body = resp.into_string().expect("Response body wasn't valid text");
+        assert_eq!(body, r#"{"locations":[]}"#);
+
+        // Add locations
+        data::create_location(
+            &mut *ctx.force_get_conn(),
+            NewLocation {
+                name: "Misti".into(),
+                country: "PE".into(),
+                elevation: 5822,
+                user_id: ctx.testuser1.user.id,
+                geog: None,
+            },
+        );
+        data::create_location(
+            &mut *ctx.force_get_conn(),
+            NewLocation {
+                name: "Machu Picchu".into(),
+                country: "PE".into(),
+                elevation: 2430,
+                user_id: ctx.testuser1.user.id,
+                geog: Some(GeogPoint {
+                    x: -72.54525463360524,
+                    y: -13.163235172208347,
+                    srid: None,
+                }),
+            },
+        );
+
+        // Query locations for user 1: Include both
+        let resp = get_locations!(ctx.auth_cookie_user1());
+        assert_eq!(resp.status(), Status::Ok);
+        let body = resp.into_string().expect("Response body wasn't valid text");
+        assert_eq!(
+            body,
+            r#"{"locations":[{"id":2,"name":"Machu Picchu","countryCode":"PE","elevation":2430,"coordinates":{"lon":-72.54525463360524,"lat":-13.163235172208347},"flightCount":0},{"id":1,"name":"Misti","countryCode":"PE","elevation":5822,"flightCount":0}]}"#
+        );
+
+        // Query locations for user 2: Must be empty
+        let resp = get_locations!(ctx.auth_cookie_user2());
+        assert_eq!(resp.status(), Status::Ok);
+        let body = resp.into_string().expect("Response body wasn't valid text");
+        assert_eq!(body, r#"{"locations":[]}"#);
+
+        // Without login
+        let resp = client.get("/locations").dispatch();
+        assert_eq!(resp.status(), Status::Unauthorized);
+    }
+
+    #[test]
+    fn add_location() {
+        let ctx = DbTestContext::new();
+        let client = make_client();
+
+        // No locations
+        let g = data::get_locations_for_user(&mut *ctx.force_get_conn(), &ctx.testuser1.user);
+        assert_eq!(g.len(), 0);
+
+        macro_rules! add_location {
+            ($body:expr, $cookie:expr) => {
+                client
+                    .post("/locations")
+                    .header(ContentType::Form)
+                    .body($body)
+                    .private_cookie($cookie)
+                    .cookie(ctx.username_cookie())
+                    .dispatch()
+            };
+        }
+
+        // Add location
+        let resp = add_location!(
+            r#"{"name": "Testlocation", "countryCode": "CH", "elevation": -123}"#,
+            ctx.auth_cookie_user1()
+        );
+        assert_eq!(resp.status(), Status::Created);
+
+        // Verify database
+        let g = data::get_locations_for_user(&mut *ctx.force_get_conn(), &ctx.testuser1.user);
+        assert_eq!(g.len(), 1);
+        assert_eq!(g[0].name, "Testlocation");
+        assert_eq!(g[0].country, "CH");
+    }
 }

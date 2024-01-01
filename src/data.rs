@@ -360,6 +360,8 @@ pub fn get_locations_for_user(conn: &mut PgConnection, user: &User) -> Vec<Locat
 
 /// Retrieve all locations for the specified user, including the number of
 /// associated flights (with either launch and/or landing at that location).
+///
+/// Locations are sorted by name.
 pub fn get_all_locations_with_stats_for_user(conn: &mut PgConnection, user: &User) -> Vec<LocationWithCount> {
     sql_query(
         "SELECT l.*, count(f.id) as count

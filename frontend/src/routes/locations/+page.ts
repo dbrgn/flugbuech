@@ -14,8 +14,7 @@ const SCHEMA_API_LOCATION = z.object({
             lon: z.number(),
             lat: z.number(),
         })
-        .nullable()
-        .transform((value) => (value === null ? undefined : value)),
+        .optional(),
     flightCount: z.number(),
 });
 
