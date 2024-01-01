@@ -1,6 +1,8 @@
 <script lang="ts">
   import {goto} from '$app/navigation';
+  import Flashes from '$lib/components/Flashes.svelte';
   import MessageModal from '$lib/components/MessageModal.svelte';
+  import {addFlash} from '$lib/stores';
   import {reactive} from '$lib/svelte';
   import {onMount} from 'svelte';
 
@@ -110,6 +112,11 @@
       switch (response.status) {
         case 201:
           // Success
+          addFlash({
+            message: 'Location successfully added',
+            severity: 'success',
+            icon: 'fa-circle-check',
+          });
           goto('/locations/');
           break;
         case 401:
@@ -144,6 +151,8 @@
     <li class="is-active"><a href="./" aria-current="page">Add Location</a></li>
   </ul>
 </nav>
+
+<Flashes />
 
 {#if submitError?.type === 'authentication'}
   <MessageModal

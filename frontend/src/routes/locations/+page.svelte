@@ -1,5 +1,6 @@
 <script lang="ts">
   import CountryFlag from '$lib/components/CountryFlag.svelte';
+  import Flashes from '$lib/components/Flashes.svelte';
   import type {Data} from './+page';
 
   export let data: Data;
@@ -12,14 +13,16 @@
   </ul>
 </nav>
 
+<Flashes />
+
 <h2 class="title is-2">Your Locations</h2>
 
 <section>
   <article class="message is-info">
     <div class="message-body">
-      <i class="fa-solid fa-circle-info" />&emsp;A location can be used both as launch location and
-      as landing location. Locations are not global, i.e. you are creating and maintaining your own
-      location database.
+      <i class="fa-solid fa-circle-info" />&emsp;Note: A location can be used both as launch
+      location and as landing location. Locations are not global, i.e. you are creating and
+      maintaining your own location database.
     </div>
   </article>
 
