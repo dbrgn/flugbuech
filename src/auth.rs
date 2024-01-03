@@ -6,7 +6,7 @@ use log::error;
 use rocket::{
     form::Form,
     get,
-    http::{Cookie, CookieJar, Status},
+    http::{Cookie, CookieJar, SameSite, Status},
     outcome::Outcome,
     post,
     request::{self, FlashMessage, FromRequest, Request},
@@ -45,6 +45,7 @@ fn make_cookie(name: &'static str, value: String) -> Cookie {
     // Create cookie
     let mut cookie = Cookie::new(name, value);
     cookie.set_expires(expiration);
+    cookie.set_same_site(SameSite::Lax);
 
     cookie
 }
