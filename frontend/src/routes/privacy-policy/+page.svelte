@@ -180,8 +180,8 @@
 <h3 class="title is-size-3">Cookies</h3>
 
 <p class="content">
-  The website uses a temporary cookie for security reasons (CSRF cookie) as well as a persistent
-  cookie for keeping you logged in (expiring after 1 year).
+  The website uses two persistent cookies for keeping you logged in (expiring after 1 year) and for
+  remembering your user name.
 </p>
 
 <h3 class="title is-size-3">Who is this data shared with?</h3>
