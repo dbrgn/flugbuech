@@ -31,6 +31,7 @@
 </div>
 
 <style>
+  /* TODO: Upgrade Bulma to 0.9+ and use the spacing helpers. */
   .message-body.has-buttons > section:first-of-type {
     margin-bottom: 16px;
   }

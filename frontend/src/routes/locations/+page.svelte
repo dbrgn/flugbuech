@@ -1,10 +1,55 @@
 <script lang="ts">
+  import {invalidateAll} from '$app/navigation';
   import CountryFlag from '$lib/components/CountryFlag.svelte';
+  import DialogModal from '$lib/components/DialogModal.svelte';
   import Flashes from '$lib/components/Flashes.svelte';
+  import {addFlash} from '$lib/stores';
   import type {Data} from './+page';
+  import type {Location} from './api';
 
   export let data: Data;
+
+  let flashes: Flashes;
+
+  let locationToDelete: Location | undefined;
+
+  function deleteLocation(): void {
+    if (locationToDelete !== undefined) {
+      console.info(`Deleting location with ID ${locationToDelete.id}`);
+
+      // TODO actually delete
+
+      // Show flash success message
+      addFlash({
+        message: `Location "${locationToDelete.name}" successfully deleted!`,
+        severity: 'success',
+        icon: 'fa-trash-can',
+      });
+      flashes.update();
+
+      // Hide delete dialog
+      locationToDelete = undefined;
+
+      // Reload data
+      invalidateAll();
+    }
+  }
 </script>
+
+{#if locationToDelete !== undefined}
+  <DialogModal
+    title="Delete Location"
+    message="Are you sure that you want to delete the location &ldquo;{locationToDelete.name}&rdquo;?"
+    dialogClass="is-danger"
+  >
+    <section slot="buttons">
+      <button class="button is-light" on:click={() => (locationToDelete = undefined)}
+        >No, cancel</button
+      >
+      <button class="button is-danger" on:click={() => deleteLocation()}>Yes, delete!</button>
+    </section>
+  </DialogModal>
+{/if}
 
 <nav class="breadcrumb" aria-label="breadcrumbs">
   <ul>
@@ -13,7 +58,7 @@
   </ul>
 </nav>
 
-<Flashes />
+<Flashes bind:this={flashes} />
 
 <h2 class="title is-2">Your Locations</h2>
 
@@ -57,11 +102,13 @@
               <i class="fa-solid fa-pen-square"></i>
             </a>
             {#if location.flightCount === 0}
-              <a
+              <button
                 class="icon has-text-danger"
                 title="Delete Location"
-                href="/locations/{location.id}/delete"><i class="fa-solid fa-trash-alt"></i></a
+                on:click={() => (locationToDelete = location)}
               >
+                <i class="fa-solid fa-trash-alt"></i>
+              </button>
             {/if}
             {#if location.coordinates !== undefined}
               {@const lon = location.coordinates.lon}
@@ -87,3 +134,15 @@
     </tbody>
   </table>
 </section>
+
+<style>
+  table button {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+  }
+
+  table button:hover i {
+    color: #c41e1e;
+  }
+</style>

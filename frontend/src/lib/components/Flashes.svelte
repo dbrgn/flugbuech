@@ -4,11 +4,15 @@
 
   let loadedFlashes: Flash[] = [];
 
-  onMount(() => {
+  export function update(): void {
     if ($flashes.length > 0) {
       loadedFlashes = [...loadedFlashes, ...$flashes];
       $flashes = [];
     }
+  }
+
+  onMount(() => {
+    update();
   });
 </script>
 
