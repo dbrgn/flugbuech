@@ -9,7 +9,7 @@
   import {reactive} from '$lib/svelte';
 
   import {type Location} from './api';
-  import {SCHEMA_API_ERROR} from '$lib/error-handling';
+  import {apiPost, extractResponseError} from '$lib/api';
 
   // Props
   export let location: Location | undefined = undefined;
@@ -106,25 +106,15 @@
       console.log(
         location === undefined ? 'Sending new location to API' : 'Updating location via API',
       );
-      const requestBody = {
+      const url =
+        location === undefined ? '/api/v1/locations/' : `/api/v1/locations/${location.id}`;
+      const response = await apiPost(url, {
         name,
         countryCode,
         elevation,
         ...(latitude !== null && longitude !== null
           ? {coordinates: {lat: latitude, lon: longitude}}
           : {}),
-      };
-      const url =
-        location === undefined ? '/api/v1/locations/' : `/api/v1/locations/${location.id}`;
-      const response = await fetch(url, {
-        method: 'POST',
-        cache: 'no-cache',
-        credentials: 'include',
-        headers: {
-          'content-type': 'application/json',
-          'accept': 'text/plain, application/json, */*;q=0.8',
-        },
-        body: JSON.stringify(requestBody),
       });
       switch (response.status) {
         case 201:
@@ -144,17 +134,9 @@
           submitError = {type: 'authentication'};
           break;
         default: {
-          let message;
-          try {
-            const error = SCHEMA_API_ERROR.parse(await response.json());
-            message = `HTTP ${response.status} (${error.error.reason}): ${error.error.description}`;
-          } catch (error) {
-            console.warn('Failed to parse API response as error:', error);
-            message = `HTTP ${response.status}`;
-          }
           submitError = {
             type: 'api-error',
-            message,
+            message: await extractResponseError(response),
           };
           break;
         }
@@ -176,7 +158,7 @@
   <MessageModal
     type="warning"
     title="Authentication Error"
-    message="Your session has expired. Please log in again."
+    message="Your login session has expired. Please log in again."
     showClose={false}
   >
     <section slot="buttons">
