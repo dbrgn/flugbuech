@@ -5,7 +5,9 @@ use std::collections::BTreeMap;
 use rocket::{
     get,
     response::Redirect,
+    routes,
     serde::{json::Json, Serialize},
+    Route,
 };
 use rocket_dyn_templates::Template;
 
@@ -148,4 +150,9 @@ pub async fn global_stats(database: data::Database) -> Json<ApiGlobalStats> {
         glider_count,
         flight_count,
     })
+}
+
+/// Return vec of all API routes.
+pub fn api_routes() -> Vec<Route> {
+    routes![global_stats]
 }

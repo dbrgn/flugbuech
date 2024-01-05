@@ -3,15 +3,7 @@
 use std::convert::TryFrom;
 
 use diesel_geography::types::GeogPoint;
-use rocket::{
-    get,
-    http::Status,
-    post,
-    response::{Flash, Redirect},
-    serde::json::Json,
-    uri,
-};
-use rocket_dyn_templates::Template;
+use rocket::{delete, get, http::Status, post, routes, serde::json::Json, Route};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -93,6 +85,11 @@ pub async fn list(database: data::Database, user: auth::AuthUser) -> Json<ApiLoc
     Json(ApiLocations { locations })
 }
 
+#[get("/locations", rank = 2)]
+pub fn list_nologin() -> ApiError {
+    ApiError::Authentication
+}
+
 #[get("/locations/<id>")]
 pub async fn get(
     user: auth::AuthUser,
@@ -126,6 +123,12 @@ pub async fn get(
         }),
         flight_count: u64::try_from(location.count.max(0)).unwrap(),
     }))
+}
+
+#[get("/locations/<id>", rank = 2)]
+#[allow(unused_variables)]
+pub fn get_nologin(id: i32) -> ApiError {
+    ApiError::Authentication
 }
 
 #[post("/locations", data = "<data>")]
@@ -222,47 +225,14 @@ pub async fn edit(
     Ok(Status::NoContent)
 }
 
-// Views
-
-#[get("/locations/<id>/delete")]
-pub async fn delete_form(
-    user: auth::AuthUser,
-    database: data::Database,
-    id: i32,
-) -> Result<Template, Status> {
-    let user = user.into_inner();
-
-    // Get data
-    let location = match database
-        .run(move |db| data::get_location_with_flight_count_by_id(db, id))
-        .await
-    {
-        Some(location) => location,
-        None => return Err(Status::NotFound),
-    };
-
-    // Ownership check
-    if location.user_id != user.id {
-        return Err(Status::Forbidden);
-    }
-
-    // Ensure that no related flights exist (otherwise a foreign key constraint
-    // would be returned by the database when attempting to delete)
-    if location.count > 0 {
-        return Err(Status::Conflict);
-    }
-
-    // Render template
-    let context = LocationContext { user, location };
-    Ok(Template::render("location_delete", context))
+#[post("/locations/<id>", rank = 2)]
+#[allow(unused_variables)]
+pub fn edit_nologin(id: i32) -> ApiError {
+    ApiError::Authentication
 }
 
-#[post("/locations/<id>/delete")]
-pub async fn delete(
-    user: auth::AuthUser,
-    database: data::Database,
-    id: i32,
-) -> Result<Flash<Redirect>, Status> {
+#[delete("/locations/<id>")]
+pub async fn delete(user: auth::AuthUser, database: data::Database, id: i32) -> Result<Status, Status> {
     let user = user.into_inner();
 
     // Get data
@@ -292,25 +262,42 @@ pub async fn delete(
         .await
         .map(|()| {
             log::info!("Deleted location with ID {}", location.id);
-            Flash::success(
-                Redirect::to(uri!(list)),
-                format!("Location \"{}\" deleted", location.name),
-            )
+            Status::NoContent
         })
-        .or_else(|e| {
+        .map_err(|e| {
             log::error!("Could not delete location with ID {}: {}", location.id, e);
-            Ok(Flash::error(
-                Redirect::to(uri!(list)),
-                format!("Could not delete location \"{}\"", location.name),
-            ))
+            Status::InternalServerError
         })
+}
+
+#[delete("/locations/<id>", rank = 2)]
+#[allow(unused_variables)]
+pub fn delete_nologin(id: i32) -> ApiError {
+    ApiError::Authentication
+}
+
+/// Return vec of all API routes.
+pub fn api_routes() -> Vec<Route> {
+    routes![
+        list,
+        list_nologin,
+        get,
+        get_nologin,
+        add,
+        add_nologin,
+        edit,
+        edit_nologin,
+        delete,
+        delete_nologin,
+    ]
 }
 
 #[cfg(test)]
 mod tests {
-    use rocket::{self, http::ContentType, local::blocking::Client, routes};
+    use rocket::{self, http::ContentType, local::blocking::Client};
 
     use crate::{
+        models::NewFlight,
         templates,
         test_utils::{make_test_config, DbTestContext},
         Config,
@@ -323,7 +310,7 @@ mod tests {
         let app = rocket::custom(make_test_config())
             .attach(data::Database::fairing())
             .attach(templates::fairing(&Config::default()))
-            .mount("/", routes![list, get, add, edit]);
+            .mount("/", api_routes());
         Client::untracked(app).expect("valid rocket instance")
     }
 
@@ -543,6 +530,78 @@ mod tests {
 
         // Update non-existing location: Not found
         let resp = update_location!(location.id + 9999, update_json, ctx.auth_cookie_user1());
+        assert_eq!(resp.status(), Status::NotFound);
+    }
+
+    #[test]
+    fn delete_location() {
+        let ctx = DbTestContext::new();
+        let client = make_client();
+
+        macro_rules! delete_location {
+            ($id:expr, $cookie:expr) => {
+                client
+                    .delete(format!("/locations/{}", $id))
+                    .private_cookie($cookie)
+                    .cookie(ctx.username_cookie())
+                    .dispatch()
+            };
+        }
+
+        // Add locations
+        let location1 = data::create_location(
+            &mut *ctx.force_get_conn(),
+            NewLocation {
+                name: "Machu Picchu".into(),
+                country: "PE".into(),
+                elevation: 2430,
+                user_id: ctx.testuser1.user.id,
+                geog: Some(GeogPoint {
+                    x: -72.54525463360524,
+                    y: -13.163235172208347,
+                    srid: None,
+                }),
+            },
+        );
+        let location2 = data::create_location(
+            &mut *ctx.force_get_conn(),
+            NewLocation {
+                name: "Misti".into(),
+                country: "PE".into(),
+                elevation: 5822,
+                user_id: ctx.testuser1.user.id,
+                geog: None,
+            },
+        );
+
+        // Add flight to location 2
+        data::create_flight(
+            &mut *ctx.force_get_conn(),
+            &NewFlight {
+                number: Some(1),
+                user_id: ctx.testuser1.user.id,
+                launch_at: Some(location2.id),
+                ..Default::default()
+            },
+            None,
+        );
+
+        // Delete locations from user 2: Forbidden
+        for location_id in [location1.id, location2.id] {
+            let resp = delete_location!(location_id, ctx.auth_cookie_user2());
+            assert_eq!(resp.status(), Status::Forbidden);
+        }
+
+        // Delete location 1 from user 1: OK
+        let resp = delete_location!(location1.id, ctx.auth_cookie_user1());
+        assert_eq!(resp.status(), Status::NoContent);
+
+        // Delete location 2 from user 1: Conflict (existing flights)
+        let resp = delete_location!(location2.id, ctx.auth_cookie_user1());
+        assert_eq!(resp.status(), Status::Conflict);
+
+        // Delete non-existing location: Not found
+        let resp = delete_location!(location2.id + 9999, ctx.auth_cookie_user1());
         assert_eq!(resp.status(), Status::NotFound);
     }
 }
