@@ -1,23 +1,9 @@
 <script lang="ts">
-  import {onMount, setContext} from 'svelte';
-  import {writable, type Writable} from 'svelte/store';
-  import {getCookiesMap} from '$lib/cookies';
-
-  interface LoginState {
-    /**
-     * The username indicates (with some certainty) whether or not we are logged in.
-     */
-    readonly username: string | undefined;
-  }
-
-  // Store containing global user login state
-  const loginState: Writable<LoginState | undefined> = writable();
-  setContext('loginState', loginState);
+  import {onMount} from 'svelte';
+  import {loginState, refreshLoginState} from '$lib/stores';
 
   onMount(() => {
-    // Update login state
-    const cookies = getCookiesMap(document.cookie);
-    loginState.set({username: cookies['user_name']});
+    refreshLoginState();
   });
 </script>
 
