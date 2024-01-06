@@ -43,7 +43,7 @@
         <div class="buttons">
           {#if $loginState?.username}
             <a class="button" href="/profile/">Profile</a>
-            <a class="button" href="/auth/logout/">Logout</a>
+            <a class="button" href="/auth/logout/" data-sveltekit-reload>Logout</a>
           {:else}
             <a class="button is-light" href="/auth/login/">Login</a>
           {/if}

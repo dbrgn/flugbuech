@@ -23,9 +23,10 @@ const SCHEMA_API_ERROR = z.object({
  */
 export async function apiPost(
     url: string,
-    requestBody: Record<string, unknown>,
+    requestBody?: Record<string, unknown>,
+    fetchImpl = fetch,
 ): Promise<Response> {
-    return await fetch(url, {
+    return await fetchImpl(url, {
         method: 'POST',
         cache: 'no-cache',
         credentials: 'include',
@@ -33,15 +34,15 @@ export async function apiPost(
             'content-type': 'application/json',
             ...COMMON_HEADERS,
         },
-        body: JSON.stringify(requestBody),
+        body: requestBody !== undefined ? JSON.stringify(requestBody) : undefined,
     });
 }
 
 /**
  * Send a DELETE request to the API.
  */
-export async function apiDelete(url: string): Promise<Response> {
-    return await fetch(url, {
+export async function apiDelete(url: string, fetchImpl = fetch): Promise<Response> {
+    return await fetchImpl(url, {
         method: 'DELETE',
         cache: 'no-cache',
         credentials: 'include',
