@@ -141,7 +141,12 @@
             <a class="icon" title="View Location" href="/locations/{location.id}">
               <i class="fa-solid fa-eye"></i>
             </a>
-            <a class="icon" title="Edit Location" href="/locations/{location.id}/edit/">
+            <a
+              class="icon"
+              title="Edit Location"
+              href="/locations/{location.id}/edit/"
+              data-sveltekit-preload-data="tap"
+            >
               <i class="fa-solid fa-pen-square"></i>
             </a>
             {#if location.flightCount === 0}
