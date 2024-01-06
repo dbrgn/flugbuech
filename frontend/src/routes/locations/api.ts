@@ -1,7 +1,7 @@
 import type {SvelteKitFetch} from '$lib';
 import {z} from 'zod';
 import {error} from '@sveltejs/kit';
-import {goto} from '$app/navigation';
+import {AuthenticationError} from '$lib/errors';
 
 const SCHEMA_API_LOCATION = z.object({
     id: z.number(),
@@ -43,10 +43,9 @@ export async function loadApiLocation(fetch: SvelteKitFetch, id: number): Promis
     const res = await fetch(`/api/v1/locations/${id}`);
     switch (res.status) {
         case 200:
-            break;
+            return SCHEMA_API_LOCATION.parse(await res.json());
         case 401:
-            goto(`/auth/login?redirect=${encodeURI(`/locations/${id}`)}`);
-            break;
+            throw AuthenticationError.redirectToLogin(`/locations/${id}`);
         case 403:
             return error(403, `This is not your location, viewing not allowed`);
         case 404:
@@ -55,5 +54,4 @@ export async function loadApiLocation(fetch: SvelteKitFetch, id: number): Promis
             // TODO: Better error handling
             throw new Error(`Could not fetch location from API: HTTP ${res.status}`);
     }
-    return SCHEMA_API_LOCATION.parse(await res.json());
 }
