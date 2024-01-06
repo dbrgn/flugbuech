@@ -77,7 +77,7 @@
       >Source Code</a
     >
     | <a href="https://github.com/dbrgn/flugbuech/issues">Bug reports and feature requests</a> |
-    <a href="/privacy-policy">Privacy Policy</a>
+    <a href="/privacy-policy/">Privacy Policy</a>
     | <a href="mailto:flugbuech@bargen.dev">Contact</a>
   </div>
 </footer>

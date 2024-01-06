@@ -162,7 +162,10 @@
     showClose={false}
   >
     <section slot="buttons">
-      <a href="/auth/login/" class="button is-warning">Login</a>
+      <a
+        href="/auth/login/?redirect=/locations/{location == undefined ? '' : `${location.id}/edit`}"
+        class="button is-warning">Login</a
+      >
     </section>
   </MessageModal>
 {:else if submitError?.type === 'api-error'}
@@ -200,7 +203,7 @@
           required
         />
         <div class="icon is-small is-left">
-          <i class="fas fa-map-marker-alt"></i>
+          <i class="fa-solid fa-map-marker-alt"></i>
         </div>
       </div>
     </div>
@@ -223,7 +226,7 @@
           required
         />
         <div class="icon is-small is-left">
-          <i class="fas fa-globe-americas"></i>
+          <i class="fa-solid fa-globe-americas"></i>
         </div>
       </div>
     </div>
@@ -247,7 +250,7 @@
           required
         />
         <div class="icon is-small is-left">
-          <i class="fas fa-tachometer-alt"></i>
+          <i class="fa-solid fa-tachometer-alt"></i>
         </div>
       </div>
     </div>
@@ -272,7 +275,7 @@
           placeholder="47.29553"
         />
         <div class="icon is-small is-left">
-          <i class="fas fa-map-marker-alt"></i>
+          <i class="fa-solid fa-map-marker-alt"></i>
         </div>
       </div>
     </div>
@@ -297,7 +300,7 @@
           placeholder="8.91927"
         />
         <div class="icon is-small is-left">
-          <i class="fas fa-map-marker-alt"></i>
+          <i class="fa-solid fa-map-marker-alt"></i>
         </div>
       </div>
     </div>

@@ -110,7 +110,7 @@
     You flew {data.gliders.length} glider{data.gliders.length === 1 ? '' : 's'} so far!
   </p>
   <p class="content">
-    <a href="https://example.com/gliders/add/" class="button is-primary">Add glider</a>
+    <a href="/gliders/add/" class="button is-info">Add glider</a>
   </p>
   <table class="table is-fullwidth is-striped is-hoverable">
     <thead>
@@ -147,12 +147,12 @@
             <a
               class="icon"
               title="Edit Glider"
-              href="https://example.com/gliders/{glider.id}/edit/"
+              href="/gliders/{glider.id}/edit/"
               data-sveltekit-preload-data="tap"
             >
               <i class="fas fa-pen-square"></i>
             </a>
-            {#if glider.stats.flights === 1}
+            {#if glider.stats.flights === 0}
               <button
                 class="icon has-text-danger"
                 title="Delete Glider"

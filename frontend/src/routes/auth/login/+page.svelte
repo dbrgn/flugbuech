@@ -123,9 +123,9 @@
   </div>
   <div class="field">
     <div class="control">
-      <button class="button is-primary" disabled={!submitEnabled} type="submit">Login</button>
+      <button class="button is-info" disabled={!submitEnabled} type="submit">Login</button>
     </div>
   </div>
 
-  <p>Don't have an account yet? <a href="/auth/registration">Register now!</a></p>
+  <p>Don't have an account yet? <a href="/auth/registration/">Register now!</a></p>
 </form>

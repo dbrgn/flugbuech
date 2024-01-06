@@ -24,7 +24,7 @@
 
 <p class="content">
   If you want to change your login password,
-  <a href="/auth/password/change">click here</a>.
+  <a href="/auth/password/change/">click here</a>.
 </p>
 
 <div class="container spaced-headers">

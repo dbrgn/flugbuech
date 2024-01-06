@@ -10,7 +10,7 @@
 <nav class="breadcrumb" aria-label="breadcrumbs">
   <ul>
     <li><a href="/">Home</a></li>
-    <li><a href="/locations">Locations</a></li>
+    <li><a href="/locations/">Locations</a></li>
     <li class="is-active"><a href="./" aria-current="page">{data.location.name}</a></li>
   </ul>
 </nav>

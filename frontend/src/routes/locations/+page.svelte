@@ -118,7 +118,7 @@
     You've been at {data.locations.length} location{data.locations.length === 1 ? '' : 's'} so far!
   </p>
   <p class="content">
-    <a href="/locations/add/" class="button is-primary">Add location</a>
+    <a href="/locations/add/" class="button is-info">Add location</a>
   </p>
   <table class="table is-fullwidth is-striped is-hoverable">
     <thead>
@@ -138,7 +138,7 @@
           <td>{location.elevation} m ASL</td>
           <td>{location.flightCount}</td>
           <td>
-            <a class="icon" title="View Location" href="/locations/{location.id}">
+            <a class="icon" title="View Location" href="/locations/{location.id}/">
               <i class="fa-solid fa-eye"></i>
             </a>
             <a
