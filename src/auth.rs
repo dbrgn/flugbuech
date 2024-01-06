@@ -303,7 +303,7 @@ pub async fn password_change(
     database
         .run(move |db| data::update_password(db, &user, &pw_new))
         .await;
-    Flash::success(Redirect::to(uri!(crate::profile::view)), "Password changed")
+    Flash::success(Redirect::to("/profile"), "Password changed")
 }
 
 /// Return the auth routes.
@@ -348,11 +348,10 @@ mod tests {
         self,
         http::{ContentType, Status},
         local::blocking::Client,
-        routes,
     };
 
     use crate::{
-        templates,
+        profile, templates,
         test_utils::{make_test_config, DbTestContext},
         Config,
     };
@@ -362,7 +361,7 @@ mod tests {
     /// Create a new test client with cookie tracking.
     fn make_client() -> Client {
         let mut test_routes = get_routes();
-        test_routes.extend_from_slice(&routes![crate::profile::view]);
+        test_routes.extend(routes![profile::get]);
         let app = rocket::custom(make_test_config())
             .attach(data::Database::fairing())
             .attach(templates::fairing(&Config::default()))
@@ -515,8 +514,6 @@ mod tests {
         // Successful password change
         let res = password_change_request(&mut client, &ctx, &ctx.testuser1.password, "abcdefgh", "abcdefgh");
         assert_eq!(res.redirect_url, "/profile");
-        println!("{}", res.body);
-        assert!(res.body.contains("Password changed"), "Success message not found");
 
         // Ensure password was changed
         assert!(

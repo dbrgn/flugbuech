@@ -186,8 +186,6 @@ async fn main() -> Result<()> {
                 gliders::edit_form,
                 gliders::edit,
                 process_igc::process_igc,
-                profile::view,
-                profile::view_nologin,
                 stats::stats,
                 stats::stats_nologin,
             ],
@@ -197,7 +195,12 @@ async fn main() -> Result<()> {
         // API routes
         .mount(
             "/api/v1/",
-            [stats::api_routes(), locations::api_routes()].concat(),
+            [
+                profile::api_routes(),
+                stats::api_routes(),
+                locations::api_routes(),
+            ]
+            .concat(),
         )
         // Static files
         .mount("/static", FileServer::from(static_files_dir));
