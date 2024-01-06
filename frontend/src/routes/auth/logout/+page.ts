@@ -11,7 +11,7 @@ export async function load({fetch}): Promise<void> {
 
     // Logout successful! Add flash.
     addFlash({
-        message: 'Logged out, good bye!',
+        message: 'Logged out, goodbye and happy landings!',
         severity: 'success',
         icon: 'fa-circle-check',
     });
