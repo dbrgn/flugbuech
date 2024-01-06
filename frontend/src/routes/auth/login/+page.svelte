@@ -1,10 +1,12 @@
 <script lang="ts">
   import {goto} from '$app/navigation';
+  import {page} from '$app/stores';
 
   import Flashes from '$lib/components/Flashes.svelte';
   import {addFlash, refreshLoginState} from '$lib/stores';
   import {ensureError} from '$lib/assert';
   import MessageModal from '$lib/components/MessageModal.svelte';
+  import {sanitizeRedirectPath} from '$lib/urls';
 
   import {apiLogin} from './api';
 
@@ -47,9 +49,8 @@
       // Refresh login state
       refreshLoginState();
 
-      // Redirect to home
-      // TODO: Parse redirect target URL
-      goto('/');
+      // Redirect to home or to requested page
+      goto(sanitizeRedirectPath($page.url.searchParams.get('redirect'), '/'));
     } else {
       // Login failed
       addFlash({
