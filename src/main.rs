@@ -178,13 +178,6 @@ async fn main() -> Result<()> {
                 flights::submit_form,
                 flights::submit_form_nologin,
                 flights::submit,
-                gliders::list,
-                gliders::list_nologin,
-                gliders::add_form,
-                gliders::add_form_nologin,
-                gliders::add,
-                gliders::edit_form,
-                gliders::edit,
                 process_igc::process_igc,
                 stats::stats,
                 stats::stats_nologin,
@@ -200,6 +193,7 @@ async fn main() -> Result<()> {
                 profile::api_routes(),
                 stats::api_routes(),
                 locations::api_routes(),
+                gliders::api_routes(),
             ]
             .concat(),
         )

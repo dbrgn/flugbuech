@@ -22,7 +22,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     data::{self, Database},
     models::User,
-    responders::{make_rocket_error, RocketError},
+    responders::RocketError,
 };
 
 pub const USER_COOKIE_ID: &str = "user_id";
@@ -141,7 +141,7 @@ pub async fn login(
         None => {
             // Login failed
             warn!("Login failed for user {}", &username);
-            Err(make_rocket_error(
+            Err(RocketError::new(
                 Status::Forbidden,
                 "BadCredentials",
                 "Wrong username or password",

@@ -22,21 +22,23 @@ pub struct RocketErrorInner {
     pub description: &'static str,
 }
 
-pub fn make_rocket_error(
-    status: Status,
-    reason: &'static str,
-    description: &'static str,
-) -> (Status, Json<RocketError>) {
-    (
-        status,
-        Json(RocketError {
-            error: RocketErrorInner {
-                code: status.code,
-                reason,
-                description,
-            },
-        }),
-    )
+impl RocketError {
+    pub fn new(
+        status: Status,
+        reason: &'static str,
+        description: &'static str,
+    ) -> (Status, Json<RocketError>) {
+        (
+            status,
+            Json(RocketError {
+                error: RocketErrorInner {
+                    code: status.code,
+                    reason,
+                    description,
+                },
+            }),
+        )
+    }
 }
 
 pub enum ApiError {

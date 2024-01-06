@@ -2,123 +2,119 @@
 
 use chrono::NaiveDate;
 use diesel::result::{DatabaseErrorKind, Error as DieselError};
-use rocket::{
-    form::{Form, FromForm},
-    get,
-    http::Status,
-    post,
-    request::Request,
-    response::{self, Redirect, Responder},
-    uri,
-};
-use rocket_dyn_templates::Template;
-use serde::Serialize;
+use rocket::{delete, error, get, http::Status, post, routes, serde::json::Json, Route};
+use serde::{Deserialize, Serialize};
 
-use crate::models::{Glider, GliderWithStats, NewGlider, User};
-use crate::{auth, data};
+use crate::{
+    auth, data,
+    models::NewGlider,
+    responders::{ApiError, RocketError},
+};
 
 // Forms
 
-#[derive(FromForm, Debug)]
-pub struct GliderForm {
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct GliderCreateUpdateForm {
     manufacturer: String,
     model: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     since: Option<String>, // ISO date (e.g. 2010-11-30) // TODO: Use OptionResult<NaiveDate>
+    #[serde(skip_serializing_if = "Option::is_none")]
     until: Option<String>, // ISO date (e.g. 2010-11-30) // TODO: Use OptionResult<NaiveDate>
+    #[serde(skip_serializing_if = "Option::is_none")]
     source: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     cost: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     comment: Option<String>,
 }
 
-// Contexts
+// API types
 
-#[derive(Serialize)]
-struct GliderContext {
-    user: User,
-    glider: Option<Glider>,
-    error_msg: Option<String>,
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ApiGlider {
+    id: i32,
+    manufacturer: String,
+    model: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    since: Option<String>, // ISO date (e.g. 2010-11-30) // TODO: Use OptionResult<NaiveDate>
+    #[serde(skip_serializing_if = "Option::is_none")]
+    until: Option<String>, // ISO date (e.g. 2010-11-30) // TODO: Use OptionResult<NaiveDate>
+    #[serde(skip_serializing_if = "Option::is_none")]
+    source: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    cost: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    comment: Option<String>,
+    stats: ApiGliderStats,
 }
 
-#[derive(Serialize)]
-struct GlidersContext {
-    user: User,
-    gliders: Vec<GliderWithStats>,
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ApiGliderStats {
+    flights: i64,
+    seconds: i64,
+    seconds_complete: bool,
 }
 
-// Renderers
-
-fn render_form(user: User, glider: Option<Glider>, error_msg: Option<String>) -> Template {
-    let context = GliderContext {
-        user,
-        glider,
-        error_msg,
-    };
-    Template::render("glider", &context)
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ApiGliders {
+    gliders: Vec<ApiGlider>,
 }
 
-// Views
+// API endpoints
 
 #[get("/gliders")]
-pub async fn list(database: data::Database, user: auth::AuthUser) -> Template {
+pub async fn list(database: data::Database, user: auth::AuthUser) -> Json<ApiGliders> {
     let user = user.into_inner();
 
-    // Get all gliders
+    // Get all gliders for user
     let gliders = database
         .run({
             let user = user.clone();
             move |db| data::get_gliders_with_stats_for_user(db, &user)
         })
-        .await;
+        .await
+        .into_iter()
+        .map(|glider| ApiGlider {
+            id: glider.id,
+            manufacturer: glider.manufacturer,
+            model: glider.model,
+            since: glider.since.map(|date| date.to_string()),
+            until: glider.until.map(|date| date.to_string()),
+            source: glider.source,
+            cost: glider.cost,
+            comment: glider.comment,
+            stats: ApiGliderStats {
+                flights: glider.flights,
+                seconds: glider.seconds,
+                seconds_complete: glider.seconds_complete,
+            },
+        })
+        .collect();
 
-    // Render template
-    let context = GlidersContext { user, gliders };
-    Template::render("gliders", &context)
+    Json(ApiGliders { gliders })
 }
 
 #[get("/gliders", rank = 2)]
-pub fn list_nologin() -> Redirect {
-    Redirect::to("/auth/login")
+pub fn list_nologin() -> ApiError {
+    ApiError::MissingAuthentication
 }
 
-#[get("/gliders/add")]
-pub fn add_form(user: auth::AuthUser) -> Template {
-    render_form(user.into_inner(), None, None)
-}
-
-#[get("/gliders/add", rank = 2)]
-pub fn add_form_nologin() -> Redirect {
-    Redirect::to("/auth/login")
-}
-
-/// The result of a form validation: Either a successful redirect, or a
-/// template response with an error status.
-///
-/// TODO: Generalize this and move it into a helper module.
-pub enum ValidationResult {
-    Success(Box<Redirect>),
-    Invalid(Template, Status),
-}
-
-#[rocket::async_trait]
-impl<'r> Responder<'r, 'static> for ValidationResult {
-    fn respond_to(self, req: &'r Request<'_>) -> response::Result<'static> {
-        match self {
-            ValidationResult::Success(redirect) => redirect.respond_to(req),
-            ValidationResult::Invalid(template, status) => template.respond_to(req).map(|mut response| {
-                response.set_status(status);
-                response
-            }),
-        }
-    }
-}
-
-#[post("/gliders/add", data = "<data>")]
-pub async fn add(user: auth::AuthUser, database: data::Database, data: Form<GliderForm>) -> ValidationResult {
+#[post("/gliders", data = "<data>")]
+pub async fn add(
+    user: auth::AuthUser,
+    database: data::Database,
+    data: Json<GliderCreateUpdateForm>,
+) -> Result<Status, (Status, Json<RocketError>)> {
     log::debug!("gliders::add");
     let user = user.into_inner();
 
     // Destructure data
-    let GliderForm {
+    let GliderCreateUpdateForm {
         manufacturer,
         model,
         since,
@@ -143,63 +139,43 @@ pub async fn add(user: auth::AuthUser, database: data::Database, data: Form<Glid
     // Create database entry
     match database.run(move |db| data::create_glider(db, glider)).await {
         Ok(_) => {
-            // Glider created, redirect to glider list
+            // Glider created
             log::info!("Created glider for user {}", user.id);
-            ValidationResult::Success(Box::new(Redirect::to(uri!(list))))
+            Ok(Status::Created)
         }
-        Err(DieselError::DatabaseError(DatabaseErrorKind::UniqueViolation, _info)) => {
-            ValidationResult::Invalid(
-                render_form(
-                    user,
-                    None,
-                    Some("You can't add the same glider twice.".to_string()),
-                ),
-                Status::Conflict,
-            )
+        Err(DieselError::DatabaseError(DatabaseErrorKind::UniqueViolation, _info)) => Err(RocketError::new(
+            Status::Conflict,
+            "Conflict",
+            "You can't add the same glider twice.",
+        )),
+        Err(other) => {
+            error!("Could not create glider: {:?}", other);
+            Err(RocketError::new(
+                Status::InternalServerError,
+                "InternalServerError",
+                "Internal server error",
+            ))
         }
-        Err(other) => ValidationResult::Invalid(
-            render_form(user, None, Some(format!("Unknown error: {}", other))),
-            Status::InternalServerError,
-        ),
     }
 }
 
-#[get("/gliders/<id>/edit")]
-pub async fn edit_form(user: auth::AuthUser, database: data::Database, id: i32) -> Result<Template, Status> {
-    let user = user.into_inner();
-
-    // Get glider
-    let glider = database
-        .run(move |db| data::get_glider_with_id(db, id))
-        .await
-        .ok_or(Status::NotFound)?;
-
-    // Ownership check
-    if glider.user_id != user.id {
-        return Err(Status::Forbidden);
-    }
-
-    // Render template
-    let context = GliderContext {
-        user,
-        glider: Some(glider),
-        error_msg: None,
-    };
-    Ok(Template::render("glider", &context))
+#[post("/gliders", rank = 2)]
+pub fn add_nologin() -> ApiError {
+    ApiError::MissingAuthentication
 }
 
-#[post("/gliders/<id>/edit", data = "<data>")]
+#[post("/gliders/<id>", data = "<data>")]
 pub async fn edit(
     user: auth::AuthUser,
     database: data::Database,
     id: i32,
-    data: Form<GliderForm>,
-) -> Result<Redirect, Status> {
+    data: Json<GliderCreateUpdateForm>,
+) -> Result<Status, Status> {
     let user = user.into_inner();
 
     // Get glider
     let mut glider = database
-        .run(move |db| data::get_glider_with_id(db, id))
+        .run(move |db| data::get_glider_by_id(db, id))
         .await
         .ok_or(Status::NotFound)?;
 
@@ -209,7 +185,7 @@ pub async fn edit(
     }
 
     // Update model
-    let GliderForm {
+    let GliderCreateUpdateForm {
         manufacturer,
         model,
         since,
@@ -218,7 +194,6 @@ pub async fn edit(
         cost,
         comment,
     } = data.into_inner();
-
     glider.manufacturer = manufacturer;
     glider.model = model;
     glider.since = since.and_then(|strval| NaiveDate::parse_from_str(&strval, "%Y-%m-%d").ok());
@@ -228,20 +203,83 @@ pub async fn edit(
     glider.comment = comment;
 
     // Update database
-    // TODO: Error handling
     database.run(move |db| data::update_glider(db, &glider)).await;
+    Ok(Status::NoContent)
+}
 
-    // Render template
-    Ok(Redirect::to(uri!(list)))
+#[post("/gliders/<id>", rank = 2)]
+#[allow(unused_variables)]
+pub fn edit_nologin(id: i32) -> ApiError {
+    ApiError::MissingAuthentication
+}
+
+#[delete("/gliders/<id>")]
+pub async fn delete(user: auth::AuthUser, database: data::Database, id: i32) -> Result<Status, Status> {
+    let user = user.into_inner();
+
+    // Get data
+    let glider = match database
+        .run(move |db| data::get_glider_with_stats_by_id(db, id))
+        .await
+    {
+        Some(location) => location,
+        None => return Err(Status::NotFound),
+    };
+
+    // Ownership check
+    if glider.user_id != user.id {
+        return Err(Status::Forbidden);
+    }
+
+    // Ensure that no related flights exist
+    if glider.flights > 0 {
+        return Err(Status::Conflict);
+    }
+
+    // Delete database entry
+    database
+        .run(move |db| data::delete_glider_by_id(db, id))
+        .await
+        .map(|()| {
+            log::info!("Deleted glider with ID {}", id);
+            Status::NoContent
+        })
+        .map_err(|e| {
+            log::error!("Could not delete glider with ID {}: {}", id, e);
+            Status::InternalServerError
+        })
+}
+
+#[delete("/gliders/<id>", rank = 2)]
+#[allow(unused_variables)]
+pub fn delete_nologin(id: i32) -> ApiError {
+    ApiError::MissingAuthentication
+}
+
+/// Return vec of all API routes.
+pub fn api_routes() -> Vec<Route> {
+    routes![
+        list,
+        list_nologin,
+        add,
+        add_nologin,
+        edit,
+        edit_nologin,
+        delete,
+        delete_nologin,
+    ]
 }
 
 #[cfg(test)]
 mod tests {
-    use chrono::NaiveDate;
-    use rocket::{self, http::ContentType, local::blocking::Client, routes};
+    use std::time::Duration;
+
+    use chrono::{NaiveDate, Utc};
+    use rocket::{self, http::ContentType, local::blocking::Client};
 
     use crate::{
-        flights, templates,
+        models::NewFlight,
+        templates,
         test_utils::{make_test_config, DbTestContext},
         Config,
     };
@@ -253,7 +291,7 @@ mod tests {
         let app = rocket::custom(make_test_config())
             .attach(data::Database::fairing())
             .attach(templates::fairing(&Config::default()))
-            .mount("/", routes![add, flights::submit]);
+            .mount("/", api_routes());
         Client::untracked(app).expect("valid rocket instance")
     }
 
@@ -269,8 +307,8 @@ mod tests {
         macro_rules! add_glider {
             ($body:expr, $cookie:expr) => {
                 client
-                    .post("/gliders/add")
-                    .header(ContentType::Form)
+                    .post("/gliders")
+                    .header(ContentType::JSON)
                     .body($body)
                     .private_cookie($cookie)
                     .cookie(ctx.username_cookie())
@@ -279,8 +317,11 @@ mod tests {
         }
 
         // Add glider
-        let resp = add_glider!("manufacturer=Advance&model=Epsilon%208", ctx.auth_cookie_user1());
-        assert_eq!(resp.status(), Status::SeeOther);
+        let resp = add_glider!(
+            r#"{"manufacturer": "Advance", "model": "Epsilon 8"}"#,
+            ctx.auth_cookie_user1()
+        );
+        assert_eq!(resp.status(), Status::Created);
 
         // Verify database
         let g = data::get_gliders_for_user(&mut *ctx.force_get_conn(), &ctx.testuser1.user);
@@ -289,7 +330,10 @@ mod tests {
         assert_eq!(g[0].model, "Epsilon 8");
 
         // Cannot add a glider twice
-        let resp = add_glider!("manufacturer=Advance&model=Epsilon%208", ctx.auth_cookie_user1());
+        let resp = add_glider!(
+            r#"{"manufacturer": "Advance", "model": "Epsilon 8"}"#,
+            ctx.auth_cookie_user1()
+        );
         assert_eq!(resp.status(), Status::Conflict);
         assert_eq!(
             data::get_gliders_for_user(&mut *ctx.force_get_conn(), &ctx.testuser1.user).len(),
@@ -301,8 +345,11 @@ mod tests {
             data::get_gliders_for_user(&mut *ctx.force_get_conn(), &ctx.testuser2.user).len(),
             0,
         );
-        let resp = add_glider!("manufacturer=Advance&model=Epsilon%208", ctx.auth_cookie_user2());
-        assert_eq!(resp.status(), Status::SeeOther);
+        let resp = add_glider!(
+            r#"{"manufacturer": "Advance", "model": "Epsilon 8"}"#,
+            ctx.auth_cookie_user2()
+        );
+        assert_eq!(resp.status(), Status::Created);
         assert_eq!(
             data::get_gliders_for_user(&mut *ctx.force_get_conn(), &ctx.testuser2.user).len(),
             1,
@@ -321,8 +368,8 @@ mod tests {
         macro_rules! add_glider {
             ($body:expr, $cookie:expr) => {
                 client
-                    .post("/gliders/add")
-                    .header(ContentType::Form)
+                    .post("/gliders")
+                    .header(ContentType::JSON)
                     .body($body)
                     .private_cookie($cookie)
                     .cookie(ctx.username_cookie())
@@ -332,10 +379,10 @@ mod tests {
 
         // Add glider
         let resp = add_glider!(
-            "manufacturer=Ozone&model=Enzo%202&since=2019-02-03&until=2019-11-20&source=Flycenter&cost=3344&comment=Sold%20it%20to%20Joe.",
+            r#"{"manufacturer": "Ozone", "model": "Enzo 2", "since": "2019-02-03", "until": "2019-11-20", "source": "Flycenter", "cost": 3344, "comment": "Sold it to Peter."}"#,
             ctx.auth_cookie_user1()
         );
-        assert_eq!(resp.status(), Status::SeeOther);
+        assert_eq!(resp.status(), Status::Created);
 
         // Verify database
         let g = data::get_gliders_for_user(&mut *ctx.force_get_conn(), &ctx.testuser1.user);
@@ -346,7 +393,7 @@ mod tests {
         assert_eq!(g[0].until, Some(NaiveDate::from_ymd_opt(2019, 11, 20).unwrap()));
         assert_eq!(g[0].source, Some("Flycenter".into()));
         assert_eq!(g[0].cost, Some(3344));
-        assert_eq!(g[0].comment, Some("Sold it to Joe.".into()));
+        assert_eq!(g[0].comment, Some("Sold it to Peter.".into()));
     }
 
     #[test]
@@ -357,23 +404,18 @@ mod tests {
         macro_rules! add_glider {
             ($body:expr, $cookie:expr) => {
                 client
-                    .post("/gliders/add")
-                    .header(ContentType::Form)
+                    .post("/gliders")
+                    .header(ContentType::JSON)
                     .body($body)
                     .private_cookie($cookie)
                     .cookie(ctx.username_cookie())
                     .dispatch()
             };
         }
-        macro_rules! add_flight {
-            ($glider:expr, $launch_date:expr, $launch_time:expr, $landing_time: expr, $cookie:expr) => {
+        macro_rules! get_gliders {
+            ($cookie:expr) => {
                 client
-                    .post("/flights/add")
-                    .header(ContentType::Form)
-                    .body(&format!(
-                        "igc_data=&number=&glider={}&launch_site=&landing_site=&launch_date={}&launch_time={}&landing_time={}&track_distance=&xcontest_tracktype=&xcontest_distance=&xcontest_url=&comment=&video_url=",
-                        $glider, $launch_date, $launch_time, $landing_time,
-                    ))
+                    .get("/gliders")
                     .private_cookie($cookie)
                     .cookie(ctx.username_cookie())
                     .dispatch()
@@ -381,52 +423,69 @@ mod tests {
         }
 
         // No gliders
-        let g = data::get_gliders_with_stats_for_user(&mut *ctx.force_get_conn(), &ctx.testuser1.user);
-        assert_eq!(g.len(), 0);
+        let resp = get_gliders!(ctx.auth_cookie_user1());
+        assert_eq!(resp.status(), Status::Ok);
+        assert_eq!(resp.into_json::<ApiGliders>().unwrap().gliders.len(), 0);
 
         // Add gliders
-        let resp = add_glider!("manufacturer=A&model=1", ctx.auth_cookie_user1());
-        assert_eq!(resp.status(), Status::SeeOther);
+        let resp = add_glider!(r#"{"manufacturer": "A", "model": "1"}"#, ctx.auth_cookie_user1());
+        assert_eq!(resp.status(), Status::Created);
 
         // One glider, no flights
-        let g = data::get_gliders_with_stats_for_user(&mut *ctx.force_get_conn(), &ctx.testuser1.user);
-        assert_eq!(1, g.len(), "No gliders found");
-        assert_eq!(g[0].manufacturer, "A");
-        assert_eq!(g[0].model, "1");
-        assert_eq!(g[0].flights, 0);
-        assert_eq!(g[0].seconds, 0);
-        assert_eq!(g[0].seconds_complete, true);
-
-        // Add a flight, without launch/landing time
-        let resp = add_flight!(g[0].id, "", "", "", ctx.auth_cookie_user1());
-        assert_eq!(resp.status(), Status::SeeOther);
-        let g = data::get_gliders_with_stats_for_user(&mut *ctx.force_get_conn(), &ctx.testuser1.user);
-        assert_eq!(1, g.len(), "No gliders found");
-        assert_eq!(g[0].flights, 1);
-        assert_eq!(g[0].seconds, 0);
-        assert_eq!(g[0].seconds_complete, false);
+        let resp = get_gliders!(ctx.auth_cookie_user1());
+        let gliders = resp.into_json::<ApiGliders>().unwrap().gliders;
+        assert_eq!(gliders.len(), 1);
+        assert_eq!(gliders[0].manufacturer, "A");
+        assert_eq!(gliders[0].model, "1");
+        assert_eq!(gliders[0].stats.flights, 0);
+        assert_eq!(gliders[0].stats.seconds, 0);
+        assert_eq!(gliders[0].stats.seconds_complete, true);
 
         // Add two flights with launch/landing time
-        let resp = add_flight!(
-            g[0].id,
-            "2020-09-25",
-            "12:00:00",
-            "13:00:00",
-            ctx.auth_cookie_user1()
+        data::create_flight(
+            &mut *ctx.force_get_conn(),
+            &NewFlight {
+                user_id: ctx.testuser1.user.id,
+                ..Default::default()
+            },
+            None,
         );
-        assert_eq!(resp.status(), Status::SeeOther);
-        let resp = add_flight!(
-            g[0].id,
-            "2020-09-25",
-            "12:30:00",
-            "12:35:00",
-            ctx.auth_cookie_user1()
+        let t1 = Utc::now() - Duration::from_secs(3600);
+        for i in [0, 1] {
+            data::create_flight(
+                &mut *ctx.force_get_conn(),
+                &NewFlight {
+                    user_id: ctx.testuser1.user.id,
+                    glider_id: Some(gliders[0].id),
+                    launch_time: Some(t1 + Duration::from_secs(i * 600)),
+                    landing_time: Some(t1 + Duration::from_secs(i * 600 + 400)),
+                    ..Default::default()
+                },
+                None,
+            );
+        }
+        let resp = get_gliders!(ctx.auth_cookie_user1());
+        let gliders = resp.into_json::<ApiGliders>().unwrap().gliders;
+        assert_eq!(gliders.len(), 1);
+        assert_eq!(gliders[0].stats.flights, 2);
+        assert_eq!(gliders[0].stats.seconds, 800);
+        assert_eq!(gliders[0].stats.seconds_complete, true);
+
+        // Add a flight without launch/landing time
+        data::create_flight(
+            &mut *ctx.force_get_conn(),
+            &NewFlight {
+                user_id: ctx.testuser1.user.id,
+                glider_id: Some(gliders[0].id),
+                ..Default::default()
+            },
+            None,
         );
-        assert_eq!(resp.status(), Status::SeeOther);
-        let g = data::get_gliders_with_stats_for_user(&mut *ctx.force_get_conn(), &ctx.testuser1.user);
-        assert_eq!(1, g.len(), "No gliders found");
-        assert_eq!(g[0].flights, 3);
-        assert_eq!(g[0].seconds, 3600 + 300);
-        assert_eq!(g[0].seconds_complete, false);
+        let resp = get_gliders!(ctx.auth_cookie_user1());
+        let gliders = resp.into_json::<ApiGliders>().unwrap().gliders;
+        assert_eq!(gliders.len(), 1);
+        assert_eq!(gliders[0].stats.flights, 3);
+        assert_eq!(gliders[0].stats.seconds, 800);
+        assert_eq!(gliders[0].stats.seconds_complete, false);
     }
 }

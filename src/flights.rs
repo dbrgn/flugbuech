@@ -197,7 +197,7 @@ pub async fn flight(id: i32, database: data::Database, user: auth::AuthUser) -> 
     let glider = database
         .run({
             let flight = flight.clone();
-            move |db| flight.glider_id.and_then(|id| data::get_glider_with_id(db, id))
+            move |db| flight.glider_id.and_then(|id| data::get_glider_by_id(db, id))
         })
         .await;
 
@@ -349,7 +349,7 @@ impl FlightForm {
         // Extract and validate glider
         let glider = match self.glider {
             Some(id) => {
-                match database.run(move |db| data::get_glider_with_id(db, id)).await {
+                match database.run(move |db| data::get_glider_by_id(db, id)).await {
                     Some(glider) => {
                         // Validate ownership
                         if glider.user_id != user.id {

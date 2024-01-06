@@ -231,12 +231,35 @@ pub fn get_gliders_with_stats_for_user(conn: &mut PgConnection, user: &User) -> 
     .expect("Error loading gliders with stats")
 }
 
-pub fn get_glider_with_id(conn: &mut PgConnection, id: i32) -> Option<Glider> {
+pub fn get_glider_by_id(conn: &mut PgConnection, id: i32) -> Option<Glider> {
     gliders::table
         .find(id)
         .first(conn)
         .optional()
         .expect("Error loading glider by id")
+}
+
+pub fn get_glider_with_stats_by_id(conn: &mut PgConnection, id: i32) -> Option<GliderWithStats> {
+    sql_query(
+            "SELECT g.*,
+                    count(f.id) as flights,
+                    coalesce(extract(epoch from sum(f.landing_time - f.launch_time))::bigint, 0) as seconds,
+                    every(f.launch_time IS NOT NULL AND f.landing_time IS NOT NULL) OR count(f.id) = 0 as seconds_complete
+               FROM gliders g
+                    LEFT JOIN flights f ON g.id = f.glider_id
+              WHERE g.id = $1
+              GROUP BY g.id",
+        )
+        .bind::<Integer, _>(id)
+        .get_result(conn)
+        .expect("Error loading glider with stats by id")
+}
+
+/// Delete a glider by ID.
+pub fn delete_glider_by_id(conn: &mut PgConnection, id: i32) -> QueryResult<()> {
+    let delete_count = diesel::delete(gliders::table.filter(gliders::id.eq(&id))).execute(conn)?;
+    assert_eq!(delete_count, 1); // Sanity check
+    Ok(())
 }
 
 /// Create a new flight.

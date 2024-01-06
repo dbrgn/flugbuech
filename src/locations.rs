@@ -81,7 +81,6 @@ pub async fn list(database: data::Database, user: auth::AuthUser) -> Json<ApiLoc
         })
         .collect();
 
-    // Render template
     Json(ApiLocations { locations })
 }
 
@@ -140,7 +139,7 @@ pub async fn add(
     log::debug!("locations::add");
     let user = user.into_inner();
 
-    // Unwrap form data
+    // Destructure data
     let LocationCreateUpdateForm {
         name,
         country_code,
@@ -220,8 +219,6 @@ pub async fn edit(
     // Update database
     // TODO: Error handling
     database.run(move |db| data::update_location(db, &location)).await;
-
-    // Render template
     Ok(Status::NoContent)
 }
 
@@ -451,7 +448,7 @@ mod tests {
             ($body:expr, $cookie:expr) => {
                 client
                     .post("/locations")
-                    .header(ContentType::Form)
+                    .header(ContentType::JSON)
                     .body($body)
                     .private_cookie($cookie)
                     .cookie(ctx.username_cookie())
