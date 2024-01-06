@@ -1,7 +1,10 @@
 <script lang="ts">
   import {onMount} from 'svelte';
-  import {_loadApiStats, type GlobalStats} from './+page';
+
   import {ResolvablePromise} from '$lib/resolvable-promise';
+  import Flashes from '$lib/components/Flashes.svelte';
+
+  import {_loadApiStats, type GlobalStats} from './+page';
 
   let stats = new ResolvablePromise<GlobalStats>();
 
@@ -10,6 +13,8 @@
     _loadApiStats().then((result) => stats.resolve(result));
   });
 </script>
+
+<Flashes />
 
 <h2 class="title is-size-2">Overview</h2>
 

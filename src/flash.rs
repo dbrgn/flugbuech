@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -15,18 +13,6 @@ impl<'a> From<rocket::request::FlashMessage<'a>> for FlashMessage {
             msg: f.message().to_string(),
         }
     }
-}
-
-/// Return a HashMap that contains the key "flashes" if a flash message is
-/// provided.
-pub fn context_from_flash_opt(
-    flash: Option<rocket::request::FlashMessage>,
-) -> HashMap<&'static str, Vec<FlashMessage>> {
-    let mut context = HashMap::new();
-    if let Some(f) = flash {
-        context.insert("flashes", vec![crate::flash::FlashMessage::from(f)]);
-    }
-    context
 }
 
 pub fn flashes_from_flash_opt(flash: Option<rocket::request::FlashMessage>) -> Vec<FlashMessage> {

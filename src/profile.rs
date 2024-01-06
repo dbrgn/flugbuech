@@ -26,7 +26,7 @@ pub fn get(user: auth::AuthUser) -> Json<ApiProfile> {
 
 #[get("/profile", rank = 2)]
 pub fn get_nologin() -> ApiError {
-    ApiError::Authentication
+    ApiError::MissingAuthentication
 }
 
 /// Return vec of all API routes.

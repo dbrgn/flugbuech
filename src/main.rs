@@ -196,6 +196,7 @@ async fn main() -> Result<()> {
         .mount(
             "/api/v1/",
             [
+                auth::api_routes(),
                 profile::api_routes(),
                 stats::api_routes(),
                 locations::api_routes(),

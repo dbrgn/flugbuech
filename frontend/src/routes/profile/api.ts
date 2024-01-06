@@ -28,7 +28,6 @@ export async function loadApiProfile(fetch: SvelteKitFetch): Promise<Profile> {
         case 403:
             return error(403, `This is not your location, viewing not allowed`);
         default:
-            // TODO: Better error handling
-            throw new Error(`Could not fetch profile from API: ${extractResponseError(res)}`);
+            throw new Error(`Could not fetch profile from API: ${await extractResponseError(res)}`);
     }
 }

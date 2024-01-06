@@ -87,7 +87,7 @@ pub async fn list(database: data::Database, user: auth::AuthUser) -> Json<ApiLoc
 
 #[get("/locations", rank = 2)]
 pub fn list_nologin() -> ApiError {
-    ApiError::Authentication
+    ApiError::MissingAuthentication
 }
 
 #[get("/locations/<id>")]
@@ -128,7 +128,7 @@ pub async fn get(
 #[get("/locations/<id>", rank = 2)]
 #[allow(unused_variables)]
 pub fn get_nologin(id: i32) -> ApiError {
-    ApiError::Authentication
+    ApiError::MissingAuthentication
 }
 
 #[post("/locations", data = "<data>")]
@@ -174,7 +174,7 @@ pub async fn add(
 
 #[post("/locations", rank = 2)]
 pub fn add_nologin() -> ApiError {
-    ApiError::Authentication
+    ApiError::MissingAuthentication
 }
 
 #[post("/locations/<id>", data = "<data>")]
@@ -228,7 +228,7 @@ pub async fn edit(
 #[post("/locations/<id>", rank = 2)]
 #[allow(unused_variables)]
 pub fn edit_nologin(id: i32) -> ApiError {
-    ApiError::Authentication
+    ApiError::MissingAuthentication
 }
 
 #[delete("/locations/<id>")]
@@ -273,7 +273,7 @@ pub async fn delete(user: auth::AuthUser, database: data::Database, id: i32) -> 
 #[delete("/locations/<id>", rank = 2)]
 #[allow(unused_variables)]
 pub fn delete_nologin(id: i32) -> ApiError {
-    ApiError::Authentication
+    ApiError::MissingAuthentication
 }
 
 /// Return vec of all API routes.

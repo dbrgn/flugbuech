@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use log::error;
+use log::{error, warn};
 use rocket::{
     form::Form,
     get,
@@ -12,22 +12,23 @@ use rocket::{
     request::{self, FlashMessage, FromRequest, Request},
     response::{Flash, Redirect},
     routes,
+    serde::json::Json,
     time::{Duration, OffsetDateTime},
     uri, FromForm, Route,
 };
 use rocket_dyn_templates::Template;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     data::{self, Database},
-    flash::context_from_flash_opt,
     models::User,
+    responders::{make_rocket_error, RocketError},
 };
 
 pub const USER_COOKIE_ID: &str = "user_id";
 pub const USER_COOKIE_NAME: &str = "user_name";
 
-#[derive(FromForm)]
+#[derive(Serialize, Deserialize)]
 pub struct Login {
     username: String,
     password: String,
@@ -114,46 +115,49 @@ impl AuthUser {
     }
 }
 
+// API views
+
 /// Login handler.
+///
+/// - Return "HTTP 204 No Content" if login was successful.
+/// - Return "HTTP 400 Bad Request" if request was malformed.
+/// - Return "HTTP 403 Forbidden" if username or password were wrong.
 #[post("/auth/login", data = "<login>")]
 pub async fn login(
     cookies: &CookieJar<'_>,
-    login: Form<Login>,
     database: Database,
-) -> Result<Redirect, Flash<Redirect>> {
+    login: Json<Login>,
+) -> Result<Status, (Status, Json<RocketError>)> {
+    let username = login.username.clone();
     match database
         .run(move |db| data::validate_login(db, &login.username, &login.password))
         .await
     {
         Some(user) => {
+            // Success, add auth cookies
             add_auth_cookies(cookies, &user);
-            Ok(Redirect::to("/"))
+            Ok(Status::NoContent)
         }
-        None => Err(Flash::error(
-            Redirect::to(uri!(login_page)),
-            "Invalid username/password.",
-        )),
+        None => {
+            // Login failed
+            warn!("Login failed for user {}", &username);
+            Err(make_rocket_error(
+                Status::Forbidden,
+                "BadCredentials",
+                "Wrong username or password",
+            ))
+        }
     }
 }
 
 /// Logout handler.
-#[get("/auth/logout")]
-pub fn logout(cookies: &CookieJar<'_>) -> Redirect {
+#[post("/auth/logout")]
+pub fn logout(cookies: &CookieJar<'_>) -> Status {
     remove_auth_cookies(cookies);
-    Redirect::to("/")
+    Status::NoContent
 }
 
-/// Redirect requests to login page if user is already logged in.
-#[get("/auth/login")]
-pub fn login_user(_user: AuthUser) -> Redirect {
-    Redirect::to("/")
-}
-
-/// Show the login page (with flash messages) if not already logged in.
-#[get("/auth/login", rank = 2)]
-pub fn login_page(flash: Option<FlashMessage>) -> Template {
-    Template::render("login", &context_from_flash_opt(flash))
-}
+// Old views
 
 #[derive(FromForm, Clone)]
 pub struct Registration {
@@ -309,17 +313,18 @@ pub async fn password_change(
 /// Return the auth routes.
 pub fn get_routes() -> Vec<Route> {
     routes![
-        login,
-        login_user,
-        login_page,
         registration,
         register_user,
         registration_page,
-        logout,
         password_change_form,
         password_change_form_nologin,
         password_change,
     ]
+}
+
+/// Return vec of all API routes.
+pub fn api_routes() -> Vec<Route> {
+    routes![login, logout]
 }
 
 /// A context that just contains the user.
@@ -348,6 +353,7 @@ mod tests {
         self,
         http::{ContentType, Status},
         local::blocking::Client,
+        serde::json,
     };
 
     use crate::{
@@ -359,6 +365,7 @@ mod tests {
     use super::*;
 
     /// Create a new test client with cookie tracking.
+    #[deprecated]
     fn make_client() -> Client {
         let mut test_routes = get_routes();
         test_routes.extend(routes![profile::get]);
@@ -369,54 +376,66 @@ mod tests {
         Client::tracked(app).expect("valid rocket instance")
     }
 
+    /// Create a new test client with cookie tracking.
+    fn make_api_client() -> Client {
+        let app = rocket::custom(make_test_config())
+            .attach(data::Database::fairing())
+            .attach(templates::fairing(&Config::default()))
+            .mount("/", api_routes());
+        Client::tracked(app).expect("valid rocket instance")
+    }
+
     #[test]
     fn login_wrong() {
         let ctx = DbTestContext::new();
-        let client = make_client();
+        let client = make_api_client();
         let resp = client
             .post("/auth/login")
-            .header(ContentType::Form)
-            .body(&format!(
-                "username={}&password=WRONG",
-                ctx.testuser1.user.username,
-            ))
+            .header(ContentType::JSON)
+            .body(
+                json::to_string(&Login {
+                    username: ctx.testuser1.user.username,
+                    password: "WRONG".to_string(),
+                })
+                .unwrap(),
+            )
             .dispatch();
 
-        // Login wrong: No cookies, redirect to login screen
+        // Login wrong: No cookies, error response
         assert_eq!(resp.cookies().get_private(USER_COOKIE_ID), None);
         assert_eq!(resp.cookies().get(USER_COOKIE_NAME), None);
-        assert_eq!(resp.status(), Status::SeeOther);
+        assert_eq!(resp.status(), Status::Forbidden);
         assert_eq!(
-            resp.headers()
-                .get_one("location")
-                .map(|header| header.to_string()),
-            Some("/auth/login".to_string()),
+            resp.into_string().unwrap(),
+            r#"{"error":{"code":403,"reason":"BadCredentials","description":"Wrong username or password"}}"#
         );
     }
 
     #[test]
     fn login_success() {
         let ctx = DbTestContext::new();
-        let client = make_client();
+        let client = make_api_client();
         let resp = client
             .post("/auth/login")
-            .header(ContentType::Form)
-            .body(&format!(
-                "username={}&password={}",
-                ctx.testuser1.user.username, &ctx.testuser1.password,
-            ))
+            .header(ContentType::JSON)
+            .body(
+                json::to_string(&Login {
+                    username: ctx.testuser1.user.username,
+                    password: ctx.testuser1.password,
+                })
+                .unwrap(),
+            )
             .dispatch();
 
-        // Login successful: Cookies set, redirect to home
+        // Login successful: Correct status, cookies set
+        assert_eq!(
+            resp.status(),
+            Status::NoContent,
+            "Body: {}",
+            resp.into_string().unwrap()
+        );
         assert!(resp.cookies().get_private(USER_COOKIE_ID).is_some());
         assert!(resp.cookies().get(USER_COOKIE_NAME).is_some());
-        assert_eq!(resp.status(), Status::SeeOther);
-        assert_eq!(
-            resp.headers()
-                .get_one("location")
-                .map(|header| header.to_string()),
-            Some("/".to_string()),
-        );
     }
 
     #[derive(Debug)]

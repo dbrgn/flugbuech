@@ -180,7 +180,13 @@
 <slot name="title" />
 
 <div class="spaced-headers">
-  <form on:submit={() => void submitForm()}>
+  <form
+    method="post"
+    on:submit={(event) => {
+      event.preventDefault();
+      void submitForm();
+    }}
+  >
     <label class="label" for="name">Name *</label>
     <div class="field">
       <div class="control has-icons-left">
@@ -309,7 +315,7 @@
     <p><em>Note: Double-click on the map to update the location coordinates.</em></p>
 
     <div class="content control submitcontrols">
-      <button class="button is-info" disabled={!submitEnabled} on:click={submitForm}>Submit</button>
+      <button class="button is-info" disabled={!submitEnabled} type="submit">Submit</button>
     </div>
 
     <p class="content"><small><em>* Required fields</em></small></p>
