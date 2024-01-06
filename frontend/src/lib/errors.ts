@@ -1,4 +1,4 @@
-import {redirect} from '@sveltejs/kit';
+import {redirect, type NumericRange} from '@sveltejs/kit';
 
 export class AuthenticationError extends Error {
     public readonly redirectUrl;
@@ -20,4 +20,15 @@ export class AuthenticationError extends Error {
     public static redirectToLogin(redirectUrl?: string): never {
         throw redirect(302, AuthenticationError.getLoginUrl(redirectUrl));
     }
+}
+
+/**
+ * Ensure that the {@link code} is between 400 and 599. If it's outside that range, set it to
+ * {@link fallback}.
+ */
+export function ensureClientOrServerErrorCode(
+    code: number,
+    fallback: NumericRange<400, 599> = 500,
+): NumericRange<400, 599> {
+    return code >= 400 && code < 600 ? (code as NumericRange<400, 599>) : fallback;
 }

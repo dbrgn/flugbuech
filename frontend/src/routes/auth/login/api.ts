@@ -1,4 +1,6 @@
 import {apiPost, extractResponseError} from '$lib/api';
+import {ensureClientOrServerErrorCode} from '$lib/errors';
+import {error} from '@sveltejs/kit';
 
 export interface LoginResult {
     readonly success: boolean;
@@ -18,6 +20,9 @@ export async function apiLogin(username: string, password: string): Promise<Logi
         case 403:
             return {success: false};
         default:
-            throw new Error(`Could not log in: ${await extractResponseError(res)}`);
+            throw error(
+                ensureClientOrServerErrorCode(res.status),
+                `Could not log in: ${await extractResponseError(res)}`,
+            );
     }
 }

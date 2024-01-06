@@ -1,7 +1,8 @@
 import type {SvelteKitFetch} from '$lib';
 import {z} from 'zod';
 import {error} from '@sveltejs/kit';
-import {AuthenticationError} from '$lib/errors';
+import {AuthenticationError, ensureClientOrServerErrorCode} from '$lib/errors';
+import {extractResponseError} from '$lib/api';
 
 const SCHEMA_API_LOCATION = z.object({
     id: z.number(),
@@ -28,12 +29,20 @@ const SCHEMA_API_LOCATIONS_RESPONSE = z.object({
  */
 export async function loadApiLocations(fetch: SvelteKitFetch): Promise<Location[]> {
     const res = await fetch('/api/v1/locations');
-    if (res.status !== 200) {
-        // TODO: Better error handling
-        throw new Error(`Could not fetch locations from API: HTTP ${res.status}`);
+    switch (res.status) {
+        case 200: {
+            const response = SCHEMA_API_LOCATIONS_RESPONSE.parse(await res.json());
+            return response.locations;
+        }
+        case 401:
+            throw AuthenticationError.redirectToLogin(`/locations/`);
+        default: {
+            throw error(
+                ensureClientOrServerErrorCode(res.status),
+                `Could not fetch locations from API: ${await extractResponseError(res)}`,
+            );
+        }
     }
-    const response = SCHEMA_API_LOCATIONS_RESPONSE.parse(await res.json());
-    return response.locations;
 }
 
 /**
@@ -51,7 +60,9 @@ export async function loadApiLocation(fetch: SvelteKitFetch, id: number): Promis
         case 404:
             return error(404, `Location with ID ${id} not found`);
         default:
-            // TODO: Better error handling
-            throw new Error(`Could not fetch location from API: HTTP ${res.status}`);
+            throw error(
+                ensureClientOrServerErrorCode(res.status),
+                `Could not fetch location from API: ${await extractResponseError(res)}`,
+            );
     }
 }

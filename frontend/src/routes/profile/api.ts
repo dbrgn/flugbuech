@@ -2,7 +2,7 @@ import type {SvelteKitFetch} from '$lib';
 import {z} from 'zod';
 import {error} from '@sveltejs/kit';
 import {extractResponseError} from '$lib/api';
-import {AuthenticationError} from '$lib/errors';
+import {AuthenticationError, ensureClientOrServerErrorCode} from '$lib/errors';
 
 const SCHEMA_API_PROFILE = z.object({
     username: z.string(),
@@ -28,6 +28,9 @@ export async function loadApiProfile(fetch: SvelteKitFetch): Promise<Profile> {
         case 403:
             return error(403, `This is not your location, viewing not allowed`);
         default:
-            throw new Error(`Could not fetch profile from API: ${await extractResponseError(res)}`);
+            throw error(
+                ensureClientOrServerErrorCode(res.status),
+                `Could not fetch profile from API: ${await extractResponseError(res)}`,
+            );
     }
 }
