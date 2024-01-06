@@ -46,7 +46,7 @@
       }
 
       // Show flash message
-      flashes.update();
+      flashes.update(true);
 
       // Hide delete dialog
       locationToDelete = undefined;
