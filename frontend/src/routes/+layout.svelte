@@ -87,7 +87,7 @@
 <!-- Footer -->
 <footer class="section">
   <div class="container">
-    &copy; 2019&ndash;2023 Danilo Bargen | <a href="https://github.com/dbrgn/flugbuech"
+    &copy; 2019&ndash;2024 Danilo Bargen | <a href="https://github.com/dbrgn/flugbuech"
       >Source Code</a
     >
     | <a href="https://github.com/dbrgn/flugbuech/issues">Bug reports and feature requests</a> |
