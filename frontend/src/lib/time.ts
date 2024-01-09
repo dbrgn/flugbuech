@@ -8,3 +8,10 @@ export function formatDuration(seconds: number): string {
     const minutes = (Math.floor(seconds / 60) % 60).toString().padStart(2, '0');
     return `${hours}:${minutes}`;
 }
+
+/**
+ * Format a date as "YYYY-mm-dd".
+ */
+export function formatDate(date: Date): string {
+    return date.toISOString().slice(0, 10);
+}

@@ -14,10 +14,3 @@ impl<'a> From<rocket::request::FlashMessage<'a>> for FlashMessage {
         }
     }
 }
-
-pub fn flashes_from_flash_opt(flash: Option<rocket::request::FlashMessage>) -> Vec<FlashMessage> {
-    match flash {
-        Some(f) => vec![f.into()],
-        None => vec![],
-    }
-}

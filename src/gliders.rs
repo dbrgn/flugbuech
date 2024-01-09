@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     auth, data,
-    models::NewGlider,
+    models::{GliderWithStats, NewGlider},
     responders::{ApiError, RocketError},
 };
 
@@ -51,6 +51,26 @@ pub struct ApiGlider {
     stats: ApiGliderStats,
 }
 
+impl From<GliderWithStats> for ApiGlider {
+    fn from(glider: GliderWithStats) -> Self {
+        ApiGlider {
+            id: glider.id,
+            manufacturer: glider.manufacturer,
+            model: glider.model,
+            since: glider.since.map(|date| date.to_string()),
+            until: glider.until.map(|date| date.to_string()),
+            source: glider.source,
+            cost: glider.cost,
+            comment: glider.comment,
+            stats: ApiGliderStats {
+                flights: glider.flights,
+                seconds: glider.seconds,
+                seconds_complete: glider.seconds_complete,
+            },
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGliderStats {
@@ -72,28 +92,14 @@ pub async fn list(database: data::Database, user: auth::AuthUser) -> Json<ApiGli
     let user = user.into_inner();
 
     // Get all gliders for user
-    let gliders = database
+    let gliders: Vec<ApiGlider> = database
         .run({
             let user = user.clone();
             move |db| data::get_gliders_with_stats_for_user(db, &user)
         })
         .await
         .into_iter()
-        .map(|glider| ApiGlider {
-            id: glider.id,
-            manufacturer: glider.manufacturer,
-            model: glider.model,
-            since: glider.since.map(|date| date.to_string()),
-            until: glider.until.map(|date| date.to_string()),
-            source: glider.source,
-            cost: glider.cost,
-            comment: glider.comment,
-            stats: ApiGliderStats {
-                flights: glider.flights,
-                seconds: glider.seconds,
-                seconds_complete: glider.seconds_complete,
-            },
-        })
+        .map(Into::into)
         .collect();
 
     Json(ApiGliders { gliders })

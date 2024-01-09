@@ -1,3 +1,5 @@
+use std::fmt::{self, Display};
+
 use chrono::{DateTime, NaiveDate, Utc};
 use diesel::sql_types::{BigInt, Bool, Date, Double, Integer, Nullable, Text};
 use diesel::{Associations, Identifiable, Queryable};
@@ -43,6 +45,12 @@ pub struct Glider {
     pub cost: Option<i32>,
     /// Add arbitrary comments about this glider
     pub comment: Option<String>,
+}
+
+impl Display for Glider {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
+        write!(f, "{} {}", self.manufacturer, self.model)
+    }
 }
 
 #[derive(Debug, QueryableByName, Serialize)]

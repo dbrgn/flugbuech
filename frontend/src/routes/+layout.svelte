@@ -33,7 +33,7 @@
       {#if $loginState?.username}
         <a class="navbar-item" href="/gliders/">My Gliders</a>
         <a class="navbar-item" href="/locations/">My Locations</a>
-        <a class="navbar-item" href="https://example.com/flights/">My Flights</a>
+        <a class="navbar-item" href="/flights/">My Flights</a>
         <a class="navbar-item" href="https://example.com/stats/">Stats</a>
         <a class="navbar-item" href="https://example.com/flights/add/">Submit flight</a>
       {/if}

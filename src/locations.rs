@@ -6,11 +6,7 @@ use diesel_geography::types::GeogPoint;
 use rocket::{delete, get, http::Status, post, routes, serde::json::Json, Route};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    auth, data,
-    models::{LocationWithCount, NewLocation, User},
-    responders::ApiError,
-};
+use crate::{auth, data, models::NewLocation, responders::ApiError};
 
 // API types
 
@@ -47,14 +43,6 @@ pub struct LocationCreateUpdateForm {
     country_code: String,
     elevation: i32,
     coordinates: Option<ApiCoordinates>,
-}
-
-// Contexts
-
-#[derive(Serialize)]
-struct LocationContext {
-    user: User,
-    location: LocationWithCount,
 }
 
 // API endpoints

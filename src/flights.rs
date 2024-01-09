@@ -13,7 +13,9 @@ use rocket::{
     post,
     request::{FlashMessage, Request},
     response::{self, Flash, Redirect, Responder, Response},
-    uri,
+    routes,
+    serde::json::Json,
+    uri, Route,
 };
 use rocket_dyn_templates::Template;
 use serde::Serialize;
@@ -22,37 +24,151 @@ use crate::{
     auth,
     base64::Base64Data,
     data,
-    flash::flashes_from_flash_opt,
     models::{Flight, Glider, Location, NewFlight, User},
     optionresult::OptionResult,
+    responders::ApiError,
 };
 
+// API types
+
 #[derive(Serialize)]
-struct FlightWithDetails<'a> {
-    flight: Flight,
-    glider: Option<&'a Glider>,
-    launch_at: Option<&'a Location>,
-    landing_at: Option<&'a Location>,
+#[serde(rename_all = "camelCase")]
+struct ApiFlightLocation {
+    id: i32,
+    name: String,
+    country_code: String,
+    elevation: i32,
+}
+
+impl From<Location> for ApiFlightLocation {
+    fn from(location: Location) -> Self {
+        ApiFlightLocation {
+            id: location.id,
+            name: location.name,
+            country_code: location.country,
+            elevation: location.elevation,
+        }
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ApiFlightListItem {
+    /// Flight ID
+    id: i32,
+    /// The user-defined flight number
+    #[serde(skip_serializing_if = "Option::is_none")]
+    number: Option<i32>,
+    /// The glider used
+    #[serde(skip_serializing_if = "Option::is_none")]
+    glider_name: Option<String>,
+    /// Inlined launch location
+    #[serde(skip_serializing_if = "Option::is_none")]
+    launch_at: Option<i32>,
+    /// Inlined landing location
+    #[serde(skip_serializing_if = "Option::is_none")]
+    landing_at: Option<i32>,
+    /// Time of launch
+    #[serde(skip_serializing_if = "Option::is_none")]
+    launch_time: Option<DateTime<Utc>>,
+    /// Time of landing
+    #[serde(skip_serializing_if = "Option::is_none")]
+    landing_time: Option<DateTime<Utc>>,
+    /// Flight duration in seconds
+    #[serde(skip_serializing_if = "Option::is_none")]
     duration_seconds: Option<u64>,
+    /// GPS track length
+    #[serde(skip_serializing_if = "Option::is_none")]
+    track_distance: Option<f32>,
+    /// XContest tracktype (free_flight, flat_triangle or fai_triangle)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    xcontest_tracktype: Option<String>,
+    /// XContest distance
+    #[serde(skip_serializing_if = "Option::is_none")]
+    xcontest_distance: Option<f32>,
+    /// XContest URL
+    #[serde(skip_serializing_if = "Option::is_none")]
+    xcontest_url: Option<String>,
+    /// Comment your flight
+    #[serde(skip_serializing_if = "Option::is_none")]
+    comment: Option<String>,
+    /// Link to a video of your flight
+    #[serde(skip_serializing_if = "Option::is_none")]
+    video_url: Option<String>,
+    /// Whether you hiked up to launch
+    hikeandfly: bool,
+    /// Whether an IGC file is present for this flight
     has_igc: bool,
 }
 
 #[derive(Serialize)]
-struct FlightsContext<'a> {
-    user: User,
-    flights: Vec<FlightWithDetails<'a>>,
-    flashes: Vec<crate::flash::FlashMessage>,
+#[serde(rename_all = "camelCase")]
+pub struct ApiFlights {
+    flights: Vec<ApiFlightListItem>,
+    locations: HashMap<i32, ApiFlightLocation>,
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ApiFlight {
+    /// Flight ID
+    id: i32,
+    /// The user-defined flight number
+    #[serde(skip_serializing_if = "Option::is_none")]
+    number: Option<i32>,
+    /// The glider used
+    #[serde(skip_serializing_if = "Option::is_none")]
+    glider_name: Option<String>,
+    /// Launch location
+    #[serde(skip_serializing_if = "Option::is_none")]
+    launch_at: Option<ApiFlightLocation>,
+    /// Landing location
+    #[serde(skip_serializing_if = "Option::is_none")]
+    landing_at: Option<ApiFlightLocation>,
+    /// Time of launch
+    #[serde(skip_serializing_if = "Option::is_none")]
+    launch_time: Option<DateTime<Utc>>,
+    /// Time of landing
+    #[serde(skip_serializing_if = "Option::is_none")]
+    landing_time: Option<DateTime<Utc>>,
+    /// Flight duration in seconds
+    #[serde(skip_serializing_if = "Option::is_none")]
+    duration_seconds: Option<u64>,
+    /// GPS track length
+    #[serde(skip_serializing_if = "Option::is_none")]
+    track_distance: Option<f32>,
+    /// XContest tracktype (free_flight, flat_triangle or fai_triangle)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    xcontest_tracktype: Option<String>,
+    /// XContest distance
+    #[serde(skip_serializing_if = "Option::is_none")]
+    xcontest_distance: Option<f32>,
+    /// XContest URL
+    #[serde(skip_serializing_if = "Option::is_none")]
+    xcontest_url: Option<String>,
+    /// Comment your flight
+    #[serde(skip_serializing_if = "Option::is_none")]
+    comment: Option<String>,
+    /// Link to a video of your flight
+    #[serde(skip_serializing_if = "Option::is_none")]
+    video_url: Option<String>,
+    /// Whether you hiked up to launch
+    hikeandfly: bool,
+    /// Whether an IGC file is present for this flight
+    has_igc: bool,
+}
+
+// Forms
+
+// ...
+
+// API endpoints
+
 #[get("/flights")]
-pub async fn list(
-    database: data::Database,
-    user: auth::AuthUser,
-    flash: Option<FlashMessage<'_>>,
-) -> Template {
+pub async fn list(database: data::Database, user: auth::AuthUser) -> Json<ApiFlights> {
     let user = Arc::new(user.into_inner());
 
-    // Get all flights
+    // Get all flights for user
     let flights = database
         .run({
             let user = user.clone();
@@ -61,15 +177,15 @@ pub async fn list(
         .await;
 
     // Get all gliders for user
-    let glider_map = database
+    let glider_name_map = database
         .run({
             let user = user.clone();
             move |db| data::get_gliders_for_user(db, &user)
         })
         .await
         .into_iter()
-        .map(|glider| (glider.id, glider))
-        .collect::<HashMap<i32, Glider>>();
+        .map(|glider| (glider.id, glider.to_string()))
+        .collect::<HashMap<i32, String>>();
 
     // Get all locations used
     let mut location_ids = flights
@@ -83,11 +199,11 @@ pub async fn list(
         .run(move |db| data::get_locations_with_ids(db, &location_ids))
         .await
         .into_iter()
-        .map(|location| (location.id, location))
-        .collect::<HashMap<i32, Location>>();
+        .map(|location| (location.id, location.into()))
+        .collect::<HashMap<i32, ApiFlightLocation>>();
 
     // Get all flight IDs with IGC files
-    let flights_with_igc = database
+    let flight_ids_with_igc = database
         .run({
             let user = user.clone();
             move |db| data::get_flight_ids_with_igc_for_user(db, &user)
@@ -95,15 +211,11 @@ pub async fn list(
         .await;
 
     // Add details to flights
-    let flights_with_details = flights
+    let api_flights = flights
         .into_iter()
         .map(|flight| {
-            // Look up glider
-            let glider = flight.glider_id.and_then(|id| glider_map.get(&id));
-
-            // Look up launch and landing
-            let launch_at = flight.launch_at.and_then(|id| location_map.get(&id));
-            let landing_at = flight.landing_at.and_then(|id| location_map.get(&id));
+            // Look up glider name
+            let glider_name = flight.glider_id.and_then(|id| glider_name_map.get(&id).cloned());
 
             // Calculate duration
             let duration_seconds = match (flight.launch_time, flight.landing_time) {
@@ -119,47 +231,43 @@ pub async fn list(
             };
 
             // Look up whether an IGC file exists for this flight
-            let has_igc = flights_with_igc.contains(&flight.id);
+            let has_igc = flight_ids_with_igc.contains(&flight.id);
 
-            FlightWithDetails {
-                flight,
-                glider,
-                launch_at,
-                landing_at,
+            ApiFlightListItem {
+                id: flight.id,
+                number: flight.number,
+                glider_name,
+                launch_at: flight.launch_at,
+                landing_at: flight.landing_at,
+                launch_time: flight.launch_time,
+                landing_time: flight.landing_time,
                 duration_seconds,
+                track_distance: flight.track_distance,
+                xcontest_tracktype: flight.xcontest_tracktype,
+                xcontest_distance: flight.xcontest_distance,
+                xcontest_url: flight.xcontest_url,
+                comment: flight.comment,
+                video_url: flight.video_url,
+                hikeandfly: flight.hikeandfly,
                 has_igc,
             }
         })
         .collect::<Vec<_>>();
 
     // Render template
-    let user = Arc::try_unwrap(user).expect("cannot unwrap user Arc");
-    let context = FlightsContext {
-        user,
-        flights: flights_with_details,
-        flashes: flashes_from_flash_opt(flash),
-    };
-    Template::render("flights", &context)
+    Json(ApiFlights {
+        locations: location_map,
+        flights: api_flights,
+    })
 }
 
 #[get("/flights", rank = 2)]
-pub fn list_nologin() -> Redirect {
-    Redirect::to("/auth/login")
-}
-
-#[derive(Serialize)]
-struct FlightContext<'a> {
-    user: User,
-    flight: Flight,
-    glider: Option<&'a Glider>,
-    launch_at: Option<&'a Location>,
-    landing_at: Option<&'a Location>,
-    duration_seconds: Option<u64>,
-    has_igc: bool,
+pub fn list_nologin() -> ApiError {
+    ApiError::MissingAuthentication
 }
 
 #[get("/flights/<id>")]
-pub async fn flight(id: i32, database: data::Database, user: auth::AuthUser) -> Result<Template, Status> {
+pub async fn get(id: i32, database: data::Database, user: auth::AuthUser) -> Result<Json<ApiFlight>, Status> {
     let user = user.into_inner();
 
     // Get flight
@@ -187,19 +295,22 @@ pub async fn flight(id: i32, database: data::Database, user: auth::AuthUser) -> 
             let flight = flight.clone();
             move |db| flight.launch_at.and_then(|id| data::get_location_by_id(db, id))
         })
-        .await;
+        .await
+        .map(|location| location.into());
     let landing_at = database
         .run({
             let flight = flight.clone();
             move |db| flight.landing_at.and_then(|id| data::get_location_by_id(db, id))
         })
-        .await;
-    let glider = database
+        .await
+        .map(|location| location.into());
+    let glider_name = database
         .run({
             let flight = flight.clone();
             move |db| flight.glider_id.and_then(|id| data::get_glider_by_id(db, id))
         })
-        .await;
+        .await
+        .map(|glider| glider.to_string());
 
     // Calculate duration
     let duration_seconds = match (flight.launch_time, flight.landing_time) {
@@ -216,17 +327,38 @@ pub async fn flight(id: i32, database: data::Database, user: auth::AuthUser) -> 
 
     // Render template
     let flight = Arc::try_unwrap(flight).expect("cannot unwrap flight Arc");
-    let context = FlightContext {
-        user,
-        flight,
-        glider: glider.as_ref(),
-        launch_at: launch_at.as_ref(),
-        landing_at: landing_at.as_ref(),
+    Ok(Json(ApiFlight {
+        id: flight.id,
+        number: flight.number,
+        glider_name,
+        launch_at,
+        landing_at,
+        launch_time: flight.launch_time,
+        landing_time: flight.landing_time,
         duration_seconds,
+        track_distance: flight.track_distance,
+        xcontest_tracktype: flight.xcontest_tracktype,
+        xcontest_distance: flight.xcontest_distance,
+        xcontest_url: flight.xcontest_url,
+        comment: flight.comment,
+        video_url: flight.video_url,
+        hikeandfly: flight.hikeandfly,
         has_igc,
-    };
-    Ok(Template::render("flight", &context))
+    }))
 }
+
+#[get("/flights/<id>", rank = 2)]
+#[allow(unused_variables)]
+pub fn get_nologin(id: i32) -> ApiError {
+    ApiError::MissingAuthentication
+}
+
+/// Return vec of all API routes.
+pub fn api_routes() -> Vec<Route> {
+    routes![list, list_nologin, get, get_nologin,]
+}
+
+// Classic views (TODO remove)
 
 /// Responder that returns the `data` bytes with the `content_type` header as a
 /// file download (disposition=attachment).

@@ -167,9 +167,6 @@ async fn main() -> Result<()> {
             routes![
                 index,
                 privacy_policy,
-                flights::list,
-                flights::list_nologin,
-                flights::flight,
                 flights::edit_form,
                 flights::edit,
                 flights::delete_form,
@@ -194,6 +191,7 @@ async fn main() -> Result<()> {
                 stats::api_routes(),
                 locations::api_routes(),
                 gliders::api_routes(),
+                flights::api_routes(),
             ]
             .concat(),
         )
