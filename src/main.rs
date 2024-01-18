@@ -171,7 +171,6 @@ async fn main() -> Result<()> {
                 flights::edit,
                 flights::delete_form,
                 flights::delete,
-                flights::igc_download,
                 flights::submit_form,
                 flights::submit_form_nologin,
                 flights::submit,

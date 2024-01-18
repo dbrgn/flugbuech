@@ -130,7 +130,7 @@
         <span class="icon is-small"><i class="fa-solid fa-download"></i></span>&nbsp;&nbsp;IGC File
       </th>
       <td>
-        {#if flight.hasIgc}<a href="/flights/{flight.id}/igc/">Download</a>{:else}-{/if}
+        {#if flight.hasIgc}<a href="/api/v1/flights/{flight.id}/igc/">Download</a>{:else}-{/if}
       </td>
     </tr>
   </table>

@@ -353,12 +353,7 @@ pub fn get_nologin(id: i32) -> ApiError {
     ApiError::MissingAuthentication
 }
 
-/// Return vec of all API routes.
-pub fn api_routes() -> Vec<Route> {
-    routes![list, list_nologin, get, get_nologin,]
-}
-
-// Classic views (TODO remove)
+// IGC Download
 
 /// Responder that returns the `data` bytes with the `content_type` header as a
 /// file download (disposition=attachment).
@@ -427,6 +422,13 @@ pub async fn igc_download(
         None => Err(Status::NotFound),
     }
 }
+
+/// Return vec of all API routes.
+pub fn api_routes() -> Vec<Route> {
+    routes![list, list_nologin, get, get_nologin, igc_download]
+}
+
+// Classic views (TODO remove)
 
 #[derive(FromForm, Debug)]
 pub struct FlightForm {
