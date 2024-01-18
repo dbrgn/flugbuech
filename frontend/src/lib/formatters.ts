@@ -17,6 +17,13 @@ export function formatDate(date: Date): string {
 }
 
 /**
+ * Format a time as "hh:mm".
+ */
+export function formatTime(time: Date): string {
+    return time.toISOString().slice(11, 16);
+}
+
+/**
  * Format a distance in km.
  */
 export function formatDistance(km: number): string {

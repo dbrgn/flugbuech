@@ -5,11 +5,11 @@
   import DialogModal from '$lib/components/DialogModal.svelte';
   import Flashes from '$lib/components/Flashes.svelte';
   import MessageModal from '$lib/components/MessageModal.svelte';
-  import XContestTracktypeIcon from '$lib/components/XContestTracktypeIcon.svelte';
   import {addFlash} from '$lib/stores';
   import {formatDate, formatDistance, formatDuration} from '$lib/formatters';
   import type {Data} from './+page';
   import type {FlightListItem} from './api';
+  import XContestSummary from '$lib/components/XContestSummary.svelte';
 
   export let data: Data;
 
@@ -145,7 +145,7 @@
         <th>Landing</th>
         <th>Duration</th>
         <th>GPS Distance</th>
-        <th>XContest Distance</th>
+        <th>XContest</th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -180,10 +180,12 @@
             {#if flight.trackDistance}{formatDistance(flight.trackDistance)}{/if}
           </td>
           <td>
-            {#if flight.xcontestTracktype}
-              <XContestTracktypeIcon tracktype={flight.xcontestTracktype} />
-            {/if}
-            {#if flight.xcontestDistance}{flight.xcontestDistance.toFixed(2)} km{/if}
+            <XContestSummary
+              tracktype={flight.xcontestTracktype}
+              distance={flight.xcontestDistance}
+              url={flight.xcontestUrl}
+              subtleLink={true}
+            />
           </td>
           <td>
             <a class="icon" title="View Flight" href="/flights/{flight.id}/">

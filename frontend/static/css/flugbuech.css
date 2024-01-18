@@ -69,10 +69,17 @@ div.control + label.checkbox {
   margin-top: 8px;
 }
 
+/* Preserve newlines */
+
+.preserve-newlines {
+  white-space: pre;
+}
+
+/* More subtle link colors, used e.g. in the flight list */
+
 a.subtle-link {
   color: #363636;
 }
-
 a.subtle-link:hover {
   color: #777;
 }
