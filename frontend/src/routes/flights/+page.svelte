@@ -5,8 +5,9 @@
   import DialogModal from '$lib/components/DialogModal.svelte';
   import Flashes from '$lib/components/Flashes.svelte';
   import MessageModal from '$lib/components/MessageModal.svelte';
+  import XContestTracktypeIcon from '$lib/components/XContestTracktypeIcon.svelte';
   import {addFlash} from '$lib/stores';
-  import {formatDate, formatDuration} from '$lib/time';
+  import {formatDate, formatDistance, formatDuration} from '$lib/formatters';
   import type {Data} from './+page';
   import type {FlightListItem} from './api';
 
@@ -42,7 +43,7 @@
       deleting = true;
       console.info(`Deleting flight with ID ${flightToDelete.id}`);
 
-      const response = await apiDelete(`/api/v1/flights/${flightToDelete.id}`);
+      const response = await apiDelete(`/api/v1/flights/${flightToDelete.id}/`);
       switch (response.status) {
         case 204:
           // Success
@@ -176,20 +177,22 @@
             {#if flight.durationSeconds}{formatDuration(flight.durationSeconds)}{/if}
           </td>
           <td>
-            {#if flight.trackDistance}{flight.trackDistance.toFixed(2)} km{/if}
+            {#if flight.trackDistance}{formatDistance(flight.trackDistance)}{/if}
           </td>
           <td>
-            {#if flight.xcontestTracktype}{flight.xcontestTracktype}{/if}
+            {#if flight.xcontestTracktype}
+              <XContestTracktypeIcon tracktype={flight.xcontestTracktype} />
+            {/if}
             {#if flight.xcontestDistance}{flight.xcontestDistance.toFixed(2)} km{/if}
           </td>
           <td>
-            <a class="icon" title="View Flight" href="/flights/{flight.id}">
+            <a class="icon" title="View Flight" href="/flights/{flight.id}/">
               <i class="fa-solid fa-eye"></i>
             </a>
             <a
               class="icon"
               title="Edit Flight"
-              href="/flights/{flight.id}/edit"
+              href="/flights/{flight.id}/edit/"
               data-sveltekit-preload-data="tap"
             >
               <i class="fa-solid fa-pen-square"></i>

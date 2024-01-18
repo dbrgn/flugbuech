@@ -4,6 +4,7 @@ import {error} from '@sveltejs/kit';
 import {AuthenticationError, ensureClientOrServerErrorCode} from '$lib/errors';
 import {extractResponseError} from '$lib/api';
 import {SCHEMA_DATETIME_STRING} from '$lib/zod-helpers';
+import {ensureXContestTracktype} from '$lib/xcontest';
 
 const SCHEMA_API_FLIGHT_LOCATION = z.object({
     id: z.number(),
@@ -13,19 +14,6 @@ const SCHEMA_API_FLIGHT_LOCATION = z.object({
 });
 
 export type FlightLocation = z.infer<typeof SCHEMA_API_FLIGHT_LOCATION>;
-
-type XContestTracktype = 'free_flight' | 'flat_triangle' | 'fai_triangle';
-
-function isXContestTracktype(value: string): value is XContestTracktype {
-    return ['free_flight', 'flat_triangle', 'fai_triangle'].includes(value);
-}
-
-function ensureXContestTracktype(value: string): XContestTracktype {
-    if (isXContestTracktype(value)) {
-        return value;
-    }
-    throw new Error(`String "${value}" is not a valid XContest track type`);
-}
 
 const SCHEMA_API_FLIGHT_LIST_ITEM = z.object({
     id: z.number(),

@@ -1,8 +1,8 @@
 import {describe, it, expect} from 'vitest';
 
-import {formatDuration} from './time';
+import {formatDistance, formatDuration} from './formatters';
 
-describe('time', () => {
+describe('formatDuration', () => {
     const testCases = [
         [0, '00:00'],
         [60 * 7, '00:07'],
@@ -17,6 +17,22 @@ describe('time', () => {
     for (const [seconds, expected] of testCases) {
         it(`formats ${seconds} seconds`, () => {
             expect(formatDuration(seconds)).to.equal(expected);
+        });
+    }
+});
+
+describe('formatDistance', () => {
+    const testCases = [
+        [0, '0 km'],
+        [3, '3 km'],
+        [3.1, '3.1 km'],
+        [3.45, '3.45 km'],
+        [3.4521, '3.45 km'],
+    ] as const;
+
+    for (const [km, expected] of testCases) {
+        it(`formats ${km} km`, () => {
+            expect(formatDistance(km)).to.equal(expected);
         });
     }
 });

@@ -15,3 +15,10 @@ export function formatDuration(seconds: number): string {
 export function formatDate(date: Date): string {
     return date.toISOString().slice(0, 10);
 }
+
+/**
+ * Format a distance in km.
+ */
+export function formatDistance(km: number): string {
+    return `${km.toFixed(2).replace(/\.?0*$/g, '')} km`;
+}

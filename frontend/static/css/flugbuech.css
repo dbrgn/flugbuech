@@ -51,10 +51,6 @@ p + .spaced-headers {
   transform: translatey(-50%);
 }
 
-.xcontest-tracktype {
-  margin-bottom: -3px;
-}
-
 footer {
   color: #777;
   font-size: 0.8em;

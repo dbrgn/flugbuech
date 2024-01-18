@@ -5,7 +5,7 @@
   import Flashes from '$lib/components/Flashes.svelte';
   import MessageModal from '$lib/components/MessageModal.svelte';
   import {addFlash} from '$lib/stores';
-  import {formatDuration} from '$lib/time';
+  import {formatDuration} from '$lib/formatters';
   import type {Data} from './+page';
   import type {Glider} from './api';
 
