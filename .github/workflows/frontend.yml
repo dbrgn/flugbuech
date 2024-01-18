@@ -71,6 +71,6 @@ jobs:
       - name: Install npm dependencies
         run: cd frontend && npm ci
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+        run: cd frontend && npx playwright install --with-deps
       - name: Run integration tests
         run: cd frontend && npm run test:integration
