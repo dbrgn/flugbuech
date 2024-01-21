@@ -1,5 +1,7 @@
 /**
  * Format a duration (in seconds) as "hh:mm".
+ *
+ * Example: formatDuration(3780) === "01:03"
  */
 export function formatDuration(seconds: number): string {
     const hours = Math.floor(seconds / 3600)
@@ -25,6 +27,8 @@ export function formatTime(time: Date): string {
 
 /**
  * Format a distance in km.
+ *
+ * Example: formatDistance(13.37123) === "13.37 km"
  */
 export function formatDistance(km: number): string {
     return `${km.toFixed(2).replace(/\.?0*$/g, '')} km`;

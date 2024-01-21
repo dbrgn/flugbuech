@@ -24,7 +24,7 @@ export async function loadApiProfile(fetch: SvelteKitFetch): Promise<Profile> {
         case 200:
             return SCHEMA_API_PROFILE.parse(await res.json());
         case 401:
-            throw AuthenticationError.redirectToLogin(`/profile`);
+            throw AuthenticationError.redirectToLogin(`/profile/`);
         case 403:
             return error(403, `This is not your location, viewing not allowed`);
         default:

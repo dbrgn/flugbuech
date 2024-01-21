@@ -175,8 +175,6 @@ async fn main() -> Result<()> {
                 flights::submit_form_nologin,
                 flights::submit,
                 process_igc::process_igc,
-                stats::stats,
-                stats::stats_nologin,
             ],
         )
         // Auth routes

@@ -4,7 +4,7 @@ import {error} from '@sveltejs/kit';
 import {AuthenticationError, ensureClientOrServerErrorCode} from '$lib/errors';
 import {extractResponseError} from '$lib/api';
 
-const SCHEMA_API_LOCATION = z.object({
+export const SCHEMA_API_LOCATION = z.object({
     id: z.number(),
     name: z.string(),
     countryCode: z.string(),

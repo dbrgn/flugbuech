@@ -6,7 +6,11 @@ use diesel_geography::types::GeogPoint;
 use rocket::{delete, get, http::Status, post, routes, serde::json::Json, Route};
 use serde::{Deserialize, Serialize};
 
-use crate::{auth, data, models::NewLocation, responders::ApiError};
+use crate::{
+    auth, data,
+    models::{LocationWithCount, NewLocation},
+    responders::ApiError,
+};
 
 // API types
 
@@ -26,6 +30,22 @@ pub struct ApiLocation {
     #[serde(skip_serializing_if = "Option::is_none")]
     coordinates: Option<ApiCoordinates>,
     flight_count: u64,
+}
+
+impl From<LocationWithCount> for ApiLocation {
+    fn from(location: LocationWithCount) -> Self {
+        Self {
+            id: location.id,
+            name: location.name,
+            country_code: location.country,
+            elevation: location.elevation,
+            coordinates: location.geog.map(|geog| ApiCoordinates {
+                lon: geog.x,
+                lat: geog.y,
+            }),
+            flight_count: u64::try_from(location.count.max(0)).unwrap(),
+        }
+    }
 }
 
 #[derive(Serialize)]
@@ -56,17 +76,7 @@ pub async fn list(database: data::Database, user: auth::AuthUser) -> Json<ApiLoc
         .run(move |db| data::get_all_locations_with_stats_for_user(db, &user))
         .await
         .into_iter()
-        .map(|location| ApiLocation {
-            id: location.id,
-            name: location.name,
-            country_code: location.country,
-            elevation: location.elevation,
-            coordinates: location.geog.map(|geog| ApiCoordinates {
-                lon: geog.x,
-                lat: geog.y,
-            }),
-            flight_count: u64::try_from(location.count.max(0)).unwrap(),
-        })
+        .map(|location| location.into())
         .collect();
 
     Json(ApiLocations { locations })
@@ -99,17 +109,7 @@ pub async fn get(
         return Err(Status::Forbidden);
     }
 
-    Ok(Json(ApiLocation {
-        id: location.id,
-        name: location.name,
-        country_code: location.country,
-        elevation: location.elevation,
-        coordinates: location.geog.map(|geog| ApiCoordinates {
-            lon: geog.x,
-            lat: geog.y,
-        }),
-        flight_count: u64::try_from(location.count.max(0)).unwrap(),
-    }))
+    Ok(Json(location.into()))
 }
 
 #[get("/locations/<id>", rank = 2)]
