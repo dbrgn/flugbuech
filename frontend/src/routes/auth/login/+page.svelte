@@ -41,7 +41,7 @@
       // Login successful! Add flash.
       addFlash({
         message:
-          'Login successful, welcome! Your session will remain active for 1 year, until you log out.',
+          'Login successful, welcome! Your session will remain active for 1 year, or until you log out.',
         severity: 'success',
         icon: 'fa-circle-check',
       });
