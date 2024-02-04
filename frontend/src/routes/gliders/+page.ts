@@ -1,12 +1,10 @@
-import {loadApiGliders, type Glider} from './api';
+import {loadApiGliders, type Gliders} from './api';
 
 // Disable server-side rendering for this page
 export const ssr = false;
 
-export interface Data {
-    readonly gliders: Glider[];
-}
+export type Data = Gliders;
 
 export async function load({fetch}): Promise<Data> {
-    return {gliders: await loadApiGliders(fetch)};
+    return await loadApiGliders(fetch);
 }

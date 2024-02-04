@@ -24,17 +24,26 @@ export type Glider = z.infer<typeof SCHEMA_API_GLIDER>;
 
 const SCHEMA_API_GLIDERS_RESPONSE = z.object({
     gliders: z.array(SCHEMA_API_GLIDER),
+    lastGliderId: z.number().optional(),
 });
+
+export interface Gliders {
+    readonly gliders: Glider[];
+    readonly lastGliderId?: number;
+}
 
 /**
  * Load gliders from API.
  */
-export async function loadApiGliders(fetch: SvelteKitFetch): Promise<Glider[]> {
+export async function loadApiGliders(fetch: SvelteKitFetch): Promise<Gliders> {
     const res = await fetch('/api/v1/gliders');
     switch (res.status) {
         case 200: {
             const response = SCHEMA_API_GLIDERS_RESPONSE.parse(await res.json());
-            return response.gliders;
+            return {
+                gliders: response.gliders,
+                lastGliderId: response.lastGliderId,
+            };
         }
         case 401:
             throw AuthenticationError.redirectToLogin(`/gliders/`);

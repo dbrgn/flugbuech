@@ -82,7 +82,10 @@ pub struct ApiGliderStats {
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiGliders {
+    /// List of user's gliders.
     gliders: Vec<ApiGlider>,
+    /// The user's last used glider ID.
+    last_glider_id: Option<i32>,
 }
 
 // API endpoints
@@ -102,7 +105,10 @@ pub async fn list(database: data::Database, user: auth::AuthUser) -> Json<ApiGli
         .map(Into::into)
         .collect();
 
-    Json(ApiGliders { gliders })
+    Json(ApiGliders {
+        gliders,
+        last_glider_id: user.last_glider_id,
+    })
 }
 
 #[get("/gliders", rank = 2)]
