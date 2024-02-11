@@ -19,6 +19,7 @@
 <FlightForm
   gliders={data.gliders}
   lastGliderId={data.lastGliderId}
+  locations={data.locations}
   existingFlightNumbers={data.existingFlightNumbers}
 >
   <h2 slot="title" class="title is-2">Add Flight</h2>
