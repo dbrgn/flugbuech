@@ -15,6 +15,7 @@
   export let existingFlightNumbers: number[] = [];
 
   // Form values
+  // Note: Values for number inputs must allow null!
   let files: FileList | undefined = undefined;
   let number: number | null = flight?.number ?? null;
   let glider: number | undefined = lastGliderId; // TODO: Is this validated by the API?
@@ -24,15 +25,24 @@
   let launchDate: string = flight?.launchTime?.toISOString().slice(0, 10) ?? '';
   let launchTime: string = flight?.launchTime?.toISOString().slice(0, 10) ?? '';
   let landingTime: string = flight?.landingTime?.toISOString().slice(0, 10) ?? '';
+  let trackDistance: string = flight?.trackDistance?.toFixed(2) ?? '';
 
   // Validation
-  const fields = ['number', 'glider', 'launchDate', 'launchTime', 'landingTime'] as const;
+  const fields = [
+    'number',
+    'glider',
+    'launchDate',
+    'launchTime',
+    'landingTime',
+    'trackDistance',
+  ] as const;
   let fieldErrors: Record<(typeof fields)[number], string | undefined> = {
     number: undefined,
     glider: undefined,
     launchDate: undefined,
     launchTime: undefined,
     landingTime: undefined,
+    trackDistance: undefined,
   };
   function validateNumber(): void {
     fieldErrors = {
@@ -71,6 +81,17 @@
     };
   }
   $: reactive(validateDatesAndTimes, [launchDate, launchTime, landingTime]);
+  function validateTrackDistance(): void {
+    // TODO: Create proper NumberInput component
+    const distanceRe = /^[0-9]+(\.[0-9]+)?$/u;
+    trackDistance = trackDistance.replace(',', '.');
+    fieldErrors = {
+      ...fieldErrors,
+      trackDistance:
+        trackDistance === '' || trackDistance.match(distanceRe) ? undefined : 'Invalid distance',
+    };
+  }
+  $: reactive(validateTrackDistance, [trackDistance]);
   function validateAll(): void {
     validateNumber();
     validateGlider();
@@ -168,7 +189,7 @@
   >
     <h3 class="title is-4">Basic Information</h3>
 
-    <label class="label" for="igc-file">IGC Flight Recording</label>
+    <label class="label" for="igcFile">IGC Flight Recording</label>
     {#if flight !== undefined && flight.hasIgc}
       <p class="content">
         <em>IGC file already uploaded. IGC files cannot be changed after the initial upload.</em>
@@ -177,7 +198,7 @@
       <div class="field">
         <div class="file has-name">
           <label class="file-label">
-            <input class="file-input" type="file" name="igc-file" accept=".igc" bind:files />
+            <input id="igcFile" type="file" class="file-input" accept=".igc" bind:files />
             <span class="file-cta">
               <span class="file-icon">
                 <i class="fa-solid fa-upload"></i>
@@ -195,12 +216,12 @@
     <div class="field">
       <div class="control has-icons-left">
         <input
+          id="number"
+          type="number"
           class="input"
           class:error={fieldErrors.number !== undefined}
-          type="number"
           min="0"
           step="1"
-          name="number"
           bind:value={number}
         />
         <div class="icon is-small is-left">
@@ -219,7 +240,7 @@
     <div class="field">
       <div class="control is-expanded has-icons-left">
         <div class="select is-fullwidth">
-          <select name="glider" class:error={fieldErrors.glider !== undefined} bind:value={glider}>
+          <select id="glider" class:error={fieldErrors.glider !== undefined} bind:value={glider}>
             <option value={undefined}></option>
             {#each gliders as glider}
               <option value={glider.id}>
@@ -245,7 +266,7 @@
         <label class="label" for="launchSite">Launch Site</label>
         <div class="control is-expanded has-icons-left">
           <div class="select is-fullwidth">
-            <select name="launch_site" bind:value={launchAt}>
+            <select id="launchSite" bind:value={launchAt}>
               <option value={undefined}></option>
               {#each locations as location}
                 <option value={location}>
@@ -259,7 +280,7 @@
           </div>
         </div>
         <label class="checkbox">
-          <input type="checkbox" name="hikeandfly" bind:checked={hikeandfly} />
+          <input type="checkbox" id="hikeandfly" bind:checked={hikeandfly} />
           Hike &amp; Fly
         </label>
       </div>
@@ -268,7 +289,7 @@
         <label class="label" for="landingSite">Landing Site</label>
         <div class="control is-expanded has-icons-left">
           <div class="select is-fullwidth">
-            <select name="landing_site" bind:value={landingAt}>
+            <select id="landingSite" bind:value={landingAt}>
               <option value={undefined}></option>
               {#each locations as location}
                 <option value={location}>
@@ -290,9 +311,9 @@
         <div class="field">
           <div class="control has-icons-left">
             <input
-              class="input"
+              id="launchDate"
               type="date"
-              name="launch_date"
+              class="input"
               class:error={fieldErrors.launchDate !== undefined}
               bind:value={launchDate}
             />
@@ -310,10 +331,10 @@
         <div class="field">
           <div class="control has-icons-left">
             <input
-              class="input"
+              id="launchTime"
               type="time"
+              class="input"
               step="60"
-              name="launch_time"
               class:error={fieldErrors.launchTime !== undefined}
               bind:value={launchTime}
             />
@@ -331,13 +352,7 @@
         <label class="label" for="landingTime">Landing Time (UTC)</label>
         <div class="field has-addons">
           <div class="control is-expanded has-icons-left">
-            <input
-              class="input"
-              type="time"
-              step="60"
-              name="landing_time"
-              bind:value={landingTime}
-            />
+            <input id="landingTime" type="time" class="input" step="60" bind:value={landingTime} />
             <div class="icon is-small is-left">
               <i class="fas fa-clock"></i>
             </div>
@@ -352,11 +367,33 @@
       </div>
     </div>
 
+    <h3 class="title is-4">GPS Track</h3>
+
+    <label class="label" for="trackDistance">GPS Track Distance</label>
+    <div class="field has-addons">
+      <div class="control is-expanded has-icons-left">
+        <input
+          id="trackDistance"
+          type="text"
+          class="input"
+          class:error={fieldErrors.trackDistance !== undefined}
+          bind:value={trackDistance}
+        />
+        <div class="icon is-small is-left">
+          <i class="fas fa-ruler"></i>
+        </div>
+      </div>
+      <p class="control">
+        <a class="button is-static" href=".">km</a>
+      </p>
+    </div>
+    {#if fieldErrors.trackDistance !== undefined}
+      <div class="field-error">Error: {fieldErrors.trackDistance}</div>
+    {/if}
+
     <div class="content control submitcontrols">
       <button class="button is-info" disabled={!submitEnabled} type="submit">Submit</button>
     </div>
-
-    <p class="content"><small><em>* Required fields</em></small></p>
   </form>
 </div>
 
