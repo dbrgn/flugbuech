@@ -6,6 +6,7 @@
 
   import {type Flight, type FlightLocation} from './api';
   import type {Glider} from '../gliders/api';
+  import type {XContestTracktype} from '$lib/xcontest';
 
   // Props
   export let flight: Flight | undefined = undefined;
@@ -26,6 +27,11 @@
   let launchTime: string = flight?.launchTime?.toISOString().slice(0, 10) ?? '';
   let landingTime: string = flight?.landingTime?.toISOString().slice(0, 10) ?? '';
   let trackDistance: string = flight?.trackDistance?.toFixed(2) ?? '';
+  let xcontestTracktype: XContestTracktype | undefined = flight?.xcontestTracktype;
+  let xcontestDistance: string = flight?.xcontestDistance?.toFixed(2) ?? '';
+  let xcontestUrl: string = flight?.xcontestUrl ?? '';
+  let comment: string = flight?.comment ?? '';
+  let videoUrl: string = flight?.videoUrl ?? '';
 
   // Validation
   const fields = [
@@ -35,6 +41,7 @@
     'launchTime',
     'landingTime',
     'trackDistance',
+    'xcontestDistance',
   ] as const;
   let fieldErrors: Record<(typeof fields)[number], string | undefined> = {
     number: undefined,
@@ -43,6 +50,7 @@
     launchTime: undefined,
     landingTime: undefined,
     trackDistance: undefined,
+    xcontestDistance: undefined,
   };
   function validateNumber(): void {
     fieldErrors = {
@@ -92,10 +100,25 @@
     };
   }
   $: reactive(validateTrackDistance, [trackDistance]);
+  function validateXContestDistance(): void {
+    // TODO: Create proper NumberInput component
+    const distanceRe = /^[0-9]+(\.[0-9]+)?$/u;
+    xcontestDistance = xcontestDistance.replace(',', '.');
+    fieldErrors = {
+      ...fieldErrors,
+      xcontestDistance:
+        xcontestDistance === '' || xcontestDistance.match(distanceRe)
+          ? undefined
+          : 'Invalid distance',
+    };
+  }
+  $: reactive(validateXContestDistance, [xcontestDistance]);
   function validateAll(): void {
     validateNumber();
     validateGlider();
     validateDatesAndTimes();
+    validateTrackDistance();
+    validateXContestDistance();
   }
   function resetErrors(): void {
     for (const field of fields) {
@@ -275,7 +298,7 @@
               {/each}
             </select>
             <div class="icon is-small is-left">
-              <i class="fas fa-plane-departure"></i>
+              <i class="fa-solid fa-plane-departure"></i>
             </div>
           </div>
         </div>
@@ -298,7 +321,7 @@
               {/each}
             </select>
             <div class="icon is-small is-left">
-              <i class="fas fa-plane-arrival"></i>
+              <i class="fa-solid fa-plane-arrival"></i>
             </div>
           </div>
         </div>
@@ -318,7 +341,7 @@
               bind:value={launchDate}
             />
             <div class="icon is-small is-left">
-              <i class="fas fa-calendar-alt"></i>
+              <i class="fa-solid fa-calendar-alt"></i>
             </div>
           </div>
         </div>
@@ -339,7 +362,7 @@
               bind:value={launchTime}
             />
             <div class="icon is-small is-left">
-              <i class="fas fa-clock"></i>
+              <i class="fa-solid fa-clock"></i>
             </div>
           </div>
         </div>
@@ -354,7 +377,7 @@
           <div class="control is-expanded has-icons-left">
             <input id="landingTime" type="time" class="input" step="60" bind:value={landingTime} />
             <div class="icon is-small is-left">
-              <i class="fas fa-clock"></i>
+              <i class="fa-solid fa-clock"></i>
             </div>
           </div>
           <p class="control" class:is-hidden={flightDuration === undefined}>
@@ -380,7 +403,7 @@
           bind:value={trackDistance}
         />
         <div class="icon is-small is-left">
-          <i class="fas fa-ruler"></i>
+          <i class="fa-solid fa-ruler"></i>
         </div>
       </div>
       <p class="control">
@@ -390,6 +413,101 @@
     {#if fieldErrors.trackDistance !== undefined}
       <div class="field-error">Error: {fieldErrors.trackDistance}</div>
     {/if}
+
+    <h3 class="title is-4">XContest</h3>
+
+    <div class="columns">
+      <div class="column">
+        <label class="label" for="xcontestTracktype">XContest Track Type</label>
+        <div class="field">
+          <div class="control is-expanded has-icons-left">
+            <div class="select is-fullwidth">
+              <select id="xcontestTracktype" bind:value={xcontestTracktype}>
+                <option value={undefined}></option>
+                <option value="free_flight">Free Flight</option>
+                <option value="flat_triangle">Flat Triangle</option>
+                <option value="fai_triangle">FAI Triangle</option>
+              </select>
+              <div class="icon is-small is-left">
+                <i class="fa-solid fa-globe-americas"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="column">
+        <label class="label" for="xcontestDistance">XContest Scored Distance</label>
+        <div class="field has-addons">
+          <div class="control is-expanded has-icons-left">
+            <input
+              id="xcontestDistance"
+              type="text"
+              class="input"
+              class:error={fieldErrors.xcontestDistance !== undefined}
+              bind:value={xcontestDistance}
+            />
+            <div class="icon is-small is-left">
+              <i class="fa-solid fa-ruler"></i>
+            </div>
+          </div>
+          <p class="control">
+            <a class="button is-static" href=".">km</a>
+          </p>
+        </div>
+        {#if fieldErrors.xcontestDistance !== undefined}
+          <div class="field-error">Error: {fieldErrors.xcontestDistance}</div>
+        {/if}
+      </div>
+    </div>
+
+    <label class="label" for="xcontestUrl">XContest URL</label>
+    <div class="field">
+      <div class="control has-icons-left">
+        <input
+          class="input"
+          type="url"
+          pattern="https?://.*"
+          id="xcontestUrl"
+          placeholder="https://www.xcontest.org/..."
+          bind:value={xcontestUrl}
+        />
+        <div class="icon is-small is-left">
+          <i class="fa-solid fa-link"></i>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="title is-4">Other</h3>
+
+    <label class="label" for="comment">Comment</label>
+    <div class="field">
+      <div class="control">
+        <textarea
+          class="textarea"
+          id="comment"
+          placeholder="Describe your flight"
+          bind:value={comment}
+        ></textarea>
+      </div>
+    </div>
+
+    <label class="label" for="videoUrl">Video URL</label>
+    <div class="field">
+      <div class="control has-icons-left">
+        <input
+          class="input"
+          type="url"
+          pattern="https?://.*"
+          id="videoUrl"
+          placeholder="https://www.youtube.com/..."
+          bind:value={videoUrl}
+        />
+        <div class="icon is-small is-left">
+          <i class="fa-solid fa-film"></i>
+        </div>
+      </div>
+    </div>
 
     <div class="content control submitcontrols">
       <button class="button is-info" disabled={!submitEnabled} type="submit">Submit</button>
