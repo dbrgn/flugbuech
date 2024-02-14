@@ -166,9 +166,47 @@
     }
   }
 
+  let dragFileOverlayVisible = false;
+
+  function setUpDropTarget(): void {
+    function onDragOver(e: DragEvent) {
+      e.stopPropagation();
+      e.preventDefault();
+      dragFileOverlayVisible = true;
+    }
+
+    function onDragLeave(e: DragEvent) {
+      e.stopPropagation();
+      e.preventDefault();
+      dragFileOverlayVisible = false;
+    }
+
+    function onDrop(e: DragEvent) {
+      e.stopPropagation();
+      e.preventDefault();
+      onDragLeave(e);
+      if (e.dataTransfer && e.dataTransfer.files) {
+        console.log(e.dataTransfer.files);
+        //onInputChange(e.dataTransfer.files);
+      }
+    }
+
+    const body = document.querySelector('body');
+    if (body !== null) {
+      body.addEventListener('dragover', onDragOver);
+      body.addEventListener('dragenter', onDragOver);
+      body.addEventListener('dragleave', onDragLeave);
+      body.addEventListener('dragend', onDragLeave);
+      body.addEventListener('drop', onDrop);
+    }
+  }
+
   onMount(() => {
     // Reset field errors, so user is not greeted with errors on page load
     resetErrors();
+
+    // Set up drag & drop handling
+    setUpDropTarget();
   });
 </script>
 
@@ -515,6 +553,10 @@
   </form>
 </div>
 
+<div class="drag-file-overlay" class:is-hidden={!dragFileOverlayVisible}>
+  <div>Drop file to process</div>
+</div>
+
 <style>
   .field input.error,
   .field select.error {
@@ -526,5 +568,25 @@
     font-size: 0.8em;
     margin-top: -12px;
     margin-bottom: 12px;
+  }
+
+  .drag-file-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    background-color: rgba(0, 0, 0, 0.7);
+  }
+
+  .drag-file-overlay div {
+    text-align: center;
+    color: white;
+    font-size: 4em;
+    position: relative;
+    padding-top: 0;
+    top: 50%;
+    transform: translatey(-50%);
   }
 </style>

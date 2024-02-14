@@ -31,26 +31,6 @@ p + .spaced-headers {
   font-size: 14px;
 }
 
-.drag-file-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 9999;
-  background-color: rgba(0, 0, 0, 0.7);
-}
-
-.drag-file-overlay div {
-  text-align: center;
-  color: white;
-  font-size: 4em;
-  position: relative;
-  padding-top: 0;
-  top: 50%;
-  transform: translatey(-50%);
-}
-
 footer {
   color: #777;
   font-size: 0.8em;
