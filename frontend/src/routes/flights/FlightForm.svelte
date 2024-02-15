@@ -4,7 +4,7 @@
   import MessageModal from '$lib/components/MessageModal.svelte';
   import {reactive} from '$lib/svelte';
 
-  import {type Flight, type FlightLocation} from './api';
+  import {processIgc, type Flight, type FlightLocation} from './api';
   import type {Glider} from '../gliders/api';
   import type {XContestTracktype} from '$lib/xcontest';
 
@@ -18,6 +18,7 @@
   // Form values
   // Note: Values for number inputs must allow null!
   let files: FileList | undefined = undefined;
+  let igcBase64: string | undefined = undefined;
   let number: number | null = flight?.number ?? null;
   let glider: number | undefined = lastGliderId; // TODO: Is this validated by the API?
   let launchAt: FlightLocation | undefined = flight?.launchAt;
@@ -152,12 +153,14 @@
   let submitEnabled = true;
   let submitError: {type: 'authentication'} | {type: 'api-error'; message: string} | undefined;
 
+  // Form submission
   async function submitForm(): Promise<void> {
     submitEnabled = false;
     validateAll();
     if (Object.values(fieldErrors).every((error) => error === undefined)) {
       // All fields valid
       console.log(flight === undefined ? 'Sending new flight to API' : 'Updating flight via API');
+      console.log('igc string', igcBase64); // TODO
       // TODO
       submitEnabled = true;
     } else {
@@ -166,8 +169,86 @@
     }
   }
 
-  let dragFileOverlayVisible = false;
+  // TODO: Unit test
+  function hmsToTimevalue(hms: [number, number, number]) {
+    let hours = hms[0];
+    let minutes = Math.round(hms[1] + hms[2] / 100);
+    if (minutes === 60) {
+      minutes = 0;
+      hours += 1;
+    }
+    const h = hours.toString().padStart(2, '0');
+    const m = minutes.toString().padStart(2, '0');
+    return `${h}:${m}`;
+  }
 
+  // Handle file uploads
+  function onFileInputChange(fileList: FileList): void {
+    const file = fileList[0];
+    if (file === undefined) {
+      return;
+    }
+    console.log('Submitting data');
+    processIgc(file)
+      .then((flightInfo) => {
+        console.log(flightInfo); // TODO remove
+
+        // TODO: Determine glider
+
+        // Determine flight date
+        if (flightInfo.dateYmd) {
+          if (launchDate === '') {
+            const y = flightInfo.dateYmd[0].toString();
+            const m = flightInfo.dateYmd[1].toString().padStart(2, '0');
+            const d = flightInfo.dateYmd[2].toString().padStart(2, '0');
+            launchDate = `${y}-${m}-${d}`;
+          }
+        }
+
+        // Determine launch time
+        if (flightInfo.launch && flightInfo.launch.timeHms) {
+          if (launchTime === '') {
+            launchTime = hmsToTimevalue(flightInfo.launch.timeHms);
+          }
+        }
+
+        // Determine landing time
+        if (flightInfo.landing && flightInfo.landing.timeHms) {
+          if (landingTime === '') {
+            landingTime = hmsToTimevalue(flightInfo.landing.timeHms);
+          }
+        }
+
+        // TODO: Determine launch and landing sites
+
+        // Determine track distance
+        if (trackDistance === '') {
+          trackDistance = flightInfo.trackDistance.toFixed(2);
+        }
+
+        // Because multipart form submissions suck, we convert the file to base64 and later submit
+        // it as text. Not nice either, but at least allows us to use regular form parsing. And
+        // because we want to store the file in the database, we can't stream it to disk anyways.
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const binaryString = e.target?.result;
+          if (typeof binaryString === 'string') {
+            // TODO: btoa cannot handle unicode
+            igcBase64 = btoa(binaryString)
+              .replace(/\+/g, '-')
+              .replace(/\//g, '_')
+              .replace(/=/g, '');
+          }
+        };
+        reader.readAsBinaryString(file);
+      })
+      .catch((e) => {
+        alert(`Could not process IGC file: ${e}`);
+      });
+  }
+
+  // File drop target
+  let dragFileOverlayVisible = false;
   function setUpDropTarget(): void {
     function onDragOver(e: DragEvent) {
       e.stopPropagation();
@@ -187,7 +268,7 @@
       onDragLeave(e);
       if (e.dataTransfer && e.dataTransfer.files) {
         console.log(e.dataTransfer.files);
-        //onInputChange(e.dataTransfer.files);
+        onFileInputChange(e.dataTransfer.files);
       }
     }
 

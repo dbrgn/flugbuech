@@ -174,7 +174,6 @@ async fn main() -> Result<()> {
                 flights::submit_form,
                 flights::submit_form_nologin,
                 flights::submit,
-                process_igc::process_igc,
             ],
         )
         // Auth routes
@@ -189,6 +188,7 @@ async fn main() -> Result<()> {
                 locations::api_routes(),
                 gliders::api_routes(),
                 flights::api_routes(),
+                process_igc::api_routes(),
             ]
             .concat(),
         )

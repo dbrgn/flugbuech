@@ -2,7 +2,7 @@ import type {SvelteKitFetch} from '$lib';
 import {z} from 'zod';
 import {error} from '@sveltejs/kit';
 import {AuthenticationError, ensureClientOrServerErrorCode} from '$lib/errors';
-import {extractResponseError} from '$lib/api';
+import {apiPostBlob, extractResponseError} from '$lib/api';
 import {SCHEMA_DATETIME_STRING} from '$lib/zod-helpers';
 import {ensureXContestTracktype} from '$lib/xcontest';
 
@@ -61,6 +61,7 @@ export async function loadApiFlights(fetch: SvelteKitFetch): Promise<Flights> {
         }
     }
 }
+
 const SCHEMA_API_FLIGHT = z.object({
     id: z.number(),
     number: z.number().optional(),
@@ -83,7 +84,7 @@ const SCHEMA_API_FLIGHT = z.object({
 export type Flight = z.infer<typeof SCHEMA_API_FLIGHT>;
 
 /**
- * Load flight from API.
+ * Load single flight from API.
  */
 export async function loadApiFlight(fetch: SvelteKitFetch, id: number): Promise<Flight> {
     const res = await fetch(`/api/v1/flights/${id}`);
@@ -100,6 +101,68 @@ export async function loadApiFlight(fetch: SvelteKitFetch, id: number): Promise<
             throw error(
                 ensureClientOrServerErrorCode(res.status),
                 `Could not fetch flight from API: ${await extractResponseError(res)}`,
+            );
+    }
+}
+
+const SCHEMA_API_LAUNCH_LANDING_INFO = z.object({
+    pos: z.object({
+        lng: z.number(),
+        lat: z.number(),
+    }),
+    alt: z.number(),
+    timeHms: z.tuple([z.number(), z.number(), z.number()]),
+    locationId: z.number().optional(),
+});
+
+const SCHEMA_API_FLIGHT_INFO = z.object({
+    type: z.union([z.literal('success'), z.literal('error')]),
+    /**
+     * Name of the pilot, as configured in the flight instrument.
+     */
+    pilot: z.string().optional(),
+    /**
+     * Name of the glider, as configured in the flight instrument.
+     */
+    glidertype: z.string().optional(),
+    /**
+     * Name of the launch site, as configured in the flight instrument.
+     */
+    site: z.string().optional(),
+    /**
+     * Date of flight (YYYY, MM, DD).
+     */
+    dateYmd: z.tuple([z.number(), z.number(), z.number()]).optional(),
+    /**
+     * Launch infos.
+     */
+    launch: SCHEMA_API_LAUNCH_LANDING_INFO.optional(),
+    /**
+     * Landing infos.
+     */
+    landing: SCHEMA_API_LAUNCH_LANDING_INFO.optional(),
+    /**
+     * Track length in kilometers.
+     */
+    trackDistance: z.number(),
+});
+
+export type FlightInfo = z.infer<typeof SCHEMA_API_FLIGHT_INFO>;
+
+/**
+ * Process IGC file through API.
+ */
+export async function processIgc(blob: Blob): Promise<FlightInfo> {
+    const res = await apiPostBlob('/api/v1/flights/add/process_igc', blob);
+    switch (res.status) {
+        case 200:
+            return SCHEMA_API_FLIGHT_INFO.parse(await res.json());
+        case 401:
+            throw new AuthenticationError();
+        default:
+            throw error(
+                ensureClientOrServerErrorCode(res.status),
+                `Could not submit IGC to API: ${await extractResponseError(res)}`,
             );
     }
 }

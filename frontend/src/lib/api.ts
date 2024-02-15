@@ -19,11 +19,11 @@ const SCHEMA_API_ERROR = z.object({
 });
 
 /**
- * Send a POST request to the API.
+ * Send a JSON POST request to the API.
  */
 export async function apiPost(
     url: string,
-    requestBody?: Record<string, unknown>,
+    requestBody: Record<string, unknown> | undefined,
     fetchImpl = fetch,
 ): Promise<Response> {
     return await fetchImpl(url, {
@@ -35,6 +35,26 @@ export async function apiPost(
             ...COMMON_HEADERS,
         },
         body: requestBody !== undefined ? JSON.stringify(requestBody) : undefined,
+    });
+}
+
+/**
+ * Send a Blob POST request to the API.
+ */
+export async function apiPostBlob(
+    url: string,
+    requestBody: Blob,
+    fetchImpl = fetch,
+): Promise<Response> {
+    return await fetchImpl(url, {
+        method: 'POST',
+        cache: 'no-cache',
+        credentials: 'include',
+        headers: {
+            'content-type': 'application/octet-stream',
+            ...COMMON_HEADERS,
+        },
+        body: requestBody,
     });
 }
 
