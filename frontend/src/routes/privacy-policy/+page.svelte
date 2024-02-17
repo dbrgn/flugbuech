@@ -39,7 +39,7 @@
   </thead>
   <tbody>
     <tr>
-      <td>Anonymized IP Address</td>
+      <td>Anonymized IP address</td>
       <td class="is-italic">178.197.222.0</td>
       <td
         >IP addresses are anonymized (by discarding the last octet) and stored in web server access
@@ -47,7 +47,7 @@
       >
     </tr>
     <tr>
-      <td>HTTP User Agent</td>
+      <td>HTTP user agent</td>
       <td class="is-italic"
         >Mozilla/5.0 (X11; Linux x86_64; rv:120.0) Gecko/20100101 Firefox/120.0</td
       >
@@ -90,7 +90,7 @@
       >
     </tr>
     <tr>
-      <td>HTTP Referer</td>
+      <td>HTTP referer</td>
       <td class="is-italic">https://duckduckgo.com/</td>
       <td
         >We use the referrer string to find the number of visitors referred to our website from
@@ -107,7 +107,7 @@
       >
     </tr>
     <tr>
-      <td>Operating System</td>
+      <td>Operating system</td>
       <td class="is-italic">macOS 10.15</td>
       <td
         >We use this to find out what operating systems people use when visiting our website. We
@@ -116,7 +116,7 @@
       >
     </tr>
     <tr>
-      <td>Device Type</td>
+      <td>Device type</td>
       <td class="is-italic">Desktop</td>
       <td
         >We use this to find out what devices people use when visiting your website. Devices are
@@ -125,7 +125,7 @@
       >
     </tr>
     <tr>
-      <td>Country, Region, City</td>
+      <td>Country, region, city</td>
       <td class="is-italic">Switzerland, St. Gallen, Rapperswil</td>
       <td
         >We look up the visitor's location using their IP address. We do not track anything more
@@ -157,22 +157,18 @@
   </thead>
   <tbody>
     <tr>
-      <td>Information about Flight</td>
+      <td>Information about flight</td>
       <td
         >Launch location, landing location, glider, flight duration, distance, etc. This information
         is manually entered or imported from an IGC file.</td
       >
     </tr>
     <tr>
-      <td>IGC Flight Recording</td>
+      <td>IGC flight recording</td>
       <td
         >The IGC file (optional) includes timestamps and location information from the flight. It
         might also include the pilot's name.</td
       >
-    </tr>
-    <tr>
-      <td>Flight Comment</td>
-      <td>Optionally you can enter a comment about the flight.</td>
     </tr>
   </tbody>
 </table>
@@ -215,4 +211,4 @@
 
 <h3 class="title is-size-3">Last Update</h3>
 
-<p class="content">This page was last updated on December 21, 2023.</p>
+<p class="content">This page was last updated on February 18, 2024.</p>
