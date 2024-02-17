@@ -207,7 +207,12 @@
               <i class="fa-solid fa-trash-alt"></i>
             </button>
             {#if flight.hasIgc}
-              <a class="icon" title="Download IGC" href="/flights/{flight.id}/igc/">
+              <a
+                class="icon"
+                title="Download IGC"
+                href="/api/v1/flights/{flight.id}/igc/"
+                data-sveltekit-reload
+              >
                 <i class="fa-solid fa-download"></i>
               </a>
             {/if}
