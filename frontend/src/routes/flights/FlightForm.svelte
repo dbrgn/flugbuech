@@ -4,9 +4,11 @@
   import MessageModal from '$lib/components/MessageModal.svelte';
   import {reactive} from '$lib/svelte';
 
-  import {processIgc, type Flight, type FlightLocation} from './api';
-  import type {Glider} from '../gliders/api';
   import type {XContestTracktype} from '$lib/xcontest';
+  import {u8aToBase64} from '$lib/base64';
+
+  import type {Glider} from '../gliders/api';
+  import {processIgc, type Flight, type FlightLocation} from './api';
 
   // Props
   export let flight: Flight | undefined = undefined;
@@ -238,16 +240,14 @@
         // because we want to store the file in the database, we can't stream it to disk anyways.
         const reader = new FileReader();
         reader.onload = (e) => {
-          const binaryString = e.target?.result;
-          if (typeof binaryString === 'string') {
-            // TODO: btoa cannot handle unicode
-            igcBase64 = btoa(binaryString)
-              .replace(/\+/g, '-')
-              .replace(/\//g, '_')
-              .replace(/=/g, '');
+          const bytes = e.target?.result;
+          if (bytes instanceof ArrayBuffer) {
+            igcBase64 = u8aToBase64(new Uint8Array(bytes), {urlSafe: true, noPad: true});
+          } else {
+            throw new Error('Unexpected file read format');
           }
         };
-        reader.readAsBinaryString(file);
+        reader.readAsArrayBuffer(file);
       })
       .catch((e) => {
         alert(`Could not process IGC file: ${e}`);
