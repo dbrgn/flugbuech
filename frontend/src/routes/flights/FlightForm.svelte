@@ -183,17 +183,24 @@
   }
 
   // Handle file uploads
-  function onFileInputChange(fileList: FileList): void {
-    const file = fileList[0];
+  function onFileInputChange(): void {
+    // Ensure that file is present
+    const file = files?.[0];
     if (file === undefined) {
       return;
     }
-    console.log('Submitting data');
+
+    // Only process IGC files
+    if (!file.name.toLocaleLowerCase().endsWith('.igc')) {
+      alert(`File "${file.name}" does not end with .igc, ignoring`);
+      files = undefined;
+      return;
+    }
+
+    console.log('Submitting IGC data');
     processIgc(file)
       .then((flightInfo) => {
         console.log(flightInfo); // TODO remove
-
-        // TODO: Determine glider
 
         // Determine flight date
         if (flightInfo.dateYmd) {
@@ -205,21 +212,21 @@
           }
         }
 
-        // Determine launch time
-        if (flightInfo.launch && flightInfo.launch.timeHms) {
-          if (launchTime === '') {
-            launchTime = hmsToTimevalue(flightInfo.launch.timeHms);
-          }
+        // Determine launch and landing time
+        if (launchTime === '' && flightInfo.launch?.timeHms !== undefined) {
+          launchTime = hmsToTimevalue(flightInfo.launch.timeHms);
+        }
+        if (landingTime === '' && flightInfo.landing?.timeHms !== undefined) {
+          landingTime = hmsToTimevalue(flightInfo.landing.timeHms);
         }
 
-        // Determine landing time
-        if (flightInfo.landing && flightInfo.landing.timeHms) {
-          if (landingTime === '') {
-            landingTime = hmsToTimevalue(flightInfo.landing.timeHms);
-          }
+        // Determine launch and landing sites
+        if (launchAt === undefined && flightInfo.launch?.locationId !== undefined) {
+          launchAt = locations.find((value) => value.id === flightInfo.launch?.locationId);
         }
-
-        // TODO: Determine launch and landing sites
+        if (landingAt === undefined && flightInfo.landing?.locationId !== undefined) {
+          landingAt = locations.find((value) => value.id === flightInfo.landing?.locationId);
+        }
 
         // Determine track distance
         if (trackDistance === '') {
@@ -246,6 +253,7 @@
         alert(`Could not process IGC file: ${e}`);
       });
   }
+  $: reactive(onFileInputChange, [files]);
 
   // File drop target
   let dragFileOverlayVisible = false;
@@ -267,8 +275,7 @@
       e.preventDefault();
       onDragLeave(e);
       if (e.dataTransfer && e.dataTransfer.files) {
-        console.log(e.dataTransfer.files);
-        onFileInputChange(e.dataTransfer.files);
+        files = e.dataTransfer.files;
       }
     }
 
@@ -347,8 +354,7 @@
               </span>
               <span class="file-label"> Click to upload IGC file </span>
             </span>
-            <span class="file-name">No file selected…</span>
-            <!-- TODO: Update filename on change -->
+            <span class="file-name">{files?.[0].name ?? 'No file selected…'}</span>
           </label>
         </div>
       </div>
