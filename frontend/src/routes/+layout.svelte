@@ -35,7 +35,7 @@
         <a class="navbar-item" href="/locations/">My Locations</a>
         <a class="navbar-item" href="/flights/">My Flights</a>
         <a class="navbar-item" href="/stats/">Stats</a>
-        <a class="navbar-item" href="https://example.com/flights/add/">Submit flight</a>
+        <a class="navbar-item" href="/flights/add/">Submit flight</a>
       {/if}
     </div>
     <div class="navbar-end">

@@ -1,7 +1,7 @@
 use std::{env, fmt};
 
 use diesel::{
-    dsl::{count, exists, max, select},
+    dsl::{count, exists, select},
     prelude::*,
     result::{Error, QueryResult},
     sql_types::{BigInt, Bool, Double, Integer, Nullable, SmallInt, Text},
@@ -312,14 +312,6 @@ pub fn get_flights_for_user(conn: &mut PgConnection, user: &User) -> Vec<Flight>
         .order((flights::number.desc(), flights::launch_time.desc()))
         .load(conn)
         .expect("Error loading flights")
-}
-
-/// Retrieve the highest flight number for a specific user.
-pub fn get_max_flight_number_for_user(conn: &mut PgConnection, user: &User) -> Option<i32> {
-    Flight::belonging_to(user)
-        .select(max(flights::number))
-        .first(conn)
-        .expect("Error loading flight count")
 }
 
 /// Retrieve flight with the specified ID.
@@ -705,65 +697,6 @@ mod tests {
             validate_password_format(password),
             Err(RegistrationError::InvalidPasswordFormat)
         );
-    }
-
-    #[test]
-    fn test_get_max_flight_number_for_user() {
-        let ctx = test_utils::DbTestContext::new();
-
-        // No flights
-        let n = get_max_flight_number_for_user(&mut ctx.force_get_conn(), &ctx.testuser1.user);
-        assert_eq!(n, None);
-
-        // Single flight, no number
-        diesel::insert_into(flights::table)
-            .values(NewFlight {
-                number: None,
-                user_id: ctx.testuser1.user.id,
-                ..Default::default()
-            })
-            .execute(&mut *ctx.force_get_conn())
-            .expect("Could not create flight");
-        let n = get_max_flight_number_for_user(&mut ctx.force_get_conn(), &ctx.testuser1.user);
-        assert_eq!(n, None);
-
-        // Now insert some flights with a flight number
-        diesel::insert_into(flights::table)
-            .values(vec![
-                NewFlight {
-                    number: Some(1),
-                    user_id: ctx.testuser1.user.id,
-                    ..Default::default()
-                },
-                NewFlight {
-                    number: Some(-1),
-                    user_id: ctx.testuser1.user.id,
-                    ..Default::default()
-                },
-                NewFlight {
-                    number: Some(7),
-                    user_id: ctx.testuser1.user.id,
-                    ..Default::default()
-                },
-                NewFlight {
-                    number: None,
-                    user_id: ctx.testuser1.user.id,
-                    ..Default::default()
-                },
-                NewFlight {
-                    number: Some(2),
-                    user_id: ctx.testuser1.user.id,
-                    ..Default::default()
-                },
-            ])
-            .execute(&mut *ctx.force_get_conn())
-            .expect("Could not create flight");
-        let n = get_max_flight_number_for_user(&mut ctx.force_get_conn(), &ctx.testuser1.user);
-        assert_eq!(n, Some(7));
-
-        // The user id is properly taken into account
-        let n = get_max_flight_number_for_user(&mut ctx.force_get_conn(), &ctx.testuser2.user);
-        assert_eq!(n, None);
     }
 
     #[test]

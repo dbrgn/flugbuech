@@ -1,4 +1,4 @@
-use std::io::Cursor;
+use std::{borrow::Cow, io::Cursor};
 
 use rocket::{
     http::{ContentType, Status},
@@ -19,7 +19,7 @@ pub struct RocketError {
 pub struct RocketErrorInner {
     pub code: u16,
     pub reason: &'static str,
-    pub description: &'static str,
+    pub description: Cow<'static, str>,
 }
 
 impl RocketError {
@@ -34,7 +34,7 @@ impl RocketError {
                 error: RocketErrorInner {
                     code: status.code,
                     reason,
-                    description,
+                    description: description.into(),
                 },
             }),
         )
@@ -43,6 +43,7 @@ impl RocketError {
 
 pub enum ApiError {
     MissingAuthentication,
+    InvalidData { message: String },
 }
 
 #[rocket::async_trait]
@@ -55,7 +56,19 @@ impl<'r> response::Responder<'r, 'static> for ApiError {
                     error: RocketErrorInner {
                         code: 401,
                         reason: "MissingAuthentication",
-                        description: "Not authenticated, please log in",
+                        description: "Not authenticated, please log in".into(),
+                    },
+                })
+                .unwrap(),
+            ),
+
+            ApiError::InvalidData { message } => (
+                Status::BadRequest,
+                json::to_string(&RocketError {
+                    error: RocketErrorInner {
+                        code: 400,
+                        reason: "InvalidData",
+                        description: message.into(),
                     },
                 })
                 .unwrap(),

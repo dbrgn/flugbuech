@@ -89,7 +89,7 @@
   <li><strong>2020-06-14:</strong> Allow editing your gliders</li>
   <li>
     <strong>2020-06-12:</strong> Statistics about your flights have been added! Check out
-    <a href="https://example.com/stats/">/stats/</a>.
+    <a href="/stats/">/stats/</a>.
   </li>
   <li><strong>2019-12-18:</strong> IGC files from XContest can now be parsed properly</li>
 </ul>

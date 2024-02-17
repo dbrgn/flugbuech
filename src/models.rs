@@ -181,6 +181,7 @@ pub struct Flight {
     /// GPS track length
     pub track_distance: Option<f32>,
     /// XContest tracktype (free_flight, flat_triangle or fai_triangle)
+    /// TODO: Proper newtype
     pub xcontest_tracktype: Option<String>,
     /// XContest distance
     pub xcontest_distance: Option<f32>,

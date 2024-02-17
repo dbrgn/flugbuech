@@ -8,7 +8,16 @@
   import {u8aToBase64} from '$lib/base64';
 
   import type {Glider} from '../gliders/api';
-  import {processIgc, type Flight, type FlightLocation} from './api';
+  import {
+    processIgc,
+    type Flight,
+    type FlightLocation,
+    addApiFlight,
+    type SubmitErrorData,
+    SubmitError,
+  } from './api';
+  import {addFlash} from '$lib/stores';
+  import {goto} from '$app/navigation';
 
   // Props
   export let flight: Flight | undefined = undefined;
@@ -22,7 +31,7 @@
   let files: FileList | undefined = undefined;
   let igcBase64: string | undefined = undefined;
   let number: number | null = flight?.number ?? null;
-  let glider: number | undefined = lastGliderId; // TODO: Is this validated by the API?
+  let glider: number | undefined = lastGliderId;
   let launchAt: FlightLocation | undefined = flight?.launchAt;
   let landingAt: FlightLocation | undefined = flight?.landingAt;
   let hikeandfly: boolean = flight?.hikeandfly ?? false;
@@ -153,7 +162,7 @@
 
   // Error handling
   let submitEnabled = true;
-  let submitError: {type: 'authentication'} | {type: 'api-error'; message: string} | undefined;
+  let submitError: SubmitErrorData | undefined;
 
   // Form submission
   async function submitForm(): Promise<void> {
@@ -161,9 +170,42 @@
     validateAll();
     if (Object.values(fieldErrors).every((error) => error === undefined)) {
       // All fields valid
-      console.log(flight === undefined ? 'Sending new flight to API' : 'Updating flight via API');
-      console.log('igc string', igcBase64); // TODO
-      // TODO
+      if (flight === undefined) {
+        console.log('Sending new flight to API');
+        try {
+          await addApiFlight({
+            number: number ?? undefined,
+            glider,
+            launchSite: launchAt?.id,
+            landingSite: landingAt?.id,
+            launchDate,
+            launchTime,
+            landingTime,
+            hikeandfly,
+            trackDistance: trackDistance === '' ? undefined : parseFloat(trackDistance),
+            xcontestTracktype,
+            xcontestDistance: xcontestDistance === '' ? undefined : parseFloat(xcontestDistance),
+            xcontestUrl: xcontestUrl === '' ? undefined : xcontestUrl,
+            comment,
+            videoUrl: videoUrl === '' ? undefined : videoUrl,
+            igcData: igcBase64,
+          });
+          addFlash({
+            message: 'Flight successfully added',
+            severity: 'success',
+            icon: 'fa-circle-check',
+          });
+          goto('/flights/');
+        } catch (error) {
+          if (error instanceof SubmitError) {
+            submitError = error.data;
+          } else {
+            submitError = {type: 'api-error', message: `Unknown API error: ${error}`};
+          }
+        }
+      } else {
+        // TODO editing
+      }
       submitEnabled = true;
     } else {
       console.warn('Some fields are not valid, not submitting form');
@@ -202,8 +244,6 @@
     console.log('Submitting IGC data');
     processIgc(file)
       .then((flightInfo) => {
-        console.log(flightInfo); // TODO remove
-
         // Determine flight date
         if (flightInfo.dateYmd) {
           if (launchDate === '') {

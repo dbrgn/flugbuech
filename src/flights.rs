@@ -2,30 +2,29 @@
 
 use std::{collections::HashMap, io::Cursor, sync::Arc};
 
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use chrono::{
     naive::{NaiveDate, NaiveDateTime, NaiveTime},
     DateTime, Utc,
 };
 use rocket::{
-    form::{error::ErrorKind, Errors, Form, FromForm},
     get,
     http::{ContentType, Header, Status},
     post,
-    request::{FlashMessage, Request},
+    request::Request,
     response::{self, Flash, Redirect, Responder, Response},
     routes,
-    serde::json::Json,
+    serde::{
+        json::Json,
+        {Deserialize, Serialize},
+    },
     uri, Route,
 };
 use rocket_dyn_templates::Template;
-use serde::Serialize;
 
 use crate::{
-    auth,
-    base64::Base64Data,
-    data,
-    models::{Flight, Glider, Location, NewFlight, User},
-    optionresult::OptionResult,
+    auth, data,
+    models::{Flight, Location, NewFlight, User},
     responders::ApiError,
 };
 
@@ -160,7 +159,40 @@ pub struct ApiFlight {
 
 // Forms
 
-// ...
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct FlightAddForm {
+    /// Flight number
+    number: Option<i32>,
+    /// Glider ID
+    glider: Option<i32>,
+    /// Launch site ID
+    launch_site: Option<i32>,
+    /// Landing site ID
+    landing_site: Option<i32>,
+    /// Launch date
+    launch_date: Option<NaiveDate>,
+    /// Launch time
+    launch_time: Option<NaiveTime>,
+    /// Landing time
+    landing_time: Option<NaiveTime>,
+    /// Whether this was a hikeandfly tour
+    hikeandfly: Option<bool>,
+    /// Track distance in km
+    track_distance: Option<f32>,
+    /// XContest tracktype
+    xcontest_tracktype: Option<String>,
+    /// XContest distance in km
+    xcontest_distance: Option<f32>,
+    /// XContest URL
+    xcontest_url: Option<String>,
+    /// Flight comment
+    comment: Option<String>,
+    /// Flight video URL
+    video_url: Option<String>,
+    /// IGC file bytes as URL-safe base64 string
+    igc_data: Option<String>,
+}
 
 // API endpoints
 
@@ -353,6 +385,158 @@ pub fn get_nologin(id: i32) -> ApiError {
     ApiError::MissingAuthentication
 }
 
+impl FlightAddForm {
+    /// Validate a `FlightAddForm` submission and convert it to a `NewFlight` model.
+    ///
+    /// If validation fails, return error message.
+    async fn into_new_flight(self, user: &User, database: &data::Database) -> Result<NewFlight, String> {
+        // Look up and validate glider
+        if let Some(glider_id) = self.glider {
+            match database
+                .run(move |db| data::get_glider_by_id(db, glider_id))
+                .await
+            {
+                Some(glider) => {
+                    // Glider found, validate ownership
+                    if glider.user_id != user.id {
+                        return Err("Invalid glider".into());
+                    }
+                }
+                None => return Err("Invalid glider".into()),
+            }
+        }
+
+        // Look up and validate locations
+        let user_location_ids = database
+            .run({
+                let user = user.clone();
+                move |db| data::get_locations_for_user(db, &user)
+            })
+            .await
+            .into_iter()
+            .map(|location| location.id)
+            .collect::<Vec<_>>();
+        if let Some(ref location_id) = self.launch_site {
+            if !user_location_ids.contains(location_id) {
+                return Err("Invalid launch location".into());
+            }
+        }
+        if let Some(ref location_id) = self.landing_site {
+            if !user_location_ids.contains(location_id) {
+                return Err("Invalid landing location".into());
+            }
+        }
+
+        // Validate distances (must be valid and non-negative)
+        if let Some(distance) = self.track_distance {
+            if distance.is_infinite()
+                || distance.is_subnormal()
+                || distance.is_nan()
+                || distance.is_sign_negative()
+            {
+                return Err(format!("Invalid GPS track distance: {}", distance));
+            }
+        }
+        if let Some(distance) = self.xcontest_distance {
+            if distance.is_infinite()
+                || distance.is_subnormal()
+                || distance.is_nan()
+                || distance.is_sign_negative()
+            {
+                return Err(format!("Invalid XContest scored distance: {}", distance));
+            }
+        }
+
+        // Validate and combine date and time
+        let date_parts = self.launch_date.map(|_| 1).unwrap_or_default()
+            + self.launch_time.map(|_| 1).unwrap_or_default()
+            + self.landing_time.map(|_| 1).unwrap_or_default();
+        if date_parts > 0 && date_parts < 3 {
+            return Err("If you specify launch date, launch time or landing time, \
+                        then the other two values must be provided as well"
+                .into());
+        }
+        let launch_time = self.launch_time.map(|time| {
+            let ndt = NaiveDateTime::new(self.launch_date.unwrap(), time);
+            DateTime::from_naive_utc_and_offset(ndt, Utc) // TODO: Timezone?
+        });
+        let landing_time = self.landing_time.map(|time| {
+            let ndt = NaiveDateTime::new(self.launch_date.unwrap(), time);
+            DateTime::from_naive_utc_and_offset(ndt, Utc) // TODO: Timezone?
+        });
+
+        // Create model
+        Ok(NewFlight {
+            number: self.number,
+            user_id: user.id,
+            glider_id: self.glider,
+            launch_at: self.launch_site,
+            landing_at: self.landing_site,
+            launch_time,
+            landing_time,
+            hikeandfly: self.hikeandfly.unwrap_or_default(),
+            track_distance: self.track_distance,
+            xcontest_tracktype: self.xcontest_tracktype,
+            xcontest_distance: self.xcontest_distance,
+            xcontest_url: self.xcontest_url,
+            comment: self.comment,
+            video_url: self.video_url,
+        })
+    }
+}
+
+#[post("/flights", data = "<data>")]
+pub async fn add(
+    user: auth::AuthUser,
+    database: data::Database,
+    data: Json<FlightAddForm>,
+) -> Result<Status, ApiError> {
+    log::debug!("flights::add");
+    let user = user.into_inner();
+
+    // TODO: Test error handling for too-large IGC file
+
+    // Decode IGC data
+    let igc_bytes = if let Some(ref base64) = data.igc_data {
+        Some(
+            URL_SAFE_NO_PAD
+                .decode(base64)
+                .map_err(|e| ApiError::InvalidData {
+                    message: format!("Invalid base64 data for IGC file: {}", e),
+                })?,
+        )
+    } else {
+        None
+    };
+
+    // Convert flight into `NewFlight`
+    let new_flight = data
+        .into_inner()
+        .into_new_flight(&user, &database)
+        .await
+        .map_err(|e| ApiError::InvalidData {
+            message: format!("Invalid flight data: {}", e),
+        })?;
+
+    // Insert flight into database
+    database
+        .run(move |db| {
+            data::create_flight(db, &new_flight, igc_bytes);
+            log::info!("Created flight for user {}", user.id);
+            if let Some(glider_id) = new_flight.glider_id {
+                data::update_user_last_glider(db, &user, glider_id);
+            }
+        })
+        .await;
+
+    Ok(Status::Created)
+}
+
+#[post("/flights/add", rank = 2)]
+pub fn add_nologin() -> ApiError {
+    ApiError::MissingAuthentication
+}
+
 // IGC Download
 
 /// Responder that returns the `data` bytes with the `content_type` header as a
@@ -425,165 +609,20 @@ pub async fn igc_download(
 
 /// Return vec of all API routes.
 pub fn api_routes() -> Vec<Route> {
-    routes![list, list_nologin, get, get_nologin, igc_download]
+    routes![
+        list,
+        list_nologin,
+        get,
+        get_nologin,
+        add,
+        add_nologin,
+        igc_download,
+    ]
 }
 
 // Classic views (TODO remove)
 
-#[derive(FromForm, Debug)]
-pub struct FlightForm {
-    igc_data: OptionResult<Base64Data>,
-    number: OptionResult<i32>,
-    glider: Option<i32>,
-    launch_site: Option<i32>,
-    landing_site: Option<i32>,
-    launch_date: OptionResult<NaiveDate>,
-    launch_time: OptionResult<NaiveTime>,
-    landing_time: OptionResult<NaiveTime>,
-    hikeandfly: bool,
-    track_distance: OptionResult<f32>,
-    xcontest_tracktype: String,
-    xcontest_distance: OptionResult<f32>,
-    xcontest_url: String,
-    comment: String,
-    video_url: String,
-}
-
-impl FlightForm {
-    /// Validate a `FlightForm` submission and convert it to a `NewFlight` model (plus the IGC file data).
-    async fn into_new_flight(
-        self,
-        user: &User,
-        database: &data::Database,
-    ) -> Result<(NewFlight, Option<Vec<u8>>), String> {
-        macro_rules! none_if_empty {
-            ($val:expr) => {
-                if $val.trim().is_empty() {
-                    None
-                } else {
-                    Some($val)
-                }
-            };
-        }
-
-        // IGC data
-        let igc = match self.igc_data {
-            OptionResult::Ok(bytes) => Some(bytes.0),
-            OptionResult::None => None,
-            OptionResult::Err(ref e) => return Err(format!("IGC File: {}", e)),
-        };
-
-        // Extract basic model data
-        let number = match self.number.into_result() {
-            Ok(name) => name,
-            Err(_) => return Err("Invalid flight number".into()),
-        };
-        let user_id = user.id;
-
-        // Extract and validate glider
-        let glider = match self.glider {
-            Some(id) => {
-                match database.run(move |db| data::get_glider_by_id(db, id)).await {
-                    Some(glider) => {
-                        // Validate ownership
-                        if glider.user_id != user.id {
-                            return Err("Invalid glider".into());
-                        }
-                        Some(glider)
-                    }
-                    None => return Err("Invalid glider".into()),
-                }
-            }
-            None => None,
-        };
-
-        // Extract date and time
-        let mut date_parts = 0;
-        let launch_date_naive = match self.launch_date.into_result() {
-            Ok(val) => {
-                if val.is_some() {
-                    date_parts += 1;
-                }
-                val
-            }
-            Err(e) => return Err(format!("Launch date: {}", e)),
-        };
-        let launch_time_naive = match self.launch_time.into_result() {
-            Ok(val) => {
-                if val.is_some() {
-                    date_parts += 1;
-                }
-                val
-            }
-            Err(e) => return Err(format!("Launch time: {}", e)),
-        };
-        let landing_time_naive = match self.landing_time.into_result() {
-            Ok(val) => {
-                if val.is_some() {
-                    date_parts += 1;
-                }
-                val
-            }
-            Err(e) => return Err(format!("Landing time: {}", e)),
-        };
-        if date_parts > 0 && date_parts < 3 {
-            return Err("If you specify launch date, launch time or landing time, \
-                        then the other two values must be provided as well"
-                .into());
-        }
-
-        // Extract launch / landing information
-        let launch_at = self.launch_site;
-        let landing_at = self.landing_site;
-        let launch_time = launch_time_naive.map(|time| {
-            let ndt = NaiveDateTime::new(launch_date_naive.unwrap(), time);
-            DateTime::from_naive_utc_and_offset(ndt, Utc) // TODO: Timezone
-        });
-        let landing_time = landing_time_naive.map(|time| {
-            let ndt = NaiveDateTime::new(launch_date_naive.unwrap(), time);
-            DateTime::from_naive_utc_and_offset(ndt, Utc) // TODO: Timezone
-        });
-        let hikeandfly = self.hikeandfly;
-
-        // Extract track information
-        let track_distance = match self.track_distance.into_result() {
-            Ok(val) => val,
-            Err(_) => return Err("Invalid track distance".into()),
-        };
-        let xcontest_tracktype = none_if_empty!(self.xcontest_tracktype);
-        let xcontest_distance = match self.xcontest_distance.into_result() {
-            Ok(val) => val,
-            Err(_) => return Err("Invalid XContest distance".into()),
-        };
-        let xcontest_url = none_if_empty!(self.xcontest_url);
-
-        // Extract other information
-        let comment = none_if_empty!(self.comment);
-        let video_url = none_if_empty!(self.video_url);
-
-        // Create model
-        let glider_id = glider.as_ref().map(|a| a.id);
-        Ok((
-            NewFlight {
-                number,
-                user_id,
-                glider_id,
-                launch_at,
-                landing_at,
-                launch_time,
-                landing_time,
-                hikeandfly,
-                track_distance,
-                xcontest_tracktype,
-                xcontest_distance,
-                xcontest_url,
-                comment,
-                video_url,
-            },
-            igc,
-        ))
-    }
-}
+/*
 
 #[derive(Serialize)]
 struct SubmitContext {
@@ -593,122 +632,6 @@ struct SubmitContext {
     gliders: Vec<Glider>,
     locations: Vec<Location>,
     error_msg: Option<String>,
-}
-
-#[get("/flights/add")]
-pub async fn submit_form(user: auth::AuthUser, database: data::Database) -> Template {
-    let user = user.into_inner();
-
-    // Query database
-    let (gliders, locations, max_flight_number) = database
-        .run({
-            let user = user.clone();
-            move |db| {
-                (
-                    data::get_gliders_for_user(db, &user),
-                    data::get_locations_for_user(db, &user),
-                    data::get_max_flight_number_for_user(db, &user),
-                )
-            }
-        })
-        .await;
-
-    let context = SubmitContext {
-        user,
-        flight: None,
-        max_flight_number,
-        gliders,
-        locations,
-        error_msg: None,
-    };
-    Template::render("flight_submit", context)
-}
-
-#[get("/flights/add", rank = 2)]
-pub fn submit_form_nologin() -> Redirect {
-    Redirect::to("/auth/login")
-}
-
-#[post("/flights/add", data = "<data>")]
-pub async fn submit(
-    user: auth::AuthUser,
-    database: data::Database,
-    data: Result<Form<FlightForm>, Errors<'_>>,
-) -> Result<Redirect, Template> {
-    log::debug!("flights::submit");
-    let user = user.into_inner();
-
-    let (gliders, locations, max_flight_number) = database
-        .run({
-            let user = user.clone();
-            move |db| {
-                (
-                    data::get_gliders_for_user(db, &user),
-                    data::get_locations_for_user(db, &user),
-                    data::get_max_flight_number_for_user(db, &user),
-                )
-            }
-        })
-        .await;
-
-    macro_rules! fail {
-        ($msg:expr) => {{
-            let error_msg = $msg.into();
-            log::error!("Could not submit flight for user {}: {}", user.id, error_msg);
-            let ctx = SubmitContext {
-                user,
-                flight: None,
-                max_flight_number,
-                gliders,
-                locations,
-                error_msg: Some(error_msg),
-            };
-            return Err(Template::render("flight_submit", ctx));
-        }};
-    }
-
-    match data {
-        Ok(form) => {
-            // Unwrap `Form<T>`
-            let form = form.into_inner();
-
-            // Convert flight into `NewFlight`
-            let (new_flight, igc) = match form.into_new_flight(&user, &database).await {
-                Ok(val) => val,
-                Err(msg) => fail!(msg),
-            };
-
-            // TODO: Error handling
-
-            // Insert flight into database
-            database
-                .run(move |db| {
-                    data::create_flight(db, &new_flight, igc);
-                    log::info!("Created flight for user {}", user.id);
-                    if let Some(glider_id) = new_flight.glider_id {
-                        data::update_user_last_glider(db, &user, glider_id);
-                    }
-                })
-                .await;
-
-            Ok(Redirect::to(uri!(list)))
-        }
-        Err(errors) => {
-            if let Some(error) = errors.first() {
-                if let ErrorKind::InvalidLength {
-                    max: Some(max_bytes), ..
-                } = error.kind
-                {
-                    fail!(format!(
-                        "The size of the form submission is larger than {} KiB, form cannot be submitted.",
-                        max_bytes / 1024
-                    ));
-                }
-            }
-            eprintln!("Error: Could not parse form: {:?}", errors);
-            fail!("Invalid form, could not parse data. Please contact the admin.");
-        }
-    }
 }
 
 #[get("/flights/<id>/edit")]
@@ -844,6 +767,8 @@ pub async fn edit(
     EditResponse::Success(Redirect::to(uri!(list)))
 }
 
+*/
+
 #[derive(Serialize)]
 struct DeleteContext {
     user: User,
@@ -907,3 +832,5 @@ pub async fn delete(
             Ok(Flash::error(Redirect::to(uri!(list)), "Could not delete flight"))
         })
 }
+
+// TODO: API tests for flight submission and editing

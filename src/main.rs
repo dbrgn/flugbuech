@@ -5,7 +5,6 @@ extern crate diesel;
 extern crate diesel_migrations;
 
 mod auth;
-mod base64;
 mod cors;
 mod data;
 mod filters;
@@ -14,7 +13,6 @@ mod flights;
 mod gliders;
 mod locations;
 mod models;
-mod optionresult;
 mod process_igc;
 mod profile;
 mod responders;
@@ -164,17 +162,7 @@ async fn main() -> Result<()> {
         // Main routes
         .mount(
             "/",
-            routes![
-                index,
-                privacy_policy,
-                flights::edit_form,
-                flights::edit,
-                flights::delete_form,
-                flights::delete,
-                flights::submit_form,
-                flights::submit_form_nologin,
-                flights::submit,
-            ],
+            routes![index, privacy_policy, flights::delete_form, flights::delete],
         )
         // Auth routes
         .mount("/", auth::get_routes())

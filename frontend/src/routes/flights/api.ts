@@ -2,9 +2,9 @@ import type {SvelteKitFetch} from '$lib';
 import {z} from 'zod';
 import {error} from '@sveltejs/kit';
 import {AuthenticationError, ensureClientOrServerErrorCode} from '$lib/errors';
-import {apiPostBlob, extractResponseError} from '$lib/api';
+import {apiPost, apiPostBlob, extractResponseError} from '$lib/api';
 import {SCHEMA_DATETIME_STRING} from '$lib/zod-helpers';
-import {ensureXContestTracktype} from '$lib/xcontest';
+import {ensureXContestTracktype, type XContestTracktype} from '$lib/xcontest';
 
 const SCHEMA_API_FLIGHT_LOCATION = z.object({
     id: z.number(),
@@ -166,3 +166,52 @@ export async function processIgc(blob: Blob): Promise<FlightInfo> {
             );
     }
 }
+
+export interface NewApiFlight {
+    number?: number;
+    glider?: number;
+    launchSite?: number;
+    landingSite?: number;
+    launchDate?: string;
+    launchTime?: string;
+    landingTime?: string;
+    hikeandfly?: boolean;
+    trackDistance?: number;
+    xcontestTracktype?: XContestTracktype;
+    xcontestDistance?: number;
+    xcontestUrl?: string;
+    comment?: string;
+    videoUrl?: string;
+    igcData?: string;
+}
+
+/**
+ * Create a new flight.
+ */
+export async function addApiFlight(flight: NewApiFlight): Promise<void> {
+    const response = await apiPost('/api/v1/flights/', {...flight});
+    switch (response.status) {
+        case 201:
+        case 204:
+            // Success
+            return;
+        case 401:
+            throw new SubmitError('API authentication failed', {type: 'authentication'});
+        default: {
+            throw new SubmitError('API error', {
+                type: 'api-error',
+                message: await extractResponseError(response),
+            });
+        }
+    }
+}
+
+export class SubmitError extends Error {
+    public constructor(
+        message: string,
+        public readonly data: SubmitErrorData,
+    ) {
+        super(message);
+    }
+}
+export type SubmitErrorData = {type: 'authentication'} | {type: 'api-error'; message: string};
