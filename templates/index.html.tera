@@ -44,6 +44,12 @@ you notice any problems or have ideas for new features, please let me know at
 
 <h3 class="title is-size-3">News</h3>
 <ul class="content">
+    <li><strong>2024-01-01:</strong> New year's update: I am working on
+    a <a href="https://github.com/dbrgn/flugbuech/pull/132">rewrite of
+    this website</a>. It should be ready in early 2024. Once it's done,
+    you won't notice much at first, but the update will modernize the
+    codebase and make it easier to add new features in the future!</li>
+    <li><strong>2023-12-21:</strong> There is now a <a href="/privacy-policy">privacy policy</a>!</li>
     <li><strong>2021-09-20:</strong> User registration is implemented</li>
     <li><strong>2021-04-20:</strong> Locations can now be viewed and deleted, number of associated flights is listed</li>
     <li><strong>2021-04-19:</strong> Location editing now supports <a href="https://www.swisstopo.admin.ch/de/karten-daten-online/karten-geodaten-online.html">Swisstopo</a> maps</li>
@@ -54,6 +60,7 @@ you notice any problems or have ideas for new features, please let me know at
     <li><strong>2020-06-12:</strong> Statistics about your flights have been added!
     Check out <a href="/stats/">/stats/</a>.</li>
     <li><strong>2019-12-18:</strong> IGC files from XContest can now be parsed properly</li>
+    <li><strong>2019-04-21:</strong> Development begins</li>
 </ul>
 
 <h3 class="title is-size-3">Stats</h3>
