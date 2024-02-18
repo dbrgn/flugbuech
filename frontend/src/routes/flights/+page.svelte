@@ -154,30 +154,34 @@
         {@const launchAt = flight.launchAt ? data.locations[flight.launchAt] : undefined}
         {@const landingAt = flight.landingAt ? data.locations[flight.landingAt] : undefined}
         <tr>
-          <td>{flight.number}</td>
+          <td>{flight.number ?? '-'}</td>
           <td>
-            {#if flight.launchTime !== undefined}{formatDate(flight.launchTime)}{/if}
+            {#if flight.launchTime !== undefined}{formatDate(flight.launchTime)}{:else}-{/if}
           </td>
-          <td>{flight.gliderName ?? ''}</td>
+          <td>{flight.gliderName ?? '-'}</td>
           <td title={launchAt !== undefined ? `${launchAt.elevation} mASL` : ''}>
             {#if launchAt}
               <CountryFlag countryCode={launchAt.countryCode} />
               <a class="subtle-link" href="/locations/{launchAt.id}">{launchAt.name}</a
               >{#if flight.hikeandfly}&nbsp;<i class="fa-solid fa-hiking" title="Hike &amp; Fly"
                 ></i>{/if}
+            {:else}
+              -
             {/if}
           </td>
           <td title={landingAt !== undefined ? `${landingAt.elevation} mASL` : ''}>
             {#if landingAt}
               <CountryFlag countryCode={landingAt.countryCode} />
               <a class="subtle-link" href="/locations/{landingAt.id}">{landingAt.name}</a>
+            {:else}
+              -
             {/if}
           </td>
           <td>
-            {#if flight.durationSeconds}{formatDuration(flight.durationSeconds)}{/if}
+            {#if flight.durationSeconds}{formatDuration(flight.durationSeconds)}{:else}-{/if}
           </td>
           <td>
-            {#if flight.trackDistance}{formatDistance(flight.trackDistance)}{/if}
+            {#if flight.trackDistance}{formatDistance(flight.trackDistance)}{:else}-{/if}
           </td>
           <td>
             <XContestSummary
