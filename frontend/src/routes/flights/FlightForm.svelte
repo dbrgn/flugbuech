@@ -15,6 +15,8 @@
     addApiFlight,
     type SubmitErrorData,
     SubmitError,
+    type NewApiFlight,
+    editApiFlight,
   } from './api';
   import {addFlash} from '$lib/stores';
   import {goto} from '$app/navigation';
@@ -31,13 +33,19 @@
   let files: FileList | undefined = undefined;
   let igcBase64: string | undefined = undefined;
   let number: number | null = flight?.number ?? null;
-  let glider: number | undefined = lastGliderId;
-  let launchAt: FlightLocation | undefined = flight?.launchAt;
-  let landingAt: FlightLocation | undefined = flight?.landingAt;
+  let glider: number | undefined = flight?.gliderId ?? lastGliderId;
+  // Note: For the select input value binding to work correctly, entries from `locations` must be
+  // used, even if they're compatible with the type included in the flight data.
+  let launchAt: FlightLocation | undefined = locations.find(
+    (location) => location.id == flight?.launchAt?.id,
+  );
+  let landingAt: FlightLocation | undefined = locations.find(
+    (location) => location.id == flight?.landingAt?.id,
+  );
   let hikeandfly: boolean = flight?.hikeandfly ?? false;
   let launchDate: string = flight?.launchTime?.toISOString().slice(0, 10) ?? '';
-  let launchTime: string = flight?.launchTime?.toISOString().slice(0, 10) ?? '';
-  let landingTime: string = flight?.landingTime?.toISOString().slice(0, 10) ?? '';
+  let launchTime: string = flight?.launchTime?.toISOString().slice(11, 19) ?? '';
+  let landingTime: string = flight?.landingTime?.toISOString().slice(11, 19) ?? '';
   let trackDistance: string = flight?.trackDistance?.toFixed(2) ?? '';
   let xcontestTracktype: XContestTracktype | undefined = flight?.xcontestTracktype;
   let xcontestDistance: string = flight?.xcontestDistance?.toFixed(2) ?? '';
@@ -68,7 +76,7 @@
     fieldErrors = {
       ...fieldErrors,
       number:
-        number !== null && existingFlightNumbers.includes(number)
+        number !== null && number !== flight?.number && existingFlightNumbers.includes(number)
           ? 'Flight number already taken'
           : undefined,
     };
@@ -168,43 +176,47 @@
   async function submitForm(): Promise<void> {
     submitEnabled = false;
     validateAll();
-    if (Object.values(fieldErrors).every((error) => error === undefined)) {
-      // All fields valid
-      if (flight === undefined) {
-        console.log('Sending new flight to API');
-        try {
-          await addApiFlight({
-            number: number ?? undefined,
-            glider,
-            launchSite: launchAt?.id,
-            landingSite: landingAt?.id,
-            launchDate,
-            launchTime,
-            landingTime,
-            hikeandfly,
-            trackDistance: trackDistance === '' ? undefined : parseFloat(trackDistance),
-            xcontestTracktype,
-            xcontestDistance: xcontestDistance === '' ? undefined : parseFloat(xcontestDistance),
-            xcontestUrl: xcontestUrl === '' ? undefined : xcontestUrl,
-            comment,
-            videoUrl: videoUrl === '' ? undefined : videoUrl,
-            igcData: igcBase64,
-          });
-          addFlash({
-            message: 'Flight successfully added',
-            severity: 'success',
-            icon: 'fa-circle-check',
-          });
-          goto('/flights/');
-        } catch (error) {
-          if (error instanceof SubmitError) {
-            submitError = error.data;
-          } else {
-            submitError = {type: 'api-error', message: `Unknown API error: ${error}`};
-          }
+    const allFieldsValid = Object.values(fieldErrors).every((error) => error === undefined);
+    if (allFieldsValid) {
+      console.log(flight === undefined ? 'Sending new flight to API' : 'Updating flight via API');
+      const flightData: NewApiFlight = {
+        number: number ?? undefined,
+        glider,
+        launchSite: launchAt?.id,
+        landingSite: landingAt?.id,
+        launchDate: launchDate === '' ? undefined : launchDate,
+        launchTime: launchTime === '' ? undefined : launchTime,
+        landingTime: landingTime === '' ? undefined : landingTime,
+        hikeandfly,
+        trackDistance: trackDistance === '' ? undefined : parseFloat(trackDistance),
+        xcontestTracktype,
+        xcontestDistance: xcontestDistance === '' ? undefined : parseFloat(xcontestDistance),
+        xcontestUrl: xcontestUrl === '' ? undefined : xcontestUrl,
+        comment,
+        videoUrl: videoUrl === '' ? undefined : videoUrl,
+        igcData: igcBase64,
+      };
+      try {
+        if (flight === undefined) {
+          await addApiFlight(flightData);
+        } else {
+          await editApiFlight(flight.id, flightData);
         }
-      } else {
-        // TODO editing
+        addFlash({
+          message:
+            flight === undefined
+              ? 'Flight successfully added'
+              : `Flight ${flight.number ?? ''} successfully updated`,
+          severity: 'success',
+          icon: 'fa-circle-check',
+        });
+        goto('/flights/');
+      } catch (error) {
+        if (error instanceof SubmitError) {
+          submitError = error.data;
+        } else {
+          submitError = {type: 'api-error', message: `Unknown API error: ${error}`};
+        }
       }
       submitEnabled = true;
     } else {
@@ -243,36 +255,36 @@
 
     console.log('Submitting IGC data');
     processIgc(file)
-      .then((flightInfo) => {
+      .then((igcMetadata) => {
         // Determine flight date
-        if (flightInfo.dateYmd) {
+        if (igcMetadata.dateYmd) {
           if (launchDate === '') {
-            const y = flightInfo.dateYmd[0].toString();
-            const m = flightInfo.dateYmd[1].toString().padStart(2, '0');
-            const d = flightInfo.dateYmd[2].toString().padStart(2, '0');
+            const y = igcMetadata.dateYmd[0].toString();
+            const m = igcMetadata.dateYmd[1].toString().padStart(2, '0');
+            const d = igcMetadata.dateYmd[2].toString().padStart(2, '0');
             launchDate = `${y}-${m}-${d}`;
           }
         }
 
         // Determine launch and landing time
-        if (launchTime === '' && flightInfo.launch?.timeHms !== undefined) {
-          launchTime = hmsToTimevalue(flightInfo.launch.timeHms);
+        if (launchTime === '' && igcMetadata.launch?.timeHms !== undefined) {
+          launchTime = hmsToTimevalue(igcMetadata.launch.timeHms);
         }
-        if (landingTime === '' && flightInfo.landing?.timeHms !== undefined) {
-          landingTime = hmsToTimevalue(flightInfo.landing.timeHms);
+        if (landingTime === '' && igcMetadata.landing?.timeHms !== undefined) {
+          landingTime = hmsToTimevalue(igcMetadata.landing.timeHms);
         }
 
         // Determine launch and landing sites
-        if (launchAt === undefined && flightInfo.launch?.locationId !== undefined) {
-          launchAt = locations.find((value) => value.id === flightInfo.launch?.locationId);
+        if (launchAt === undefined && igcMetadata.launch?.locationId !== undefined) {
+          launchAt = locations.find((value) => value.id === igcMetadata.launch?.locationId);
         }
-        if (landingAt === undefined && flightInfo.landing?.locationId !== undefined) {
-          landingAt = locations.find((value) => value.id === flightInfo.landing?.locationId);
+        if (landingAt === undefined && igcMetadata.landing?.locationId !== undefined) {
+          landingAt = locations.find((value) => value.id === igcMetadata.landing?.locationId);
         }
 
         // Determine track distance
         if (trackDistance === '') {
-          trackDistance = flightInfo.trackDistance.toFixed(2);
+          trackDistance = igcMetadata.trackDistance.toFixed(2);
         }
 
         // Because multipart form submissions suck, we convert the file to base64 and later submit
@@ -333,8 +345,10 @@
     // Reset field errors, so user is not greeted with errors on page load
     resetErrors();
 
-    // Set up drag & drop handling
-    setUpDropTarget();
+    // Set up drag & drop handling for flights that don't yet have an IGC file
+    if (flight === undefined || !flight.hasIgc) {
+      setUpDropTarget();
+    }
   });
 </script>
 
@@ -379,7 +393,7 @@
     <h3 class="title is-4">Basic Information</h3>
 
     <label class="label" for="igcFile">IGC Flight Recording</label>
-    {#if flight !== undefined && flight.hasIgc}
+    {#if flight?.hasIgc}
       <p class="content">
         <em>IGC file already uploaded. IGC files cannot be changed after the initial upload.</em>
       </p>
@@ -408,7 +422,6 @@
           type="number"
           class="input"
           class:error={fieldErrors.number !== undefined}
-          min="0"
           step="1"
           bind:value={number}
         />

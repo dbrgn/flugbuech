@@ -58,7 +58,7 @@ struct ApiFlightListItem {
     /// The user-defined flight number
     #[serde(skip_serializing_if = "Option::is_none")]
     number: Option<i32>,
-    /// The glider used
+    /// The name of the glider used
     #[serde(skip_serializing_if = "Option::is_none")]
     glider_name: Option<String>,
     /// Inlined launch location
@@ -118,6 +118,9 @@ pub struct ApiFlight {
     /// The glider used
     #[serde(skip_serializing_if = "Option::is_none")]
     glider_name: Option<String>,
+    /// The ID of the glider used
+    #[serde(skip_serializing_if = "Option::is_none")]
+    glider_id: Option<i32>,
     /// Launch location
     #[serde(skip_serializing_if = "Option::is_none")]
     launch_at: Option<ApiFlightLocation>,
@@ -363,6 +366,7 @@ pub async fn get(id: i32, database: data::Database, user: auth::AuthUser) -> Res
         id: flight.id,
         number: flight.number,
         glider_name,
+        glider_id: flight.glider_id,
         launch_at,
         landing_at,
         launch_time: flight.launch_time,
@@ -509,7 +513,7 @@ pub async fn add(
         None
     };
 
-    // Convert flight into `NewFlight`
+    // Convert request data into `NewFlight`
     let new_flight = data
         .into_inner()
         .into_new_flight(&user, &database)
@@ -534,6 +538,91 @@ pub async fn add(
 
 #[post("/flights/add", rank = 2)]
 pub fn add_nologin() -> ApiError {
+    ApiError::MissingAuthentication
+}
+
+#[post("/flights/<id>", data = "<data>")]
+pub async fn edit(
+    user: auth::AuthUser,
+    database: data::Database,
+    id: i32,
+    data: Json<FlightAddForm>,
+) -> Result<Status, ApiError> {
+    log::debug!("flights::add");
+    let user = user.into_inner();
+
+    // Decode IGC data
+    let igc_bytes = if let Some(ref base64) = data.igc_data {
+        Some(
+            URL_SAFE_NO_PAD
+                .decode(base64)
+                .map_err(|e| ApiError::InvalidData {
+                    message: format!("Invalid base64 data for IGC file: {}", e),
+                })?,
+        )
+    } else {
+        None
+    };
+    log::info!("flight igc {:?}", igc_bytes.is_some());
+
+    // Get flight
+    let mut flight = database
+        .run(move |db| data::get_flight_with_id(db, id))
+        .await
+        .ok_or(ApiError::NotFound)?;
+
+    // Ownership check
+    if flight.user_id != user.id {
+        return Err(ApiError::NotFound);
+    }
+
+    // TODO: Test error handling for too-large IGC file
+
+    // Convert request data into `NewFlight`
+    let new_flight = data
+        .into_inner()
+        .into_new_flight(&user, &database)
+        .await
+        .map_err(|e| ApiError::InvalidData {
+            message: format!("Invalid flight data: {}", e),
+        })?;
+
+    // Update existing flight
+    flight.number = new_flight.number;
+    flight.glider_id = new_flight.glider_id;
+    flight.launch_at = new_flight.launch_at;
+    flight.landing_at = new_flight.landing_at;
+    flight.launch_time = new_flight.launch_time;
+    flight.landing_time = new_flight.landing_time;
+    flight.hikeandfly = new_flight.hikeandfly;
+    flight.track_distance = new_flight.track_distance;
+    flight.xcontest_tracktype = new_flight.xcontest_tracktype;
+    flight.xcontest_distance = new_flight.xcontest_distance;
+    flight.xcontest_url = new_flight.xcontest_url;
+    flight.comment = new_flight.comment;
+    flight.video_url = new_flight.video_url;
+
+    // Save changes
+    // TODO: Error handling
+    database
+        .run(move |db| {
+            data::update_flight(db, &flight);
+            // Note: Only add IGC data if flight doesn't have IGC data yet. Never modify IGC.
+            let has_igc = data::flight_has_igc(db, &flight);
+            if !has_igc {
+                if let Some(data) = igc_bytes {
+                    data::update_igc(db, &flight, &data);
+                }
+            }
+        })
+        .await;
+
+    Ok(Status::NoContent)
+}
+
+#[post("/flights/<id>", rank = 3)]
+#[allow(unused_variables)]
+pub fn edit_nologin(id: i32) -> ApiError {
     ApiError::MissingAuthentication
 }
 
@@ -616,158 +705,13 @@ pub fn api_routes() -> Vec<Route> {
         get_nologin,
         add,
         add_nologin,
+        edit,
+        edit_nologin,
         igc_download,
     ]
 }
 
 // Classic views (TODO remove)
-
-/*
-
-#[derive(Serialize)]
-struct SubmitContext {
-    user: User,
-    flight: Option<Flight>,
-    max_flight_number: Option<i32>,
-    gliders: Vec<Glider>,
-    locations: Vec<Location>,
-    error_msg: Option<String>,
-}
-
-#[get("/flights/<id>/edit")]
-pub async fn edit_form(
-    user: auth::AuthUser,
-    database: data::Database,
-    id: i32,
-    flash: Option<FlashMessage<'_>>,
-) -> Result<Template, Status> {
-    let user = user.into_inner();
-
-    // Get data
-    let (gliders, locations, flight_opt) = database
-        .run({
-            let user = user.clone();
-            move |db| {
-                (
-                    data::get_gliders_for_user(db, &user),
-                    data::get_locations_for_user(db, &user),
-                    data::get_flight_with_id(db, id),
-                )
-            }
-        })
-        .await;
-    let flight = match flight_opt {
-        Some(flight) => flight,
-        None => return Err(Status::NotFound),
-    };
-
-    // Ownership check
-    if flight.user_id != user.id {
-        return Err(Status::Forbidden);
-    }
-
-    // Render template
-    let context = SubmitContext {
-        user,
-        flight: Some(flight),
-        max_flight_number: None,
-        gliders,
-        locations,
-        error_msg: flash.map(|f: FlashMessage| f.message().to_owned()),
-    };
-    Ok(Template::render("flight_submit", context))
-}
-
-#[derive(Debug, Responder)]
-pub enum EditResponse {
-    Success(Redirect),
-    Message(Flash<Redirect>),
-    Error(Status),
-}
-
-#[post("/flights/<id>/edit", data = "<data>")]
-pub async fn edit(
-    user: auth::AuthUser,
-    database: data::Database,
-    id: i32,
-    data: Result<Form<FlightForm>, Errors<'_>>,
-) -> EditResponse {
-    let user = user.into_inner();
-
-    /// If something fails, redirect back to the edit form with an error message.
-    macro_rules! fail {
-        ($msg:expr) => {{
-            return EditResponse::Message(Flash::error(Redirect::to(uri!(edit_form(id))), $msg));
-        }};
-    }
-
-    // Get flight
-    let mut flight = match database.run(move |db| data::get_flight_with_id(db, id)).await {
-        Some(flight) => flight,
-        None => return EditResponse::Error(Status::NotFound),
-    };
-
-    // Ownership check
-    if flight.user_id != user.id {
-        return EditResponse::Error(Status::Forbidden);
-    }
-
-    // Get `NewFlight` instance from form
-    let (new_flight, igc) = match data {
-        Ok(form) => match form.into_inner().into_new_flight(&user, &database).await {
-            Ok(val) => val,
-            Err(msg) => fail!(msg),
-        },
-        Err(errors) => {
-            if let Some(error) = errors.first() {
-                if let ErrorKind::InvalidLength {
-                    max: Some(max_bytes), ..
-                } = error.kind
-                {
-                    fail!(format!(
-                        "The size of the form submission is larger than {} KiB, form cannot be submitted.",
-                        max_bytes / 1024
-                    ));
-                }
-            }
-            eprintln!("Error: Could not parse form: {:?}", errors);
-            fail!("Invalid form, could not parse data. Please contact the admin.");
-        }
-    };
-
-    // Update existing flight
-    flight.number = new_flight.number;
-    flight.user_id = new_flight.user_id;
-    flight.glider_id = new_flight.glider_id;
-    flight.launch_at = new_flight.launch_at;
-    flight.landing_at = new_flight.landing_at;
-    flight.launch_time = new_flight.launch_time;
-    flight.landing_time = new_flight.landing_time;
-    flight.hikeandfly = new_flight.hikeandfly;
-    flight.track_distance = new_flight.track_distance;
-    flight.xcontest_tracktype = new_flight.xcontest_tracktype;
-    flight.xcontest_distance = new_flight.xcontest_distance;
-    flight.xcontest_url = new_flight.xcontest_url;
-    flight.comment = new_flight.comment;
-    flight.video_url = new_flight.video_url;
-
-    // Save changes
-    // TODO: Error handling
-    database
-        .run(move |db| {
-            data::update_flight(db, &flight);
-            if let Some(data) = igc {
-                // We don't want to overwrite IGC data with nothing.
-                data::update_igc(db, &flight, &data);
-            }
-        })
-        .await;
-
-    // Render template
-    EditResponse::Success(Redirect::to(uri!(list)))
-}
-
-*/
 
 #[derive(Serialize)]
 struct DeleteContext {

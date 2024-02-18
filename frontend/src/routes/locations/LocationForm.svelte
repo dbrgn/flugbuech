@@ -101,8 +101,8 @@
   async function submitForm(): Promise<void> {
     submitEnabled = false;
     validateAll();
-    if (Object.values(fieldErrors).every((error) => error === undefined)) {
-      // All fields valid
+    const allFieldsValid = Object.values(fieldErrors).every((error) => error === undefined);
+    if (allFieldsValid) {
       console.log(
         location === undefined ? 'Sending new location to API' : 'Updating location via API',
       );

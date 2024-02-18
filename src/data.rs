@@ -324,11 +324,20 @@ pub fn get_flight_with_id(conn: &mut PgConnection, id: i32) -> Option<Flight> {
 }
 
 /// Save an updated IGC entry in the database.
+///
+/// If no IGC entry existed before, add one.
 pub fn update_igc(conn: &mut PgConnection, flight: &Flight, data: &[u8]) {
-    diesel::update(igcs::table.filter(igcs::flight_id.eq(flight.id)))
+    let val = Igc {
+        flight_id: flight.id,
+        data: data.to_vec(),
+    };
+    diesel::insert_into(igcs::table)
+        .values(val)
+        .on_conflict(igcs::flight_id)
+        .do_update()
         .set(igcs::data.eq(data))
         .execute(conn)
-        .expect("Could not update IGC entry");
+        .expect("Could not update IGC entry for flight");
 }
 
 /// Retrieve IGC data for the specified flight.

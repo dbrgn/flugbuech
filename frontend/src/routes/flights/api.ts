@@ -66,6 +66,7 @@ const SCHEMA_API_FLIGHT = z.object({
     id: z.number(),
     number: z.number().optional(),
     gliderName: z.string().optional(),
+    gliderId: z.number().optional(),
     launchAt: SCHEMA_API_FLIGHT_LOCATION.optional(),
     landingAt: SCHEMA_API_FLIGHT_LOCATION.optional(),
     launchTime: SCHEMA_DATETIME_STRING.optional(),
@@ -115,7 +116,7 @@ const SCHEMA_API_LAUNCH_LANDING_INFO = z.object({
     locationId: z.number().optional(),
 });
 
-const SCHEMA_API_FLIGHT_INFO = z.object({
+const SCHEMA_API_IGC_METADATA = z.object({
     type: z.union([z.literal('success'), z.literal('error')]),
     /**
      * Name of the pilot, as configured in the flight instrument.
@@ -147,16 +148,16 @@ const SCHEMA_API_FLIGHT_INFO = z.object({
     trackDistance: z.number(),
 });
 
-export type FlightInfo = z.infer<typeof SCHEMA_API_FLIGHT_INFO>;
+export type IgcMetadata = z.infer<typeof SCHEMA_API_IGC_METADATA>;
 
 /**
  * Process IGC file through API.
  */
-export async function processIgc(blob: Blob): Promise<FlightInfo> {
+export async function processIgc(blob: Blob): Promise<IgcMetadata> {
     const res = await apiPostBlob('/api/v1/flights/add/process_igc', blob);
     switch (res.status) {
         case 200:
-            return SCHEMA_API_FLIGHT_INFO.parse(await res.json());
+            return SCHEMA_API_IGC_METADATA.parse(await res.json());
         case 401:
             throw new AuthenticationError();
         default:
@@ -192,6 +193,25 @@ export async function addApiFlight(flight: NewApiFlight): Promise<void> {
     const response = await apiPost('/api/v1/flights/', {...flight});
     switch (response.status) {
         case 201:
+            // Success
+            return;
+        case 401:
+            throw new SubmitError('API authentication failed', {type: 'authentication'});
+        default: {
+            throw new SubmitError('API error', {
+                type: 'api-error',
+                message: await extractResponseError(response),
+            });
+        }
+    }
+}
+
+/**
+ * Edit an existing flight.
+ */
+export async function editApiFlight(flightId: number, flight: NewApiFlight): Promise<void> {
+    const response = await apiPost(`/api/v1/flights/${flightId}`, {...flight});
+    switch (response.status) {
         case 204:
             // Success
             return;

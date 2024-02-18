@@ -160,6 +160,7 @@ async fn main() -> Result<()> {
     // Attach routes
     let app = app
         // Main routes
+        // TODO: Remove them all
         .mount(
             "/",
             routes![index, privacy_policy, flights::delete_form, flights::delete],
@@ -184,6 +185,11 @@ async fn main() -> Result<()> {
         .mount("/static", FileServer::from(static_files_dir));
 
     // Launch app
-    app.ignite().await?.launch().await?;
+    app.ignite()
+        .await
+        .context("Could not ignite app")?
+        .launch()
+        .await
+        .context("Could not launch app")?;
     Ok(())
 }

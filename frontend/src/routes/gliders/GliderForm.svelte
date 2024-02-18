@@ -82,8 +82,8 @@
   async function submitForm(): Promise<void> {
     submitEnabled = false;
     validateAll();
-    if (Object.values(fieldErrors).every((error) => error === undefined)) {
-      // All fields valid
+    const allFieldsValid = Object.values(fieldErrors).every((error) => error === undefined);
+    if (allFieldsValid) {
       console.log(glider === undefined ? 'Sending new glider to API' : 'Updating glider via API');
       const url = glider === undefined ? '/api/v1/gliders/' : `/api/v1/gliders/${glider.id}`;
       const response = await apiPost(url, {
@@ -100,10 +100,9 @@
         case 204:
           // Success
           addFlash({
-            message:
-              glider === undefined
-                ? `Glider "${manufacturer} ${model}" successfully added`
-                : `Glider "${manufacturer} ${model}" successfully updated`,
+            message: `Glider "${manufacturer} ${model}" successfully ${
+              glider === undefined ? 'added' : 'updated'
+            }`,
             severity: 'success',
             icon: 'fa-circle-check',
           });

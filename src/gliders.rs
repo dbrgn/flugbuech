@@ -193,6 +193,7 @@ pub async fn edit(
 
     // Ownership check
     if glider.user_id != user.id {
+        // TODO: Don't leak this information, use ApiError::NotFound instead
         return Err(Status::Forbidden);
     }
 

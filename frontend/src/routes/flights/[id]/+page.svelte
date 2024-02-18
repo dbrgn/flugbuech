@@ -16,7 +16,11 @@
   <ul>
     <li><a href="/">Home</a></li>
     <li><a href="/flights/">Flights</a></li>
-    <li class="is-active"><a href="./" aria-current="page">Flight {flight.id}</a></li>
+    <li class="is-active">
+      <a href="./" aria-current="page">
+        Flight {#if flight.number}#{flight.number}{:else}{flight.id}{/if}
+      </a>
+    </li>
   </ul>
 </nav>
 
@@ -24,7 +28,7 @@
 
 <h2 class="title is-2">
   Flight
-  {flight.number || ''}
+  {#if flight.number}#{flight.number}{/if}
   {#if launchAt}from {launchAt.name}{/if}
   {#if landingAt}to {landingAt.name}{/if}
 </h2>

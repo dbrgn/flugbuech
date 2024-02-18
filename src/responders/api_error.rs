@@ -44,6 +44,7 @@ impl RocketError {
 pub enum ApiError {
     MissingAuthentication,
     InvalidData { message: String },
+    NotFound,
 }
 
 #[rocket::async_trait]
@@ -61,7 +62,6 @@ impl<'r> response::Responder<'r, 'static> for ApiError {
                 })
                 .unwrap(),
             ),
-
             ApiError::InvalidData { message } => (
                 Status::BadRequest,
                 json::to_string(&RocketError {
@@ -69,6 +69,17 @@ impl<'r> response::Responder<'r, 'static> for ApiError {
                         code: 400,
                         reason: "InvalidData",
                         description: message.into(),
+                    },
+                })
+                .unwrap(),
+            ),
+            ApiError::NotFound => (
+                Status::NotFound,
+                json::to_string(&RocketError {
+                    error: RocketErrorInner {
+                        code: 404,
+                        reason: "NotFound",
+                        description: "Requested data not found".into(),
                     },
                 })
                 .unwrap(),
