@@ -69,12 +69,10 @@ pub fn get_user(conn: &mut PgConnection, id: i32) -> Option<User> {
 
 #[derive(Debug, PartialEq)]
 pub enum RegistrationError {
-    /// E-Mail is invalid or already registered
+    /// E-mail is invalid or already registered
     InvalidEmail,
     /// Username is invalid or already taken
     NonUniqueUsername,
-    /// The password confirmation does not match
-    PasswordConfirmation,
     /// Password is too short
     InvalidPasswordFormat,
 }
@@ -84,14 +82,11 @@ impl std::error::Error for RegistrationError {}
 impl fmt::Display for RegistrationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            RegistrationError::InvalidEmail => write!(f, "Invalid email format or email is not unique"),
+            RegistrationError::InvalidEmail => write!(f, "Invalid e-mail format or e-mail is not unique"),
             RegistrationError::InvalidPasswordFormat => {
                 write!(f, "Password is too short or does not match format")
             }
             RegistrationError::NonUniqueUsername => write!(f, "Username is not unique"),
-            RegistrationError::PasswordConfirmation => {
-                write!(f, "Password and password confirmation do not match")
-            }
         }
     }
 }
@@ -99,22 +94,20 @@ impl fmt::Display for RegistrationError {
 /// Validate registration params and check for unique attributes { email, username }
 pub fn validate_registration(
     conn: &mut PgConnection,
-    email: &str,
     username: &str,
+    email: &str,
     password: &str,
-    password_confirmation: &str,
 ) -> Result<(), RegistrationError> {
     validate_email(email)?;
-    validate_password_confirmation_match(password, password_confirmation)?;
     validate_password_format(password)?;
-    validate_unique_registration_fields(conn, email, username)?;
+    validate_unique_registration_fields(conn, username, email)?;
     Ok(())
 }
 
 fn validate_unique_registration_fields(
     conn: &mut PgConnection,
-    email: &str,
     username: &str,
+    email: &str,
 ) -> Result<(), RegistrationError> {
     let user: Option<User> = users::table
         .filter(users::username.eq(username))
@@ -126,18 +119,6 @@ fn validate_unique_registration_fields(
         Some(user) if user.email == email => Err(RegistrationError::InvalidEmail),
         Some(_) => unreachable!("Returned user must match with either email or username"),
         None => Ok(()),
-    }
-}
-
-/// Validates that password and confirmation match
-fn validate_password_confirmation_match(
-    password: &str,
-    password_confirmation: &str,
-) -> Result<(), RegistrationError> {
-    if password == password_confirmation {
-        Ok(())
-    } else {
-        Err(RegistrationError::PasswordConfirmation)
     }
 }
 
@@ -180,8 +161,8 @@ pub fn get_user_count(conn: &mut PgConnection) -> i64 {
 pub fn create_user(
     conn: &mut PgConnection,
     username: impl Into<String>,
-    password: impl Into<String>,
     email: impl Into<String>,
+    password: impl Into<String>,
 ) -> User {
     diesel::insert_into(users::table)
         .values(&(
@@ -674,20 +655,8 @@ mod tests {
     ) {
         let ctx = test_utils::DbTestContext::new();
         assert_eq!(
-            validate_unique_registration_fields(&mut ctx.force_get_conn(), email, username),
+            validate_unique_registration_fields(&mut ctx.force_get_conn(), username, email),
             result
-        );
-    }
-
-    #[test]
-    fn test_matching_password_confirmation() {
-        assert_eq!(
-            validate_password_confirmation_match("password", "password"),
-            Ok(())
-        );
-        assert_eq!(
-            validate_password_confirmation_match("password", "passwor"),
-            Err(RegistrationError::PasswordConfirmation)
         );
     }
 

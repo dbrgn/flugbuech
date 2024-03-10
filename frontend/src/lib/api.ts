@@ -19,6 +19,11 @@ const SCHEMA_API_ERROR = z.object({
 });
 
 /**
+ * An API error response.
+ */
+export type ApiError = z.infer<typeof SCHEMA_API_ERROR>;
+
+/**
  * Send a JSON POST request to the API.
  */
 export async function apiPost(
@@ -73,11 +78,18 @@ export async function apiDelete(url: string, fetchImpl = fetch): Promise<Respons
 }
 
 /**
- * Extract the error message from an error response.
+ * Extract the {@link ApiError} from an error response.
+ */
+export async function extractApiError(response: Response): Promise<ApiError> {
+    return SCHEMA_API_ERROR.parse(await response.json());
+}
+
+/**
+ * Extract an error message from an error response.
  */
 export async function extractResponseError(response: Response): Promise<string> {
     try {
-        const error = SCHEMA_API_ERROR.parse(await response.json());
+        const error = await extractApiError(response);
         return `HTTP ${response.status} (${error.error.reason}): ${error.error.description}`;
     } catch (error) {
         console.warn('Failed to parse API response as error:', error);

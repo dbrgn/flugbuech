@@ -34,6 +34,13 @@ pub struct Login {
     password: String,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct Registration {
+    username: String,
+    email: String,
+    password: String,
+}
+
 /// User newtype, wraps the user model, provides guard transparency.
 #[derive(Debug)]
 pub struct AuthUser(User);
@@ -157,59 +164,26 @@ pub fn logout(cookies: &CookieJar<'_>) -> Status {
     Status::NoContent
 }
 
-// Old views
-
-#[derive(FromForm, Clone)]
-pub struct Registration {
-    username: String,
-    email: String,
-    password: String,
-    password_confirmation: String,
-}
-
-/// Redirect requests to registration page if user is already logged in.
-#[get("/auth/registration")]
-pub fn register_user(_user: AuthUser) -> Redirect {
-    Redirect::to("/")
-}
-
-#[derive(Serialize)]
-struct RegistrationContext {
-    min_password_length: usize,
-    flashes: Vec<crate::flash::FlashMessage>,
-}
-
-/// Show the registration page (with flash messages) if not already logged in.
-#[get("/auth/registration", rank = 2)]
-pub fn registration_page(flash: Option<FlashMessage>) -> Template {
-    let flash_messages = if let Some(f) = flash {
-        vec![crate::flash::FlashMessage::from(f)]
-    } else {
-        Vec::new()
-    };
-    let context = RegistrationContext {
-        min_password_length: data::MIN_PASSWORD_LENGTH,
-        flashes: flash_messages,
-    };
-    Template::render("registration", &context)
-}
-
 /// Registration handler
+///
+/// - Return "HTTP 204 No Content" if registration was successful.
+/// - Return "HTTP 400 Bad Request" if request was malformed.
 #[post("/auth/registration", data = "<registration>")]
 pub async fn registration(
     cookies: &CookieJar<'_>,
-    registration: Form<Registration>,
     database: Database,
-) -> Result<Flash<Redirect>, Flash<Redirect>> {
+    registration: Json<Registration>,
+) -> Result<Status, (Status, Json<RocketError>)> {
+    // TODO: Transation for registration
+
     let registration_clone = registration.clone();
     let registration_result = database
         .run(move |db| {
             data::validate_registration(
                 db,
-                &registration_clone.email,
                 &registration_clone.username,
+                &registration_clone.email,
                 &registration_clone.password,
-                &registration_clone.password_confirmation,
             )
         })
         .await;
@@ -221,24 +195,36 @@ pub async fn registration(
                     data::create_user(
                         db,
                         &registration.username,
-                        &registration.password,
                         &registration.email,
+                        &registration.password,
                     )
                 })
                 .await;
             add_auth_cookies(cookies, &new_user);
-            Ok(Flash::success(
-                Redirect::to("/"),
-                "Your account was successfully created",
-            ))
+            Ok(Status::NoContent)
         }
-        Err(error) => {
-            let msg = error.to_string();
-            log::error!("Was not able to register user: {}", msg);
-            Err(Flash::error(Redirect::to(uri!(registration_page)), msg))
-        }
+        Err(data::RegistrationError::NonUniqueUsername) => Err(RocketError::new(
+            Status::BadRequest,
+            "invalid-username",
+            format!(
+                "Invalid username ({}): Invalid or already taken",
+                registration.username,
+            ),
+        )),
+        Err(data::RegistrationError::InvalidEmail) => Err(RocketError::new(
+            Status::BadRequest,
+            "invalid-email",
+            format!("Invalid e-mail address ({})", registration.email),
+        )),
+        Err(data::RegistrationError::InvalidPasswordFormat) => Err(RocketError::new(
+            Status::BadRequest,
+            "invalid-password",
+            "Invalid password: Too short",
+        )),
     }
 }
+
+// Old views
 
 #[derive(FromForm)]
 pub struct PasswordChange {
@@ -313,9 +299,6 @@ pub async fn password_change(
 /// Return the auth routes.
 pub fn get_routes() -> Vec<Route> {
     routes![
-        registration,
-        register_user,
-        registration_page,
         password_change_form,
         password_change_form_nologin,
         password_change,
@@ -324,7 +307,7 @@ pub fn get_routes() -> Vec<Route> {
 
 /// Return vec of all API routes.
 pub fn api_routes() -> Vec<Route> {
-    routes![login, logout]
+    routes![login, logout, registration]
 }
 
 /// A context that just contains the user.

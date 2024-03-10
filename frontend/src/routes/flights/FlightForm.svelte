@@ -175,54 +175,57 @@
   // Form submission
   async function submitForm(): Promise<void> {
     submitEnabled = false;
+
+    // Validate
     validateAll();
     const allFieldsValid = Object.values(fieldErrors).every((error) => error === undefined);
-    if (allFieldsValid) {
-      console.log(flight === undefined ? 'Sending new flight to API' : 'Updating flight via API');
-      const flightData: NewApiFlight = {
-        number: number ?? undefined,
-        glider,
-        launchSite: launchAt?.id,
-        landingSite: landingAt?.id,
-        launchDate: launchDate === '' ? undefined : launchDate,
-        launchTime: launchTime === '' ? undefined : launchTime,
-        landingTime: landingTime === '' ? undefined : landingTime,
-        hikeandfly,
-        trackDistance: trackDistance === '' ? undefined : parseFloat(trackDistance),
-        xcontestTracktype,
-        xcontestDistance: xcontestDistance === '' ? undefined : parseFloat(xcontestDistance),
-        xcontestUrl: xcontestUrl === '' ? undefined : xcontestUrl,
-        comment,
-        videoUrl: videoUrl === '' ? undefined : videoUrl,
-        igcData: igcBase64,
-      };
-      try {
-        if (flight === undefined) {
-          await addApiFlight(flightData);
-        } else {
-          await editApiFlight(flight.id, flightData);
-        }
-        addFlash({
-          message:
-            flight === undefined
-              ? 'Flight successfully added'
-              : `Flight ${flight.number ?? ''} successfully updated`,
-          severity: 'success',
-          icon: 'fa-circle-check',
-        });
-        goto('/flights/');
-      } catch (error) {
-        if (error instanceof SubmitError) {
-          submitError = error.data;
-        } else {
-          submitError = {type: 'api-error', message: `Unknown API error: ${error}`};
-        }
-      }
-      submitEnabled = true;
-    } else {
+    if (!allFieldsValid) {
       console.warn('Some fields are not valid, not submitting form');
       setTimeout(() => (submitEnabled = true), 200);
+      return;
     }
+
+    console.log(flight === undefined ? 'Sending new flight to API' : 'Updating flight via API');
+    const flightData: NewApiFlight = {
+      number: number ?? undefined,
+      glider,
+      launchSite: launchAt?.id,
+      landingSite: landingAt?.id,
+      launchDate: launchDate === '' ? undefined : launchDate,
+      launchTime: launchTime === '' ? undefined : launchTime,
+      landingTime: landingTime === '' ? undefined : landingTime,
+      hikeandfly,
+      trackDistance: trackDistance === '' ? undefined : parseFloat(trackDistance),
+      xcontestTracktype,
+      xcontestDistance: xcontestDistance === '' ? undefined : parseFloat(xcontestDistance),
+      xcontestUrl: xcontestUrl === '' ? undefined : xcontestUrl,
+      comment,
+      videoUrl: videoUrl === '' ? undefined : videoUrl,
+      igcData: igcBase64,
+    };
+    try {
+      if (flight === undefined) {
+        await addApiFlight(flightData);
+      } else {
+        await editApiFlight(flight.id, flightData);
+      }
+      addFlash({
+        message:
+          flight === undefined
+            ? 'Flight successfully added'
+            : `Flight ${flight.number ?? ''} successfully updated`,
+        severity: 'success',
+        icon: 'fa-circle-check',
+      });
+      goto('/flights/');
+    } catch (error) {
+      if (error instanceof SubmitError) {
+        submitError = error.data;
+      } else {
+        submitError = {type: 'api-error', message: `Unknown API error: ${error}`};
+      }
+    }
+    submitEnabled = true;
   }
 
   // TODO: Unit test

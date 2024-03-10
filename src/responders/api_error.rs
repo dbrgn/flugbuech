@@ -26,7 +26,7 @@ impl RocketError {
     pub fn new(
         status: Status,
         reason: &'static str,
-        description: &'static str,
+        description: impl Into<Cow<'static, str>>,
     ) -> (Status, Json<RocketError>) {
         (
             status,

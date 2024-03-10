@@ -36,7 +36,7 @@
         <td>{data.profile.username}</td>
       </tr>
       <tr>
-        <th>E-Mail</th>
+        <th>E-mail</th>
         <td>{data.profile.email}</td>
       </tr>
       <tr>

@@ -93,7 +93,7 @@ Start server:
 ## Registration
 
 In order to register a new user, head to localhost:8000/auth/registration.
-Both email and username have to be unique and the password has to match password confirmation.
+Both e-mail and username have to be unique and the password has to match password confirmation.
 Upon successful registration you will be redirect to the root_path and will see
 a welcome message bearing your username.
 
@@ -129,7 +129,7 @@ configuring your deployment!
 
 Licensed under the AGPL version 3 or later. See `LICENSE.md` file.
 
-    Copyright (C) 2019–2023 Danilo Bargen
+    Copyright (C) 2019–2024 Danilo Bargen
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as

@@ -46,6 +46,7 @@
             <a class="button" href="/auth/logout/" data-sveltekit-reload>Logout</a>
           {:else}
             <a class="button is-light" href="/auth/login/">Login</a>
+            <a class="button is-light" href="/auth/registration/">Register</a>
           {/if}
         </div>
       </div>

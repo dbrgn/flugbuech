@@ -47,7 +47,7 @@
 
 <h4 class="title is-size-5">Can I sign up?</h4>
 <p class="content">
-  Sure thing! Feel free to <a href="https://example.com/auth/registration"> create an account</a>.
+  Sure thing! Feel free to <a href="/auth/registration"> create an account</a>.
 </p>
 <p class="content">
   Keep in mind that this is still beta software and that there may be bugs. If you notice any
