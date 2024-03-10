@@ -84,7 +84,7 @@
   </li>
   <li>
     <strong>2020-07-10:</strong> Your own password
-    <a href="https://example.com/auth/password/change">can now be changed</a>
+    <a href="/auth/password/change/">can now be changed</a>
   </li>
   <li><strong>2020-06-14:</strong> Allow editing your gliders</li>
   <li>

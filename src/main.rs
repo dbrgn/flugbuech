@@ -165,8 +165,6 @@ async fn main() -> Result<()> {
             "/",
             routes![index, privacy_policy, flights::delete_form, flights::delete],
         )
-        // Auth routes
-        .mount("/", auth::get_routes())
         // API routes
         .mount(
             "/api/v1/",

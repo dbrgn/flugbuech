@@ -4,41 +4,48 @@ use std::sync::Arc;
 
 use log::{error, warn};
 use rocket::{
-    form::Form,
-    get,
     http::{Cookie, CookieJar, SameSite, Status},
     outcome::Outcome,
     post,
-    request::{self, FlashMessage, FromRequest, Request},
-    response::{Flash, Redirect},
+    request::{self, FromRequest, Request},
     routes,
     serde::json::Json,
     time::{Duration, OffsetDateTime},
-    uri, FromForm, Route,
+    Route,
 };
-use rocket_dyn_templates::Template;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     data::{self, Database},
     models::User,
-    responders::RocketError,
+    responders::{ApiError, RocketError},
 };
 
 pub const USER_COOKIE_ID: &str = "user_id";
 pub const USER_COOKIE_NAME: &str = "user_name";
 
+// Forms
+
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Login {
     username: String,
     password: String,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct Registration {
     username: String,
     email: String,
     password: String,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct PasswordChange {
+    current_password: String,
+    new_password: String,
 }
 
 /// User newtype, wraps the user model, provides guard transparency.
@@ -167,7 +174,7 @@ pub fn logout(cookies: &CookieJar<'_>) -> Status {
 /// Registration handler
 ///
 /// - Return "HTTP 204 No Content" if registration was successful.
-/// - Return "HTTP 400 Bad Request" if request was malformed.
+/// - Return "HTTP 422 Unprocessable Entity" if registration data was invalid.
 #[post("/auth/registration", data = "<registration>")]
 pub async fn registration(
     cookies: &CookieJar<'_>,
@@ -204,7 +211,7 @@ pub async fn registration(
             Ok(Status::NoContent)
         }
         Err(data::RegistrationError::NonUniqueUsername) => Err(RocketError::new(
-            Status::BadRequest,
+            Status::UnprocessableEntity,
             "invalid-username",
             format!(
                 "Invalid username ({}): Invalid or already taken",
@@ -212,76 +219,56 @@ pub async fn registration(
             ),
         )),
         Err(data::RegistrationError::InvalidEmail) => Err(RocketError::new(
-            Status::BadRequest,
+            Status::UnprocessableEntity,
             "invalid-email",
             format!("Invalid e-mail address ({})", registration.email),
         )),
         Err(data::RegistrationError::InvalidPasswordFormat) => Err(RocketError::new(
-            Status::BadRequest,
+            Status::UnprocessableEntity,
             "invalid-password",
             "Invalid password: Too short",
         )),
     }
 }
 
-// Old views
-
-#[derive(FromForm)]
-pub struct PasswordChange {
-    current: String,
-    new1: String,
-    new2: String,
-}
-
-/// Change user password.
-#[get("/auth/password/change")]
-pub fn password_change_form(user: AuthUser, flash: Option<FlashMessage>) -> Template {
-    let context = UserContext::with_flash(user.into_inner(), flash);
-    Template::render("password-change", &context)
-}
-
-/// Change user password.
-#[get("/auth/password/change", rank = 2)]
-pub fn password_change_form_nologin() -> Redirect {
-    Redirect::to("/auth/login")
-}
-
+/// Password change handler
+///
+/// - Return "HTTP 204 No Content" if password change was successful.
+/// - Return "HTTP 422 Unprocessable Entity" if password change data was invalid.
 #[post("/auth/password/change", data = "<password_change>")]
 pub async fn password_change(
     user: AuthUser,
-    password_change: Form<PasswordChange>,
     database: Database,
-) -> Flash<Redirect> {
+    password_change: Json<PasswordChange>,
+) -> Result<Status, (Status, Json<RocketError>)> {
     let user = Arc::new(user.into_inner());
 
     macro_rules! fail {
         ($msg:expr) => {{
             log::error!("Could not change password for user {}: {}", user.id, $msg);
-            return Flash::error(Redirect::to(uri!(password_change_form)), $msg);
+            return Err(RocketError::new(
+                Status::UnprocessableEntity,
+                "PasswordChangeError",
+                $msg,
+            ));
         }};
     }
 
-    // Compare new passwords
-    if password_change.new1 != password_change.new2 {
-        fail!("Passwords don't match");
-    }
-
     // Ensure minimum length of new password
-    if password_change.new1.len() < data::MIN_PASSWORD_LENGTH {
-        fail!("Password must have at least 8 characters");
+    if password_change.new_password.len() < data::MIN_PASSWORD_LENGTH {
+        fail!("New password must have at least 8 characters");
     }
 
     // Unwrap password fields
     let PasswordChange {
-        current: pw_current,
-        new1: pw_new,
-        ..
+        current_password,
+        new_password,
     } = password_change.into_inner();
 
     // Verify current password
     let user_clone = user.clone();
     match database
-        .run(move |db| data::validate_login(db, &user_clone.username, &pw_current))
+        .run(move |db| data::validate_login(db, &user_clone.username, &current_password))
         .await
     {
         Some(u) if u.id == user.id => { /* Valid password */ }
@@ -291,43 +278,25 @@ pub async fn password_change(
 
     // Update password
     database
-        .run(move |db| data::update_password(db, &user, &pw_new))
+        .run(move |db| data::update_password(db, &user, &new_password))
         .await;
-    Flash::success(Redirect::to("/profile"), "Password changed")
+    Ok(Status::NoContent)
 }
 
-/// Return the auth routes.
-pub fn get_routes() -> Vec<Route> {
-    routes![
-        password_change_form,
-        password_change_form_nologin,
-        password_change,
-    ]
+#[post("/auth/password/change", rank = 2)]
+pub fn password_change_nologin() -> ApiError {
+    ApiError::MissingAuthentication
 }
 
 /// Return vec of all API routes.
 pub fn api_routes() -> Vec<Route> {
-    routes![login, logout, registration]
-}
-
-/// A context that just contains the user.
-#[derive(Serialize)]
-pub struct UserContext {
-    pub user: User,
-    pub flashes: Vec<crate::flash::FlashMessage>,
-}
-
-impl UserContext {
-    pub fn with_flash(user: User, flash: Option<FlashMessage>) -> Self {
-        Self {
-            user,
-            flashes: if let Some(f) = flash {
-                vec![f.into()]
-            } else {
-                vec![]
-            },
-        }
-    }
+    routes![
+        login,
+        logout,
+        registration,
+        password_change,
+        password_change_nologin,
+    ]
 }
 
 #[cfg(test)]
@@ -335,29 +304,17 @@ mod tests {
     use rocket::{
         self,
         http::{ContentType, Status},
-        local::blocking::Client,
+        local::blocking::{Client, LocalResponse},
         serde::json,
     };
 
     use crate::{
-        profile, templates,
+        templates,
         test_utils::{make_test_config, DbTestContext},
         Config,
     };
 
     use super::*;
-
-    /// Create a new test client with cookie tracking.
-    #[deprecated]
-    fn make_client() -> Client {
-        let mut test_routes = get_routes();
-        test_routes.extend(routes![profile::get]);
-        let app = rocket::custom(make_test_config())
-            .attach(data::Database::fairing())
-            .attach(templates::fairing(&Config::default()))
-            .mount("/", test_routes);
-        Client::tracked(app).expect("valid rocket instance")
-    }
 
     /// Create a new test client with cookie tracking.
     fn make_api_client() -> Client {
@@ -421,49 +378,32 @@ mod tests {
         assert!(resp.cookies().get(USER_COOKIE_NAME).is_some());
     }
 
-    #[derive(Debug)]
-    struct ChangeResult {
-        redirect_url: String,
-        body: String,
-    }
-
-    /// Request a password change, return the redirect URL and the body of the redirect target.
+    /// Request a password change, return the redirect response.
     fn password_change_request<'a>(
         client: &'a mut Client,
         ctx: &DbTestContext,
         current: &str,
-        new1: &str,
-        new2: &str,
-    ) -> ChangeResult {
-        let resp1 = client
+        new: &str,
+    ) -> LocalResponse<'a> {
+        client
             .post("/auth/password/change")
-            .header(ContentType::Form)
-            .body(&format!("current={}&new1={}&new2={}", current, new1, new2))
+            .header(ContentType::JSON)
+            .body(
+                json::to_string(&PasswordChange {
+                    current_password: current.into(),
+                    new_password: new.into(),
+                })
+                .unwrap(),
+            )
             .private_cookie(ctx.auth_cookie_user1())
             .cookie(ctx.username_cookie())
-            .dispatch();
-        assert_eq!(resp1.status(), Status::SeeOther);
-        let redirect_url = resp1
-            .headers()
-            .get_one("location")
-            .expect("location header")
-            .to_string();
-        let resp2 = client
-            .get(redirect_url.clone())
-            .private_cookie(ctx.auth_cookie_user1())
-            .cookie(ctx.username_cookie())
-            .dispatch();
-        assert_eq!(resp2.status(), Status::Ok);
-        ChangeResult {
-            redirect_url,
-            body: resp2.into_string().expect("body"),
-        }
+            .dispatch()
     }
 
     #[test]
     fn password_change() {
         let ctx = DbTestContext::new();
-        let mut client = make_client();
+        let mut client = make_api_client();
 
         macro_rules! password_valid {
             ($pw:expr) => {
@@ -482,30 +422,18 @@ mod tests {
             "Test user password does not work"
         );
 
-        // New password mismatch
-        let res = password_change_request(&mut client, &ctx, "a", "b", "c");
-        assert_eq!(res.redirect_url, "/auth/password/change");
-        assert!(
-            res.body.contains("Error: Passwords don&#x27;t match"),
-            "Error message not found"
-        );
-
         // Password too short
-        let res = password_change_request(&mut client, &ctx, &ctx.testuser1.password, "abc", "abc");
-        assert_eq!(res.redirect_url, "/auth/password/change");
-        assert!(
-            res.body
-                .contains("Error: Password must have at least 8 characters"),
-            "Error message not found"
-        );
+        let res = password_change_request(&mut client, &ctx, &ctx.testuser1.password, "abc");
+        assert_eq!(res.status(), Status::UnprocessableEntity);
+        assert!(res
+            .into_string()
+            .unwrap()
+            .contains("New password must have at least 8 characters"));
 
         // Old password is wrong
-        let res = password_change_request(&mut client, &ctx, "iawieoioijf", "abcdefgh", "abcdefgh");
-        assert_eq!(res.redirect_url, "/auth/password/change");
-        assert!(
-            res.body.contains("Error: Invalid current password"),
-            "Error message not found"
-        );
+        let res = password_change_request(&mut client, &ctx, "iawieoioijf", "abcdefgh");
+        assert_eq!(res.status(), Status::UnprocessableEntity);
+        assert!(res.into_string().unwrap().contains("Invalid current password"));
 
         // Ensure password wasn't changed
         assert!(
@@ -514,8 +442,8 @@ mod tests {
         );
 
         // Successful password change
-        let res = password_change_request(&mut client, &ctx, &ctx.testuser1.password, "abcdefgh", "abcdefgh");
-        assert_eq!(res.redirect_url, "/profile");
+        let res = password_change_request(&mut client, &ctx, &ctx.testuser1.password, "abcdefgh");
+        assert_eq!(res.status(), Status::NoContent);
 
         // Ensure password was changed
         assert!(

@@ -1,16 +1,16 @@
 <script lang="ts">
-  import {goto} from '$app/navigation';
+  import {onMount} from 'svelte';
 
   import Flashes from '$lib/components/Flashes.svelte';
   import {addFlash, refreshLoginState} from '$lib/stores';
   import {ensureError} from '$lib/assert';
   import MessageModal from '$lib/components/MessageModal.svelte';
+  import {reactive} from '$lib/svelte';
+  import {MIN_PASSWORD_LENGTH} from '$lib/constants';
+
+  import {goto} from '$app/navigation';
 
   import {apiRegister} from './api';
-  import {reactive} from '$lib/svelte';
-  import {onMount} from 'svelte';
-
-  const minPasswordLength = 8;
 
   // Form values
   let username: string = '';
@@ -47,8 +47,8 @@
     fieldErrors = {
       ...fieldErrors,
       password1:
-        password1.length < minPasswordLength
-          ? `Password must contain at least ${minPasswordLength} characters`
+        password1.length < MIN_PASSWORD_LENGTH
+          ? `Password must contain at least ${MIN_PASSWORD_LENGTH} characters`
           : undefined,
     };
   }
@@ -213,7 +213,7 @@
         class="input"
         class:error={fieldErrors.password1 !== undefined}
         required
-        placeholder="Choose a password (at least {minPasswordLength} characters)"
+        placeholder="Choose a password (at least {MIN_PASSWORD_LENGTH} characters)"
         bind:value={password1}
       />
       <span class="icon is-small is-left">

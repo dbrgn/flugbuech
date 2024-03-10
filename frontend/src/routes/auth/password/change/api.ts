@@ -2,7 +2,7 @@ import {apiPost, extractApiError, extractResponseError} from '$lib/api';
 import {ensureClientOrServerErrorCode} from '$lib/errors';
 import {error} from '@sveltejs/kit';
 
-export type RegistrationResult =
+export type PasswordChangeResult =
     | {
           readonly success: true;
       }
@@ -13,17 +13,15 @@ export type RegistrationResult =
       };
 
 /**
- * Sign up via API.
+ * Change password via API.
  */
-export async function apiRegister(
-    username: string,
-    email: string,
-    password: string,
-): Promise<RegistrationResult> {
-    const res = await apiPost('/api/v1/auth/registration', {
-        username,
-        email,
-        password,
+export async function apiChangePassword(
+    currentPassword: string,
+    newPassword: string,
+): Promise<PasswordChangeResult> {
+    const res = await apiPost('/api/v1/auth/password/change', {
+        currentPassword,
+        newPassword,
     });
     switch (res.status) {
         case 204:
@@ -39,14 +37,14 @@ export async function apiRegister(
             } catch (e) {
                 throw error(
                     ensureClientOrServerErrorCode(res.status),
-                    `Could not register: Unknown error response`,
+                    `Could not change password: Unknown error response`,
                 );
             }
         }
         default:
             throw error(
                 ensureClientOrServerErrorCode(res.status),
-                `Could not register: ${await extractResponseError(res)}`,
+                `Could not change password: ${await extractResponseError(res)}`,
             );
     }
 }

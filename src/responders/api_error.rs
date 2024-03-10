@@ -8,13 +8,13 @@ use rocket::{
 };
 use serde::Serialize;
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct RocketError {
     pub error: RocketErrorInner,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct RocketErrorInner {
     pub code: u16,
