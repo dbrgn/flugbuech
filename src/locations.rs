@@ -58,7 +58,7 @@ pub struct ApiLocations {
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct LocationCreateUpdateForm {
+pub struct LocationAddUpdateForm {
     name: String,
     country_code: String,
     elevation: i32,
@@ -122,13 +122,13 @@ pub fn get_nologin(id: i32) -> ApiError {
 pub async fn add(
     user: auth::AuthUser,
     database: data::Database,
-    data: Json<LocationCreateUpdateForm>,
+    data: Json<LocationAddUpdateForm>,
 ) -> Status {
     log::debug!("locations::add");
     let user = user.into_inner();
 
     // Destructure data
-    let LocationCreateUpdateForm {
+    let LocationAddUpdateForm {
         name,
         country_code,
         elevation,
@@ -169,7 +169,7 @@ pub async fn edit(
     user: auth::AuthUser,
     database: data::Database,
     id: i32,
-    data: Json<LocationCreateUpdateForm>,
+    data: Json<LocationAddUpdateForm>,
 ) -> Result<Status, Status> {
     let user = user.into_inner();
 
@@ -185,7 +185,7 @@ pub async fn edit(
     }
 
     // Update model
-    let LocationCreateUpdateForm {
+    let LocationAddUpdateForm {
         name,
         country_code,
         elevation,
@@ -216,6 +216,12 @@ pub fn edit_nologin(id: i32) -> ApiError {
     ApiError::MissingAuthentication
 }
 
+/// Delete a location.
+///
+/// - Return "HTTP 204 No Content" if location was deleted.
+/// - Return "HTTP 404 Not Found" if location was not found.
+/// - Return "HTTP 403 Forbidden" if location does not belong to user.
+/// - Return "HTTP 409 Conflict" if there are flights associated with this location.
 #[delete("/locations/<id>")]
 pub async fn delete(user: auth::AuthUser, database: data::Database, id: i32) -> Result<Status, Status> {
     let user = user.into_inner();

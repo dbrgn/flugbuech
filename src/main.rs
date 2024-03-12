@@ -161,10 +161,7 @@ async fn main() -> Result<()> {
     let app = app
         // Main routes
         // TODO: Remove them all
-        .mount(
-            "/",
-            routes![index, privacy_policy, flights::delete_form, flights::delete],
-        )
+        .mount("/", routes![index, privacy_policy])
         // API routes
         .mount(
             "/api/v1/",

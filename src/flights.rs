@@ -8,23 +8,20 @@ use chrono::{
     DateTime, Utc,
 };
 use rocket::{
-    get,
+    delete, get,
     http::{ContentType, Header, Status},
     post,
     request::Request,
-    response::{self, Flash, Redirect, Responder, Response},
+    response::{self, Responder, Response},
     routes,
-    serde::{
-        json::Json,
-        {Deserialize, Serialize},
-    },
-    uri, Route,
+    serde::json::Json,
+    Route,
 };
-use rocket_dyn_templates::Template;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     auth, data,
-    models::{Flight, Location, NewFlight, User},
+    models::{Location, NewFlight, User},
     responders::ApiError,
 };
 
@@ -164,7 +161,7 @@ pub struct ApiFlight {
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct FlightAddForm {
+pub struct FlightAddUpdateForm {
     /// Flight number
     number: Option<i32>,
     /// Glider ID
@@ -389,7 +386,7 @@ pub fn get_nologin(id: i32) -> ApiError {
     ApiError::MissingAuthentication
 }
 
-impl FlightAddForm {
+impl FlightAddUpdateForm {
     /// Validate a `FlightAddForm` submission and convert it to a `NewFlight` model.
     ///
     /// If validation fails, return error message.
@@ -493,7 +490,7 @@ impl FlightAddForm {
 pub async fn add(
     user: auth::AuthUser,
     database: data::Database,
-    data: Json<FlightAddForm>,
+    data: Json<FlightAddUpdateForm>,
 ) -> Result<Status, ApiError> {
     log::debug!("flights::add");
     let user = user.into_inner();
@@ -546,7 +543,7 @@ pub async fn edit(
     user: auth::AuthUser,
     database: data::Database,
     id: i32,
-    data: Json<FlightAddForm>,
+    data: Json<FlightAddUpdateForm>,
 ) -> Result<Status, ApiError> {
     log::debug!("flights::add");
     let user = user.into_inner();
@@ -623,6 +620,47 @@ pub async fn edit(
 #[post("/flights/<id>", rank = 3)]
 #[allow(unused_variables)]
 pub fn edit_nologin(id: i32) -> ApiError {
+    ApiError::MissingAuthentication
+}
+
+/// Delete a flight.
+///
+/// - Return "HTTP 204 No Content" if flight was deleted.
+/// - Return "HTTP 404 Not Found" if flight was not found.
+/// - Return "HTTP 403 Forbidden" if flight does not belong to user.
+#[delete("/flights/<id>")]
+pub async fn delete(user: auth::AuthUser, database: data::Database, id: i32) -> Result<Status, Status> {
+    let user = user.into_inner();
+
+    // Get data
+    let flight = match database.run(move |db| data::get_flight_with_id(db, id)).await {
+        Some(flight) => flight,
+        None => return Err(Status::NotFound),
+    };
+
+    // Ownership check
+    if flight.user_id != user.id {
+        return Err(Status::Forbidden);
+    }
+
+    // Delete database entry
+    let flight_id = flight.id;
+    database
+        .run(move |db| data::delete_flight(db, flight))
+        .await
+        .map(|()| {
+            log::info!("Deleted flight with ID {}", flight_id);
+            Status::NoContent
+        })
+        .map_err(|e| {
+            log::error!("Could not delete flight with ID {}: {}", flight_id, e);
+            Status::InternalServerError
+        })
+}
+
+#[delete("/flights/<id>", rank = 2)]
+#[allow(unused_variables)]
+pub fn delete_nologin(id: i32) -> ApiError {
     ApiError::MissingAuthentication
 }
 
@@ -707,74 +745,85 @@ pub fn api_routes() -> Vec<Route> {
         add_nologin,
         edit,
         edit_nologin,
+        delete,
+        delete_nologin,
         igc_download,
     ]
 }
 
-// Classic views (TODO remove)
-
-#[derive(Serialize)]
-struct DeleteContext {
-    user: User,
-    flight: Flight,
-}
-
-#[get("/flights/<id>/delete")]
-pub async fn delete_form(
-    user: auth::AuthUser,
-    database: data::Database,
-    id: i32,
-) -> Result<Template, Status> {
-    let user = user.into_inner();
-
-    // Get data
-    let flight = match database.run(move |db| data::get_flight_with_id(db, id)).await {
-        Some(flight) => flight,
-        None => return Err(Status::NotFound),
-    };
-
-    // Ownership check
-    if flight.user_id != user.id {
-        return Err(Status::Forbidden);
-    }
-
-    // Render template
-    let context = DeleteContext { user, flight };
-    Ok(Template::render("flight_delete", context))
-}
-
-#[post("/flights/<id>/delete")]
-pub async fn delete(
-    user: auth::AuthUser,
-    database: data::Database,
-    id: i32,
-) -> Result<Flash<Redirect>, Status> {
-    let user = user.into_inner();
-
-    // Get data
-    let flight = match database.run(move |db| data::get_flight_with_id(db, id)).await {
-        Some(flight) => flight,
-        None => return Err(Status::NotFound),
-    };
-
-    // Ownership check
-    if flight.user_id != user.id {
-        return Err(Status::Forbidden);
-    }
-
-    // Delete database entry
-    let flight_id = flight.id;
-    database
-        .run(move |db| data::delete_flight(db, flight))
-        .await
-        .map(|()| {
-            log::info!("Deleted flight with ID {}", flight_id);
-            Flash::success(Redirect::to(uri!(list)), "Flight deleted")
-        })
-        .or_else(|e| {
-            log::error!("Could not delete flight with ID {}: {}", flight_id, e);
-            Ok(Flash::error(Redirect::to(uri!(list)), "Could not delete flight"))
-        })
-}
-
 // TODO: API tests for flight submission and editing
+
+#[cfg(test)]
+mod tests {
+    use rocket::{self, local::blocking::Client};
+
+    use crate::{
+        models::NewFlight,
+        templates,
+        test_utils::{make_test_config, DbTestContext},
+        Config,
+    };
+
+    use super::*;
+
+    /// Create a new test client. Cookie tracking is disabled.
+    fn make_client() -> Client {
+        let app = rocket::custom(make_test_config())
+            .attach(data::Database::fairing())
+            .attach(templates::fairing(&Config::default()))
+            .mount("/", api_routes());
+        Client::untracked(app).expect("valid rocket instance")
+    }
+
+    #[test]
+    fn delete_flight() {
+        let ctx = DbTestContext::new();
+        let client = make_client();
+
+        macro_rules! delete_flight {
+            ($id:expr, $cookie:expr) => {
+                client
+                    .delete(format!("/flights/{}", $id))
+                    .private_cookie($cookie)
+                    .cookie(ctx.username_cookie())
+                    .dispatch()
+            };
+        }
+
+        // Add flights
+        let flight1 = data::create_flight(
+            &mut *ctx.force_get_conn(),
+            &NewFlight {
+                number: Some(1),
+                user_id: ctx.testuser1.user.id,
+                ..Default::default()
+            },
+            None,
+        );
+        let flight2 = data::create_flight(
+            &mut *ctx.force_get_conn(),
+            &NewFlight {
+                number: Some(2),
+                user_id: ctx.testuser2.user.id,
+                ..Default::default()
+            },
+            None,
+        );
+
+        // Delete flight 1 from user 1: OK
+        let resp = delete_flight!(flight1.id, ctx.auth_cookie_user1());
+        assert_eq!(resp.status(), Status::NoContent);
+
+        // Delete flight 2 from user 1: Forbidden
+        let resp = delete_flight!(flight2.id, ctx.auth_cookie_user1());
+        assert_eq!(resp.status(), Status::Forbidden);
+
+        // Delete flight 2 from user 2: OK
+        let resp = delete_flight!(flight2.id, ctx.auth_cookie_user2());
+        assert_eq!(resp.status(), Status::NoContent);
+
+        // Delete non-existing flight: Not found
+        let resp = delete_flight!(flight2.id, ctx.auth_cookie_user2());
+        assert_eq!(resp.status(), Status::NotFound);
+    }
+}
