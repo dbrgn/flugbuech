@@ -41,18 +41,18 @@
     <tr>
       <td>Anonymized IP address</td>
       <td class="is-italic">178.197.222.0</td>
-      <td
-        >IP addresses are anonymized (by discarding the last octet) and stored in web server access
+      <td>
+        IP addresses are anonymized (by discarding the last octet) and stored in web server access
         logs for 14 days. After this period, the access logs are deleted.</td
       >
     </tr>
     <tr>
       <td>HTTP user agent</td>
-      <td class="is-italic"
-        >Mozilla/5.0 (X11; Linux x86_64; rv:120.0) Gecko/20100101 Firefox/120.0</td
+      <td class="is-italic">
+        Mozilla/5.0 (X11; Linux x86_64; rv:120.0) Gecko/20100101 Firefox/120.0</td
       >
-      <td
-        >The browser's HTTP user agent is stored in web server access logs for 14 days. After this
+      <td>
+        The browser's HTTP user agent is stored in web server access logs for 14 days. After this
         period, the access logs are deleted.</td
       >
     </tr>
@@ -84,24 +84,24 @@
     <tr>
       <td>Page URL</td>
       <td class="is-italic">https://flugbuech.bargen.dev/stats/</td>
-      <td
-        >We track the page URL of each page view on our website, in order to determine how many
-        times a specific pages has been viewed.</td
+      <td>
+        We track the page URL of each page view on our website, in order to determine how many times
+        a specific pages has been viewed.</td
       >
     </tr>
     <tr>
       <td>HTTP referer</td>
       <td class="is-italic">https://duckduckgo.com/</td>
-      <td
-        >We use the referrer string to find the number of visitors referred to our website from
-        links on other sites.</td
+      <td>
+        We use the referrer string to find the number of visitors referred to our website from links
+        on other sites.</td
       >
     </tr>
     <tr>
       <td>Browser</td>
       <td class="is-italic">Firefox 120.0.1</td>
-      <td
-        >We use this to find out what browsers and browser version numbers people use when visiting
+      <td>
+        We use this to find out what browsers and browser version numbers people use when visiting
         our website. This is derived from the User-Agent HTTP header. The full User-Agent is
         discarded.</td
       >
@@ -109,8 +109,8 @@
     <tr>
       <td>Operating system</td>
       <td class="is-italic">macOS 10.15</td>
-      <td
-        >We use this to find out what operating systems people use when visiting our website. We
+      <td>
+        We use this to find out what operating systems people use when visiting our website. We
         store the brand of the operating system and the version number. This is derived from the
         User-Agent HTTP header. The full User-Agent is discarded.</td
       >
@@ -118,8 +118,8 @@
     <tr>
       <td>Device type</td>
       <td class="is-italic">Desktop</td>
-      <td
-        >We use this to find out what devices people use when visiting your website. Devices are
+      <td>
+        We use this to find out what devices people use when visiting your website. Devices are
         categorized into desktop, mobile or tablet. This is derived from the User-Agent HTTP header.
         The full User-Agent is discarded.</td
       >
@@ -127,8 +127,8 @@
     <tr>
       <td>Country, region, city</td>
       <td class="is-italic">Switzerland, St. Gallen, Rapperswil</td>
-      <td
-        >We look up the visitor's location using their IP address. We do not track anything more
+      <td>
+        We look up the visitor's location using their IP address. We do not track anything more
         granular than the city level and the IP address of the visitor is discarded.</td
       >
     </tr>
@@ -142,6 +142,28 @@
     >plausible.io/data-policy</a
   >.
 </p>
+
+<p class="content">
+  When signing up to this website, the following information is being collected and stored:
+</p>
+
+<table class="table is-hoverable">
+  <thead>
+    <tr>
+      <th>Data point</th>
+      <th>Comment</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>E-mail address</td>
+      <td>
+        Your e-mail address may be used by me to contact you if there are any issues with your
+        account. The e-mail address is not published anywhere.
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 <p class="content">
   When submitting flights to this website as a registered user, the following information is being
@@ -160,15 +182,15 @@
       <td>Information about flight</td>
       <td
         >Launch location, landing location, glider, flight duration, distance, etc. This information
-        is manually entered or imported from an IGC file.</td
-      >
+        is manually entered or imported from an IGC file.
+      </td>
     </tr>
     <tr>
       <td>IGC flight recording</td>
       <td
         >The IGC file (optional) includes timestamps and location information from the flight. It
-        might also include the pilot's name.</td
-      >
+        might also include the pilot's name.
+      </td>
     </tr>
   </tbody>
 </table>
@@ -211,4 +233,4 @@
 
 <h3 class="title is-size-3">Last Update</h3>
 
-<p class="content">This page was last updated on February 18, 2024.</p>
+<p class="content">This page was last updated on March 12, 2024.</p>
