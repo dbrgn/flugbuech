@@ -27,7 +27,7 @@ const SCHEMA_API_GLIDERS_RESPONSE = z.object({
     lastGliderId: z.number().optional(),
 });
 
-export interface Gliders {
+export interface GlidersInfo {
     readonly gliders: Glider[];
     readonly lastGliderId?: number;
 }
@@ -35,7 +35,7 @@ export interface Gliders {
 /**
  * Load gliders from API.
  */
-export async function loadApiGliders(fetch: SvelteKitFetch): Promise<Gliders> {
+export async function loadApiGliders(fetch: SvelteKitFetch): Promise<GlidersInfo> {
     const res = await fetch('/api/v1/gliders');
     switch (res.status) {
         case 200: {

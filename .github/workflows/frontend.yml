@@ -13,7 +13,7 @@ env:
 
 jobs:
   build:
-    name: Build
+    name: Build and check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,6 +23,7 @@ jobs:
       - name: Install npm dependencies
         run: cd frontend && npm ci
       - run: cd frontend && npm run build
+      - run: cd frontend && npm run check
 
   eslint:
     name: Run eslint
