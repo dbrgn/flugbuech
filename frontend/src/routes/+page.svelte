@@ -16,6 +16,18 @@
 
 <Flashes />
 
+<article class="message is-info">
+  <div class="message-header">
+    <p>Update March 2024</p>
+  </div>
+  <div class="message-body">
+    After a longer development break, the complete Flugbuech UI has been rewritten from scratch! It
+    should still look (mostly) the same, but it should react faster for you and be easier to
+    maintain and extend for me. If you have any feedback (positive or negative), contact me at
+    <a href="mailto:flugbuech@bargen.dev">flugbuech@bargen.dev</a> (German or English)!
+  </div>
+</article>
+
 <h2 class="title is-size-2">Overview</h2>
 
 <p class="content">
@@ -66,6 +78,16 @@
 
 <h3 class="title is-size-3">News</h3>
 <ul class="content">
+  <li>
+    <strong>2024-03-13:</strong> After a longer development break, the complete Flugbuech UI has
+    been rewritten from scratch! It should still look (mostly) the same, but it should react faster
+    for you and be easier to maintain and extend for me. If you have any feedback (positive or
+    negative), contact me at <a href="mailto:flugbuech@bargen.dev">flugbuech@bargen.dev</a> (German or
+    English)!
+  </li>
+  <li>
+    <strong>2023-12-21:</strong> There is now a <a href="/privacy-policy/">privacy policy</a>
+  </li>
   <li><strong>2021-09-20:</strong> User registration is implemented</li>
   <li>
     <strong>2021-04-20:</strong> Locations can now be viewed and deleted, number of associated flights
