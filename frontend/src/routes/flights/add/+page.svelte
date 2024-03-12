@@ -2,8 +2,15 @@
   import FlightForm from '../FlightForm.svelte';
   import Flashes from '$lib/components/Flashes.svelte';
   import type {Data} from './+page';
+  import {requireLogin} from '$lib/auth';
+  import {loginState} from '$lib/stores';
+  import {onMount} from 'svelte';
 
   export let data: Data;
+
+  onMount(() => {
+    requireLogin($loginState, '/flights/add/');
+  });
 </script>
 
 <nav class="breadcrumb" aria-label="breadcrumbs">

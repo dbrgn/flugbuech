@@ -17,7 +17,7 @@ export function addFlash(flash: Flash): void {
 
 // Login state
 
-interface LoginState {
+export interface LoginState {
     /**
      * The username indicates (with some certainty) whether or not we are logged in.
      */

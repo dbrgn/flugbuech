@@ -7,10 +7,11 @@
   import {reactive} from '$lib/svelte';
   import {MIN_PASSWORD_LENGTH} from '$lib/constants';
   import {ensureError} from '$lib/assert';
-  import {addFlash} from '$lib/stores';
+  import {addFlash, loginState} from '$lib/stores';
 
   import {apiChangePassword} from './api';
   import PasswordFormInputField from './PasswordFormInputField.svelte';
+  import {requireLogin} from '$lib/auth';
 
   // Form values
   let current: string = '';
@@ -116,6 +117,8 @@
   }
 
   onMount(() => {
+    requireLogin($loginState, `/auth/password/change/`);
+
     // Reset field errors, so user is not greeted with errors on page load
     resetErrors();
   });

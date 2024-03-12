@@ -1,6 +1,13 @@
 <script lang="ts">
   import LocationForm from '../LocationForm.svelte';
   import Flashes from '$lib/components/Flashes.svelte';
+  import {onMount} from 'svelte';
+  import {requireLogin} from '$lib/auth';
+  import {loginState} from '$lib/stores';
+
+  onMount(() => {
+    requireLogin($loginState, '/locations/add/');
+  });
 </script>
 
 <nav class="breadcrumb" aria-label="breadcrumbs">

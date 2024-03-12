@@ -1,24 +1,20 @@
 import {redirect, type NumericRange} from '@sveltejs/kit';
 
+import {getLoginUrl} from '$lib/auth';
+
 export class AuthenticationError extends Error {
     public readonly redirectUrl;
 
     constructor(redirectUrl?: string) {
         super('Not logged in');
-        this.redirectUrl = AuthenticationError.getLoginUrl(redirectUrl);
-    }
-
-    private static getLoginUrl(redirectUrl?: string): string {
-        return redirectUrl !== undefined
-            ? `/auth/login?redirect=${encodeURI(redirectUrl)}`
-            : `/auth/login`;
+        this.redirectUrl = getLoginUrl(redirectUrl);
     }
 
     /**
      * Helper method: Throw an error that redirects to the login page.
      */
     public static redirectToLogin(redirectUrl?: string): never {
-        throw redirect(302, AuthenticationError.getLoginUrl(redirectUrl));
+        throw redirect(302, getLoginUrl(redirectUrl));
     }
 }
 
