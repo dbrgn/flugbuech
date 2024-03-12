@@ -759,9 +759,7 @@ mod tests {
 
     use crate::{
         models::NewFlight,
-        templates,
         test_utils::{make_test_config, DbTestContext},
-        Config,
     };
 
     use super::*;
@@ -770,7 +768,6 @@ mod tests {
     fn make_client() -> Client {
         let app = rocket::custom(make_test_config())
             .attach(data::Database::fairing())
-            .attach(templates::fairing(&Config::default()))
             .mount("/", api_routes());
         Client::untracked(app).expect("valid rocket instance")
     }

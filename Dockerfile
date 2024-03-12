@@ -19,8 +19,6 @@ RUN cd /build/flugbuech \
  && cargo build --release \
  && mkdir /out \
  && cp /build/flugbuech/target/release/flugbuech /out/flugbuech \
- && cp -R /build/flugbuech/static /out/static \
- && cp -R /build/flugbuech/templates /out/templates \
  && cp -R /build/flugbuech/Rocket.toml /out/Rocket.toml
 
 
@@ -45,8 +43,6 @@ RUN mkdir /static \
 
 # Copy backend files
 COPY --from=backend-build --chown=flugbuech:flugbuech /out/flugbuech /flugbuech/flugbuech
-COPY --from=backend-build --chown=flugbuech:flugbuech /out/static /flugbuech/static/
-COPY --from=backend-build --chown=flugbuech:flugbuech /out/templates /flugbuech/templates/
 COPY --from=backend-build --chown=flugbuech:flugbuech /out/Rocket.toml /flugbuech/
 
 # Copy frontend files

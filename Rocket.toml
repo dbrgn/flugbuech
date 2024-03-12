@@ -14,7 +14,6 @@
 form = "3 MiB"
 
 [debug]
-static_files_dir = "static"
 secret_key = "eXqSA0wz+qLlg8umREPesnkBzNlhwaNcp34BttIWLes="
 cors_allow_origin = "*"
 

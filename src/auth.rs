@@ -308,11 +308,7 @@ mod tests {
         serde::json,
     };
 
-    use crate::{
-        templates,
-        test_utils::{make_test_config, DbTestContext},
-        Config,
-    };
+    use crate::test_utils::{make_test_config, DbTestContext};
 
     use super::*;
 
@@ -320,7 +316,6 @@ mod tests {
     fn make_api_client() -> Client {
         let app = rocket::custom(make_test_config())
             .attach(data::Database::fairing())
-            .attach(templates::fairing(&Config::default()))
             .mount("/", api_routes());
         Client::tracked(app).expect("valid rocket instance")
     }
