@@ -15,11 +15,7 @@ FROM docker.io/rust:1-buster AS backend-build
 
 # Build binary
 COPY . /build/flugbuech/
-RUN cd /build/flugbuech \
- && cargo build --release \
- && mkdir /out \
- && cp /build/flugbuech/target/release/flugbuech /out/flugbuech \
- && cp -R /build/flugbuech/Rocket.toml /out/Rocket.toml
+RUN cd /build/flugbuech && cargo build --release
 
 
 ###### RUNTIME ######
@@ -42,13 +38,11 @@ RUN mkdir /static \
  && chmod 0700 /static/
 
 # Copy backend files
-COPY --from=backend-build --chown=flugbuech:flugbuech /out/flugbuech /flugbuech/flugbuech
-COPY --from=backend-build --chown=flugbuech:flugbuech /out/Rocket.toml /flugbuech/
+COPY --from=backend-build --chown=flugbuech:flugbuech /build/flugbuech/target/release/flugbuech-api /flugbuech/flugbuech-api
+COPY --from=backend-build --chown=flugbuech:flugbuech /build/flugbuech/Rocket.toml /flugbuech/Rocket.toml
 
 # Copy frontend files
-COPY --from=frontend-build --chown=flugbuech:flugbuech /build/flugbuech/static/js/*.component.js /flugbuech/static/js/
-COPY --from=frontend-build --chown=flugbuech:flugbuech /build/flugbuech/static/js/maplibre-gl.* /flugbuech/static/js/
-COPY --from=frontend-build --chown=flugbuech:flugbuech /build/flugbuech/static/css/maplibre-gl.* /flugbuech/static/css/
+COPY --from=frontend-build --chown=flugbuech:flugbuech /build/flugbuech/build /flugbuech/static
 
 # Specify workdir and user
 WORKDIR /flugbuech
@@ -59,4 +53,4 @@ VOLUME ["/static"]
 
 ENV RUST_BACKTRACE=1
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["/bin/bash", "-c", "rm -rf /static/{js,img,css,svelte}/ && cp -Rv /flugbuech/static/* /static/ && exec ./flugbuech --migrate"]
+CMD ["/bin/bash", "-c", "rm -rf /static/* && cp -Rv /flugbuech/static/* /static/ && exec ./flugbuech-api --migrate"]
