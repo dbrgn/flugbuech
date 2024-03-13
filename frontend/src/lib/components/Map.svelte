@@ -1,13 +1,13 @@
 <script lang="ts">
+  import {reactive} from '$lib/svelte';
   import {Map, NavigationControl, Marker, type LngLatLike} from 'maplibre-gl';
   import {onMount} from 'svelte';
 
-  export let lngInput: HTMLInputElement | null;
-  export let latInput: HTMLInputElement | null;
+  export let latitude: number | null = null;
+  export let longitude: number | null = null;
+  export let editable: boolean = false;
   export let position: LngLatLike = {lng: 10, lat: 47};
   export let zoom: number = 6;
-
-  let editable: boolean = lngInput !== null && latInput !== null;
 
   // Access token
   //
@@ -39,6 +39,7 @@
 
   // Map variable
   let map: Map | null = null;
+  let mapMarker: Marker | undefined;
 
   // Update map style whenever variable above changes
   let prevMapType = mapType;
@@ -94,12 +95,17 @@
     prevMapType = newMapType;
   }
 
+  // Handle map type updates
   $: if (map !== null) {
     updateMapType(map, mapType);
   }
 
   // Helper function to validate a coordinate pair
-  function validLngLat(lng: number | null, lat: number | null): boolean {
+  function validPos(pos: {
+    lng: number | null;
+    lat: number | null;
+  }): pos is {lng: number; lat: number} {
+    let {lng, lat} = pos;
     if (lng === null || lat === null) {
       return false;
     }
@@ -114,6 +120,18 @@
     }
     return true;
   }
+
+  // When the input value changes, update the marker
+  $: reactive(() => {
+    if (!editable || mapMarker === undefined) {
+      return;
+    }
+    const pos = {lng: longitude, lat: latitude};
+    if (validPos(pos) === true) {
+      mapMarker.setLngLat(pos);
+      map?.flyTo({center: pos});
+    }
+  }, [latitude, longitude]);
 
   onMount(() => {
     // Create map
@@ -135,12 +153,12 @@
     if (editable) {
       // Function to update coordinates from marker
       const updateCoordinatesFromMarker = () => {
-        if (lngInput === null || latInput === null) {
+        if (!editable) {
           return;
         }
         const lngLat = marker.getLngLat();
-        lngInput.value = lngLat.lng.toFixed(5);
-        latInput.value = lngLat.lat.toFixed(5);
+        latitude = Number(lngLat.lat.toFixed(5));
+        longitude = Number(lngLat.lng.toFixed(5));
       };
 
       // Update coordinates on marker drag
@@ -151,22 +169,6 @@
         marker.setLngLat(e.lngLat);
         updateCoordinatesFromMarker();
       });
-
-      // When the input value changes, update the marker
-      const updateMarkerFromCoordinates = () => {
-        if (lngInput === null || latInput === null) {
-          return;
-        }
-        const lng = parseFloat(lngInput.value);
-        const lat = parseFloat(latInput.value);
-        if (validLngLat(lng, lat) === true) {
-          const pos = {lng: lng, lat: lat};
-          marker.setLngLat(pos);
-          map?.flyTo({center: pos});
-        }
-      };
-      lngInput?.addEventListener('change', updateMarkerFromCoordinates);
-      latInput?.addEventListener('change', updateMarkerFromCoordinates);
     }
   });
 </script>

@@ -309,8 +309,9 @@
     {/if}
 
     <MapComponent
-      latInput={latitudeInput}
-      lngInput={longitudeInput}
+      bind:latitude
+      bind:longitude
+      editable={true}
       position={location?.coordinates}
       zoom={location?.coordinates !== undefined ? 13 : undefined}
     />
