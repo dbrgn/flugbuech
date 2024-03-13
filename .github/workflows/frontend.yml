@@ -1,0 +1,77 @@
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  schedule:
+    - cron: '30 3 * * 2'
+
+name: Frontend
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  build:
+    name: Build and check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install npm dependencies
+        run: cd frontend && npm ci
+      - run: cd frontend && npm run build
+      - run: cd frontend && npm run check
+
+  eslint:
+    name: Run eslint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install npm dependencies
+        run: cd frontend && npm ci
+      - run: cd frontend && npm run lint:eslint
+
+  prettier:
+    name: Check code formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install npm dependencies
+        run: cd frontend && npm ci
+      - run: cd frontend && npm run lint:prettier
+
+  test_unit:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install npm dependencies
+        run: cd frontend && npm ci
+      - run: cd frontend && npm run test:unit
+
+  test_integration:
+    name: Run integration tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install npm dependencies
+        run: cd frontend && npm ci
+      - name: Install Playwright browsers
+        run: cd frontend && npx playwright install --with-deps
+      - name: Run integration tests
+        run: cd frontend && npm run test:integration

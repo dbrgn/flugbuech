@@ -1,3 +1,0 @@
-{% macro flag(country_code) %}
-<img class="flag" title="{{ country_code }}" is="flag-{{ country_code | lower }}">
-{% endmacro flag %}

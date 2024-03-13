@@ -1,4 +1,4 @@
-# Docs: https://rocket.rs/v0.5-rc/guide/configuration/
+# Docs: https://rocket.rs/v0.5/guide/configuration/
 #
 # Rocket automatically sets the configuration profile to `debug` when compiled
 # in debug mode and `release` when compiled in release mode.
@@ -14,9 +14,11 @@
 form = "3 MiB"
 
 [debug]
-static_files_dir = "static"
 secret_key = "eXqSA0wz+qLlg8umREPesnkBzNlhwaNcp34BttIWLes="
+cors_allow_origin = "*"
 
   [debug.databases.flugbuech]
   url = "postgres://flugbuech:flugbuech-dev-password@localhost/flugbuech"
+  min_connections = 2
+  max_connections = 8
   timeout = 5

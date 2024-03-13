@@ -1,7 +1,7 @@
 use std::{env, fmt};
 
 use diesel::{
-    dsl::{count, exists, max, select},
+    dsl::{count, exists, select},
     prelude::*,
     result::{Error, QueryResult},
     sql_types::{BigInt, Bool, Double, Integer, Nullable, SmallInt, Text},
@@ -69,12 +69,10 @@ pub fn get_user(conn: &mut PgConnection, id: i32) -> Option<User> {
 
 #[derive(Debug, PartialEq)]
 pub enum RegistrationError {
-    /// E-Mail is invalid or already registered
+    /// E-mail is invalid or already registered
     InvalidEmail,
     /// Username is invalid or already taken
     NonUniqueUsername,
-    /// The password confirmation does not match
-    PasswordConfirmation,
     /// Password is too short
     InvalidPasswordFormat,
 }
@@ -84,14 +82,11 @@ impl std::error::Error for RegistrationError {}
 impl fmt::Display for RegistrationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            RegistrationError::InvalidEmail => write!(f, "Invalid email format or email is not unique"),
+            RegistrationError::InvalidEmail => write!(f, "Invalid e-mail format or e-mail is not unique"),
             RegistrationError::InvalidPasswordFormat => {
                 write!(f, "Password is too short or does not match format")
             }
             RegistrationError::NonUniqueUsername => write!(f, "Username is not unique"),
-            RegistrationError::PasswordConfirmation => {
-                write!(f, "Password and password confirmation do not match")
-            }
         }
     }
 }
@@ -99,22 +94,20 @@ impl fmt::Display for RegistrationError {
 /// Validate registration params and check for unique attributes { email, username }
 pub fn validate_registration(
     conn: &mut PgConnection,
-    email: &str,
     username: &str,
+    email: &str,
     password: &str,
-    password_confirmation: &str,
 ) -> Result<(), RegistrationError> {
     validate_email(email)?;
-    validate_password_confirmation_match(password, password_confirmation)?;
     validate_password_format(password)?;
-    validate_unique_registration_fields(conn, email, username)?;
+    validate_unique_registration_fields(conn, username, email)?;
     Ok(())
 }
 
 fn validate_unique_registration_fields(
     conn: &mut PgConnection,
-    email: &str,
     username: &str,
+    email: &str,
 ) -> Result<(), RegistrationError> {
     let user: Option<User> = users::table
         .filter(users::username.eq(username))
@@ -126,18 +119,6 @@ fn validate_unique_registration_fields(
         Some(user) if user.email == email => Err(RegistrationError::InvalidEmail),
         Some(_) => unreachable!("Returned user must match with either email or username"),
         None => Ok(()),
-    }
-}
-
-/// Validates that password and confirmation match
-fn validate_password_confirmation_match(
-    password: &str,
-    password_confirmation: &str,
-) -> Result<(), RegistrationError> {
-    if password == password_confirmation {
-        Ok(())
-    } else {
-        Err(RegistrationError::PasswordConfirmation)
     }
 }
 
@@ -180,8 +161,8 @@ pub fn get_user_count(conn: &mut PgConnection) -> i64 {
 pub fn create_user(
     conn: &mut PgConnection,
     username: impl Into<String>,
-    password: impl Into<String>,
     email: impl Into<String>,
+    password: impl Into<String>,
 ) -> User {
     diesel::insert_into(users::table)
         .values(&(
@@ -231,12 +212,35 @@ pub fn get_gliders_with_stats_for_user(conn: &mut PgConnection, user: &User) -> 
     .expect("Error loading gliders with stats")
 }
 
-pub fn get_glider_with_id(conn: &mut PgConnection, id: i32) -> Option<Glider> {
+pub fn get_glider_by_id(conn: &mut PgConnection, id: i32) -> Option<Glider> {
     gliders::table
         .find(id)
         .first(conn)
         .optional()
         .expect("Error loading glider by id")
+}
+
+pub fn get_glider_with_stats_by_id(conn: &mut PgConnection, id: i32) -> Option<GliderWithStats> {
+    sql_query(
+            "SELECT g.*,
+                    count(f.id) as flights,
+                    coalesce(extract(epoch from sum(f.landing_time - f.launch_time))::bigint, 0) as seconds,
+                    every(f.launch_time IS NOT NULL AND f.landing_time IS NOT NULL) OR count(f.id) = 0 as seconds_complete
+               FROM gliders g
+                    LEFT JOIN flights f ON g.id = f.glider_id
+              WHERE g.id = $1
+              GROUP BY g.id",
+        )
+        .bind::<Integer, _>(id)
+        .get_result(conn)
+        .expect("Error loading glider with stats by id")
+}
+
+/// Delete a glider by ID.
+pub fn delete_glider_by_id(conn: &mut PgConnection, id: i32) -> QueryResult<()> {
+    let delete_count = diesel::delete(gliders::table.filter(gliders::id.eq(&id))).execute(conn)?;
+    assert_eq!(delete_count, 1); // Sanity check
+    Ok(())
 }
 
 /// Create a new flight.
@@ -291,14 +295,6 @@ pub fn get_flights_for_user(conn: &mut PgConnection, user: &User) -> Vec<Flight>
         .expect("Error loading flights")
 }
 
-/// Retrieve the highest flight number for a specific user.
-pub fn get_max_flight_number_for_user(conn: &mut PgConnection, user: &User) -> Option<i32> {
-    Flight::belonging_to(user)
-        .select(max(flights::number))
-        .first(conn)
-        .expect("Error loading flight count")
-}
-
 /// Retrieve flight with the specified ID.
 pub fn get_flight_with_id(conn: &mut PgConnection, id: i32) -> Option<Flight> {
     flights::table
@@ -309,11 +305,20 @@ pub fn get_flight_with_id(conn: &mut PgConnection, id: i32) -> Option<Flight> {
 }
 
 /// Save an updated IGC entry in the database.
+///
+/// If no IGC entry existed before, add one.
 pub fn update_igc(conn: &mut PgConnection, flight: &Flight, data: &[u8]) {
-    diesel::update(igcs::table.filter(igcs::flight_id.eq(flight.id)))
+    let val = Igc {
+        flight_id: flight.id,
+        data: data.to_vec(),
+    };
+    diesel::insert_into(igcs::table)
+        .values(val)
+        .on_conflict(igcs::flight_id)
+        .do_update()
         .set(igcs::data.eq(data))
         .execute(conn)
-        .expect("Could not update IGC entry");
+        .expect("Could not update IGC entry for flight");
 }
 
 /// Retrieve IGC data for the specified flight.
@@ -360,6 +365,8 @@ pub fn get_locations_for_user(conn: &mut PgConnection, user: &User) -> Vec<Locat
 
 /// Retrieve all locations for the specified user, including the number of
 /// associated flights (with either launch and/or landing at that location).
+///
+/// Locations are sorted by name.
 pub fn get_all_locations_with_stats_for_user(conn: &mut PgConnection, user: &User) -> Vec<LocationWithCount> {
     sql_query(
         "SELECT l.*, count(f.id) as count
@@ -648,20 +655,8 @@ mod tests {
     ) {
         let ctx = test_utils::DbTestContext::new();
         assert_eq!(
-            validate_unique_registration_fields(&mut ctx.force_get_conn(), email, username),
+            validate_unique_registration_fields(&mut ctx.force_get_conn(), username, email),
             result
-        );
-    }
-
-    #[test]
-    fn test_matching_password_confirmation() {
-        assert_eq!(
-            validate_password_confirmation_match("password", "password"),
-            Ok(())
-        );
-        assert_eq!(
-            validate_password_confirmation_match("password", "passwor"),
-            Err(RegistrationError::PasswordConfirmation)
         );
     }
 
@@ -680,65 +675,6 @@ mod tests {
             validate_password_format(password),
             Err(RegistrationError::InvalidPasswordFormat)
         );
-    }
-
-    #[test]
-    fn test_get_max_flight_number_for_user() {
-        let ctx = test_utils::DbTestContext::new();
-
-        // No flights
-        let n = get_max_flight_number_for_user(&mut ctx.force_get_conn(), &ctx.testuser1.user);
-        assert_eq!(n, None);
-
-        // Single flight, no number
-        diesel::insert_into(flights::table)
-            .values(NewFlight {
-                number: None,
-                user_id: ctx.testuser1.user.id,
-                ..Default::default()
-            })
-            .execute(&mut *ctx.force_get_conn())
-            .expect("Could not create flight");
-        let n = get_max_flight_number_for_user(&mut ctx.force_get_conn(), &ctx.testuser1.user);
-        assert_eq!(n, None);
-
-        // Now insert some flights with a flight number
-        diesel::insert_into(flights::table)
-            .values(vec![
-                NewFlight {
-                    number: Some(1),
-                    user_id: ctx.testuser1.user.id,
-                    ..Default::default()
-                },
-                NewFlight {
-                    number: Some(-1),
-                    user_id: ctx.testuser1.user.id,
-                    ..Default::default()
-                },
-                NewFlight {
-                    number: Some(7),
-                    user_id: ctx.testuser1.user.id,
-                    ..Default::default()
-                },
-                NewFlight {
-                    number: None,
-                    user_id: ctx.testuser1.user.id,
-                    ..Default::default()
-                },
-                NewFlight {
-                    number: Some(2),
-                    user_id: ctx.testuser1.user.id,
-                    ..Default::default()
-                },
-            ])
-            .execute(&mut *ctx.force_get_conn())
-            .expect("Could not create flight");
-        let n = get_max_flight_number_for_user(&mut ctx.force_get_conn(), &ctx.testuser1.user);
-        assert_eq!(n, Some(7));
-
-        // The user id is properly taken into account
-        let n = get_max_flight_number_for_user(&mut ctx.force_get_conn(), &ctx.testuser2.user);
-        assert_eq!(n, None);
     }
 
     #[test]

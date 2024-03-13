@@ -1,0 +1,57 @@
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  schedule:
+    - cron: '30 3 * * 2'
+
+name: Backend
+
+jobs:
+  build_and_test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: mdillon/postgis:11
+        env:
+          POSTGRES_USER: flugbuech
+          POSTGRES_PASSWORD: flugbuech
+          POSTGRES_DB: flugbuech_test
+        ports:
+          - 5432:5432
+        # Needed because the postgres container does not provide a healthcheck
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get install -y libpq-dev
+      - uses: dtolnay/rust-toolchain@1.72.0
+
+      - name: Run check
+        run: cargo check --all-features
+      - name: Run tests
+        run: cargo test --all-features
+        env:
+          TEST_DATABASE_URL: 'postgres://flugbuech:flugbuech@localhost:5432/flugbuech_test'
+
+  clippy:
+    name: Run clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get install -y libpq-dev
+      - uses: dtolnay/rust-toolchain@1.72.0
+        with:
+          components: clippy
+      - run: cargo clippy --all-features
+
+  rustfmt:
+    name: Check code formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.72.0
+        with:
+          components: rustfmt
+      - run: cargo fmt -- --check

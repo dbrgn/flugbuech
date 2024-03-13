@@ -1,6 +1,6 @@
 [package]
-name = "flugbuech"
-version = "0.1.0"
+name = "flugbuech-api"
+version = "0.2.0"
 authors = ["Danilo Bargen <mail@dbrgn.ch>"]
 edition = "2018"
 license = "AGPL-3.0"
@@ -20,7 +20,6 @@ log = "0.4"
 num-traits = "0.2"
 regex = "1.5.5"
 rocket = { version = "0.5.0", features = ["secrets", "json"], default-features = false }
-rocket_dyn_templates = { version = "0.1.0", features = ["tera"], default-features = false }
 rocket_sync_db_pools = { version = "0.1.0", features = ["diesel_postgres_pool"], default-features = false }
 serde = { version = "1", features = ["derive"] }
 

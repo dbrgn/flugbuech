@@ -1,3 +1,5 @@
+use std::fmt::{self, Display};
+
 use chrono::{DateTime, NaiveDate, Utc};
 use diesel::sql_types::{BigInt, Bool, Date, Double, Integer, Nullable, Text};
 use diesel::{Associations, Identifiable, Queryable};
@@ -23,6 +25,7 @@ pub struct User {
 }
 
 #[derive(Identifiable, Queryable, Associations, AsChangeset, Serialize, PartialEq, Debug, Clone)]
+#[diesel(treat_none_as_null = true)]
 #[diesel(belongs_to(User, foreign_key = user_id))]
 #[diesel(table_name = gliders)]
 pub struct Glider {
@@ -42,6 +45,12 @@ pub struct Glider {
     pub cost: Option<i32>,
     /// Add arbitrary comments about this glider
     pub comment: Option<String>,
+}
+
+impl Display for Glider {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
+        write!(f, "{} {}", self.manufacturer, self.model)
+    }
 }
 
 #[derive(Debug, QueryableByName, Serialize)]
@@ -88,6 +97,7 @@ pub struct NewGlider {
 }
 
 #[derive(Identifiable, Queryable, Associations, AsChangeset, Serialize, PartialEq, Debug, Clone)]
+#[diesel(treat_none_as_null = true)]
 #[diesel(belongs_to(User, foreign_key = user_id))]
 #[diesel(table_name = locations)]
 pub struct Location {
@@ -147,6 +157,7 @@ pub struct LocationWithCount {
 }
 
 #[derive(Identifiable, Queryable, Associations, AsChangeset, Serialize, PartialEq, Debug, Clone)]
+#[diesel(treat_none_as_null = true)]
 #[diesel(belongs_to(User, foreign_key = user_id))]
 #[diesel(belongs_to(Glider, foreign_key = glider_id))]
 #[diesel(table_name = flights)]
@@ -170,6 +181,7 @@ pub struct Flight {
     /// GPS track length
     pub track_distance: Option<f32>,
     /// XContest tracktype (free_flight, flat_triangle or fai_triangle)
+    /// TODO: Proper newtype
     pub xcontest_tracktype: Option<String>,
     /// XContest distance
     pub xcontest_distance: Option<f32>,

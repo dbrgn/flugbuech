@@ -10,8 +10,9 @@ use igc::{
 use num_traits::Float;
 use rocket::{
     data::{Data, ToByteUnit},
-    post,
+    post, routes,
     serde::json::Json,
+    Route,
 };
 use serde::Serialize;
 
@@ -24,6 +25,7 @@ struct LatLng {
 }
 
 #[derive(Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
 struct LaunchLandingInfo {
     pos: LatLng,
     alt: i16,
@@ -32,6 +34,7 @@ struct LaunchLandingInfo {
 }
 
 #[derive(Default, Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FlightInfo {
     /// Name of the pilot, as configured in the flight instrument.
     pilot: Option<String>,
@@ -202,16 +205,16 @@ fn parse_igc(reader: impl BufRead, user: &models::User, db: &mut diesel::PgConne
 
 /// Process IGC file, return parsed data.
 ///
-/// This endpoint is meant to be called from a XmlHttpRequest.
+/// This endpoint is meant to be called from a fetch request.
 #[post(
     "/flights/add/process_igc",
     format = "application/octet-stream",
     data = "<data>"
 )]
 pub async fn process_igc(
-    data: Data<'_>,
     user: auth::AuthUser,
     database: data::Database,
+    data: Data<'_>,
 ) -> Json<FlightInfoResult> {
     let user = user.into_inner();
 
@@ -234,6 +237,11 @@ pub async fn process_igc(
 
     // Process data
     Json(database.run(move |db| parse_igc(buf_reader, &user, db)).await)
+}
+
+/// Return vec of all API routes.
+pub fn api_routes() -> Vec<Route> {
+    routes![process_igc]
 }
 
 #[cfg(test)]

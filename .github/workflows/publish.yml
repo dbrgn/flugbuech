@@ -1,0 +1,27 @@
+on:
+  workflow_run:
+    workflows: [backend, frontend]
+    types:
+      - completed
+
+name: Publish
+
+jobs:
+  docker_image:
+    name: Build Docker image
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: |
+          docker build \
+            --no-cache \
+            -t dbrgn/flugbuech:latest \
+            -t dbrgn/flugbuech:main \
+            .
+      - name: Push Docker image
+        run: |
+          docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}" && \
+          docker push dbrgn/flugbuech:main && \
+          docker push dbrgn/flugbuech:latest

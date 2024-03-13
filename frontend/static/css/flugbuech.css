@@ -1,0 +1,65 @@
+.navbar-brand .navbar-item {
+  margin-left: 8px;
+}
+
+.submitcontrols {
+  margin-top: 48px;
+}
+
+p + .spaced-headers {
+  margin-top: 24px;
+}
+
+.spaced-headers h3.title {
+  margin-top: 48px;
+}
+
+.map {
+  height: 400px;
+  position: relative;
+}
+
+.map-style-switcher {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 8px;
+  z-index: 9999;
+}
+
+.map-style-switcher select {
+  font-size: 14px;
+}
+
+footer {
+  color: #777;
+  font-size: 0.8em;
+}
+
+.formhint {
+  color: #777;
+  font-size: 0.8em;
+}
+
+.flash-container {
+  margin-bottom: 24px;
+}
+
+div.control + label.checkbox {
+  margin-top: 8px;
+}
+
+/* Preserve newlines */
+
+.preserve-newlines {
+  white-space: pre;
+}
+
+/* More subtle link colors, used e.g. in the flight list */
+
+a.subtle-link {
+  color: #363636;
+}
+a.subtle-link:hover {
+  color: #777;
+}

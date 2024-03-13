@@ -1,6 +1,7 @@
 # Flugbuech
 
-[![Build status](https://github.com/dbrgn/flugbuech/workflows/CI/badge.svg)](https://github.com/dbrgn/flugbuech/actions?query=branch%3Amaster)
+[![Build status: Backend](https://github.com/dbrgn/flugbuech/workflows/backend/badge.svg)](https://github.com/dbrgn/flugbuech/actions?query=branch%3Amaster)
+[![Build status: Frontend](https://github.com/dbrgn/flugbuech/workflows/frontend/badge.svg)](https://github.com/dbrgn/flugbuech/actions?query=branch%3Amaster)
 [![Docker image](https://img.shields.io/badge/docker%20image-dbrgn%2Fflugbuech-blue)](https://hub.docker.com/r/dbrgn/flugbuech/)
 
 Personal flight log for paragliding pilots. Written with
@@ -92,7 +93,7 @@ Start server:
 ## Registration
 
 In order to register a new user, head to localhost:8000/auth/registration.
-Both email and username have to be unique and the password has to match password confirmation.
+Both e-mail and username have to be unique and the password has to match password confirmation.
 Upon successful registration you will be redirect to the root_path and will see
 a welcome message bearing your username.
 
@@ -128,7 +129,7 @@ configuring your deployment!
 
 Licensed under the AGPL version 3 or later. See `LICENSE.md` file.
 
-    Copyright (C) 2019–2023 Danilo Bargen
+    Copyright (C) 2019–2024 Danilo Bargen
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as
