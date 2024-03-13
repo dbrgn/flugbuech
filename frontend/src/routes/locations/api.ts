@@ -32,7 +32,7 @@ export async function loadApiLocations(fetch: SvelteKitFetch): Promise<Location[
     switch (res.status) {
         case 200: {
             const response = SCHEMA_API_LOCATIONS_RESPONSE.parse(await res.json());
-            return response.locations;
+            return response.locations.sort((a, b) => a.name.localeCompare(b.name));
         }
         case 401:
             throw AuthenticationError.redirectToLogin(`/locations/`);
