@@ -1,6 +1,7 @@
-import type {SvelteKitFetch} from '$lib';
-import {z} from 'zod';
 import {error} from '@sveltejs/kit';
+import {z} from 'zod';
+
+import type {SvelteKitFetch} from '$lib';
 import {extractResponseError} from '$lib/api';
 import {AuthenticationError, ensureClientOrServerErrorCode} from '$lib/errors';
 

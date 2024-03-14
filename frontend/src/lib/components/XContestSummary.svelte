@@ -4,6 +4,7 @@ Render a XContest flight summary, with icon, distance and link.
 <script lang="ts">
   import {formatDistance} from '$lib/formatters';
   import {tracktypeName, type XContestTracktype} from '$lib/xcontest';
+
   import XContestTracktypeIcon from './XContestTracktypeIcon.svelte';
 
   /**

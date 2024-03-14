@@ -1,6 +1,8 @@
 <script lang="ts">
-  import FlightForm from '../../FlightForm.svelte';
   import Flashes from '$lib/components/Flashes.svelte';
+
+  import FlightForm from '../../FlightForm.svelte';
+
   import type {Data} from './+page';
 
   export let data: Data;

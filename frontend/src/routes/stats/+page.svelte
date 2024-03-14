@@ -2,6 +2,7 @@
   import CountryFlag from '$lib/components/CountryFlag.svelte';
   import Flashes from '$lib/components/Flashes.svelte';
   import {formatDuration} from '$lib/formatters';
+
   import type {Data} from './+page';
 
   export let data: Data;

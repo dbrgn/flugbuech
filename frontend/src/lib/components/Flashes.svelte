@@ -1,6 +1,7 @@
 <script lang="ts">
-  import {flashes, type Flash} from '$lib/stores';
   import {onMount} from 'svelte';
+
+  import {flashes, type Flash} from '$lib/stores';
 
   let loadedFlashes: Flash[] = [];
 

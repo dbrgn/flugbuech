@@ -1,5 +1,6 @@
 <script lang="ts">
   import {onMount} from 'svelte';
+
   import {loginState, refreshLoginState} from '$lib/stores';
 
   onMount(() => {

@@ -1,7 +1,7 @@
+import {error} from '@sveltejs/kit';
 import {z} from 'zod';
 
 import {loadApiGliders, type Glider} from '../../api';
-import {error} from '@sveltejs/kit';
 
 // Disable server-side rendering for this page
 export const ssr = false;

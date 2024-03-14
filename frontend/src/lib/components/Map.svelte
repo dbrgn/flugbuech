@@ -1,7 +1,8 @@
 <script lang="ts">
-  import {reactive} from '$lib/svelte';
   import {Map, NavigationControl, Marker, type LngLatLike} from 'maplibre-gl';
   import {onMount} from 'svelte';
+
+  import {reactive} from '$lib/svelte';
 
   export let latitude: number | null = null;
   export let longitude: number | null = null;

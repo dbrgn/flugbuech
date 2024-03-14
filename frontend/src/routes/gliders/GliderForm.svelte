@@ -1,14 +1,14 @@
 <script lang="ts">
   import {onMount} from 'svelte';
 
-  import {goto} from '$app/navigation';
-
+  import {apiPost, extractResponseError} from '$lib/api';
   import MessageModal from '$lib/components/MessageModal.svelte';
   import {addFlash} from '$lib/stores';
   import {reactive} from '$lib/svelte';
 
-  import {type Glider} from './api';
-  import {apiPost, extractResponseError} from '$lib/api';
+  import {goto} from '$app/navigation';
+
+  import type {Glider} from './api';
 
   // Props
   export let glider: Glider | undefined = undefined;

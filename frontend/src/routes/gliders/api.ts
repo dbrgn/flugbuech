@@ -1,8 +1,9 @@
-import type {SvelteKitFetch} from '$lib';
-import {z} from 'zod';
 import {error} from '@sveltejs/kit';
-import {AuthenticationError, ensureClientOrServerErrorCode} from '$lib/errors';
+import {z} from 'zod';
+
+import type {SvelteKitFetch} from '$lib';
 import {extractResponseError} from '$lib/api';
+import {AuthenticationError, ensureClientOrServerErrorCode} from '$lib/errors';
 
 const SCHEMA_API_GLIDER = z.object({
     id: z.number(),

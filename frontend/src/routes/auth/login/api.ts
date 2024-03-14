@@ -1,6 +1,7 @@
+import {error} from '@sveltejs/kit';
+
 import {apiPost, extractResponseError} from '$lib/api';
 import {ensureClientOrServerErrorCode} from '$lib/errors';
-import {error} from '@sveltejs/kit';
 
 export interface LoginResult {
     readonly success: boolean;

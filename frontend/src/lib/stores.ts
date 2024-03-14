@@ -1,4 +1,5 @@
 import {writable} from 'svelte/store';
+
 import {getCookiesMap} from './cookies';
 
 // Flashes

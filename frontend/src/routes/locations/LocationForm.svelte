@@ -1,15 +1,15 @@
 <script lang="ts">
   import {onMount} from 'svelte';
 
-  import {goto} from '$app/navigation';
-
+  import {apiPost, extractResponseError} from '$lib/api';
   import MapComponent from '$lib/components/Map.svelte';
   import MessageModal from '$lib/components/MessageModal.svelte';
   import {addFlash} from '$lib/stores';
   import {reactive} from '$lib/svelte';
 
-  import {type Location} from './api';
-  import {apiPost, extractResponseError} from '$lib/api';
+  import {goto} from '$app/navigation';
+
+  import type {Location} from './api';
 
   // Props
   export let location: Location | undefined = undefined;

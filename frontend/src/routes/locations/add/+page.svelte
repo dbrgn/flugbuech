@@ -1,9 +1,11 @@
 <script lang="ts">
-  import LocationForm from '../LocationForm.svelte';
-  import Flashes from '$lib/components/Flashes.svelte';
   import {onMount} from 'svelte';
+
   import {requireLogin} from '$lib/auth';
+  import Flashes from '$lib/components/Flashes.svelte';
   import {loginState} from '$lib/stores';
+
+  import LocationForm from '../LocationForm.svelte';
 
   onMount(() => {
     requireLogin($loginState, '/locations/add/');

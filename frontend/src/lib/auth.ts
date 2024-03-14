@@ -1,4 +1,5 @@
 import {goto} from '$app/navigation';
+
 import type {LoginState} from './stores';
 
 export function getLoginUrl(redirectUrl?: string): string {

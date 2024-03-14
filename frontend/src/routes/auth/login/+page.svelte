@@ -1,12 +1,12 @@
 <script lang="ts">
+  import {ensureError} from '$lib/assert';
+  import Flashes from '$lib/components/Flashes.svelte';
+  import MessageModal from '$lib/components/MessageModal.svelte';
+  import {addFlash, refreshLoginState} from '$lib/stores';
+  import {sanitizeRedirectPath} from '$lib/urls';
+
   import {goto} from '$app/navigation';
   import {page} from '$app/stores';
-
-  import Flashes from '$lib/components/Flashes.svelte';
-  import {addFlash, refreshLoginState} from '$lib/stores';
-  import {ensureError} from '$lib/assert';
-  import MessageModal from '$lib/components/MessageModal.svelte';
-  import {sanitizeRedirectPath} from '$lib/urls';
 
   import {apiLogin} from './api';
 

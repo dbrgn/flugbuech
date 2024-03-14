@@ -1,9 +1,10 @@
 <script lang="ts">
   import CountryFlag from '$lib/components/CountryFlag.svelte';
   import Flashes from '$lib/components/Flashes.svelte';
-  import type {Data} from './+page';
-  import {formatDate, formatDistance, formatDuration, formatTime} from '$lib/formatters';
   import XContestSummary from '$lib/components/XContestSummary.svelte';
+  import {formatDate, formatDistance, formatDuration, formatTime} from '$lib/formatters';
+
+  import type {Data} from './+page';
 
   export let data: Data;
 

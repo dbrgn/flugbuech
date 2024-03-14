@@ -1,13 +1,16 @@
 <script lang="ts">
   import {onMount} from 'svelte';
 
-  import MessageModal from '$lib/components/MessageModal.svelte';
-  import {reactive} from '$lib/svelte';
-
-  import type {XContestTracktype} from '$lib/xcontest';
   import {u8aToBase64} from '$lib/base64';
+  import MessageModal from '$lib/components/MessageModal.svelte';
+  import {addFlash} from '$lib/stores';
+  import {reactive} from '$lib/svelte';
+  import type {XContestTracktype} from '$lib/xcontest';
+
+  import {goto} from '$app/navigation';
 
   import type {Glider} from '../gliders/api';
+
   import {
     processIgc,
     type Flight,
@@ -18,8 +21,6 @@
     type NewApiFlight,
     editApiFlight,
   } from './api';
-  import {addFlash} from '$lib/stores';
-  import {goto} from '$app/navigation';
 
   // Props
   export let flight: Flight | undefined = undefined;

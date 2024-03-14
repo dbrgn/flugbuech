@@ -1,17 +1,18 @@
 <script lang="ts">
   import {onMount} from 'svelte';
 
-  import {goto} from '$app/navigation';
+  import {ensureError} from '$lib/assert';
+  import {requireLogin} from '$lib/auth';
   import Flashes from '$lib/components/Flashes.svelte';
   import MessageModal from '$lib/components/MessageModal.svelte';
-  import {reactive} from '$lib/svelte';
   import {MIN_PASSWORD_LENGTH} from '$lib/constants';
-  import {ensureError} from '$lib/assert';
   import {addFlash, loginState} from '$lib/stores';
+  import {reactive} from '$lib/svelte';
 
-  import {apiChangePassword} from './api';
+  import {goto} from '$app/navigation';
+
   import PasswordFormInputField from './PasswordFormInputField.svelte';
-  import {requireLogin} from '$lib/auth';
+  import {apiChangePassword} from './api';
 
   // Form values
   let current: string = '';

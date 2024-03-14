@@ -1,5 +1,6 @@
-import {goto} from '$app/navigation';
 import {addFlash, refreshLoginState} from '$lib/stores';
+
+import {goto} from '$app/navigation';
 
 import {apiLogout} from './api';
 
