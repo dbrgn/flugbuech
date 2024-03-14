@@ -143,3 +143,9 @@
     </tr>
   </table>
 </section>
+
+<style>
+  table th {
+    white-space: nowrap;
+  }
+</style>
