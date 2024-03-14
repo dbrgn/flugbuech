@@ -1,16 +1,26 @@
 root: true
 extends:
-  - 'eslint:recommended'
-  - 'plugin:@typescript-eslint/recommended'
-  - 'plugin:svelte/recommended'
-  - 'prettier'
+  - eslint:recommended
+  - plugin:@typescript-eslint/recommended
+  - plugin:svelte/recommended
+  - plugin:import/recommended
+  - plugin:import/typescript
+  - prettier
 parser: '@typescript-eslint/parser'
 plugins:
   - '@typescript-eslint'
+  - import
 parserOptions:
   sourceType: 'module'
   ecmaVersion: 2020
   extraFileExtensions: ['.svelte']
+settings:
+  import/parsers:
+    '@typescript-eslint/parser': ['.ts']
+  import/resolver:
+    typescript:
+      alwaysTryTypes: true
+      project: true
 env:
   browser: true
   es2017: true
@@ -20,22 +30,23 @@ overrides:
     parser: 'svelte-eslint-parser'
     parserOptions:
       parser: '@typescript-eslint/parser'
-#rules:
-#  indent:
-#    - error
-#    - 4
-#  linebreak-style:
-#    - error
-#    - unix
-#  quotes:
-#    - error
-#    - single
-#  semi:
-#    - error
-#    - always
-#  no-unused-vars:
-#    - error
-#    - varsIgnorePattern: '^_'
-#      argsIgnorePattern: '^_'
-#  no-trailing-spaces:
-#    - error
+rules:
+  import/no-unresolved: off # Cannot handle $app correctly
+  '@typescript-eslint/consistent-type-imports': error
+  '@typescript-eslint/no-import-type-side-effects': error
+  'import/order':
+    - error
+    - newlines-between: always
+      alphabetize:
+        order: asc
+        orderImportKind: asc
+        caseInsensitive: false
+      groups:
+        - builtin
+        - external
+        - internal
+        - unknown # $app
+        - parent
+        - sibling
+        - index
+        - object
