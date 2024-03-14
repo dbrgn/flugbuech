@@ -5,6 +5,10 @@
   import type {Data} from './+page';
 
   export let data: Data;
+
+  $: sortedStats = Object.entries(data.yearlyStats)
+    .map(([year, stats]) => ({year, ...stats}))
+    .sort((a, b) => b.year.localeCompare(a.year));
 </script>
 
 <nav class="breadcrumb" aria-label="breadcrumbs">
@@ -35,11 +39,9 @@
           </tr>
         </thead>
         <tbody>
-          {#each Object.entries(data.yearlyStats) as entry}
-            {@const year = entry[0]}
-            {@const stats = entry[1]}
+          {#each sortedStats as stats}
             <tr>
-              <td>{year}</td>
+              <td>{stats.year}</td>
               <td>{stats.flightCount}</td>
               <td>{stats.hikeandflyCount}</td>
               <td>
