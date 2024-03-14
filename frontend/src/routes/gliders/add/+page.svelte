@@ -1,9 +1,11 @@
 <script lang="ts">
-  import GliderForm from '../GliderForm.svelte';
-  import Flashes from '$lib/components/Flashes.svelte';
-  import {requireLogin} from '$lib/auth';
-  import {loginState} from '$lib/stores';
   import {onMount} from 'svelte';
+
+  import {requireLogin} from '$lib/auth';
+  import Flashes from '$lib/components/Flashes.svelte';
+  import {loginState} from '$lib/stores';
+
+  import GliderForm from '../GliderForm.svelte';
 
   onMount(() => {
     requireLogin($loginState, '/flights/add/');

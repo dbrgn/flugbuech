@@ -2,6 +2,7 @@
   import Flashes from '$lib/components/Flashes.svelte';
 
   import LocationForm from '../../LocationForm.svelte';
+
   import type {Data} from './+page';
 
   export let data: Data;

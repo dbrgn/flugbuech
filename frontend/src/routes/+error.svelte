@@ -1,7 +1,7 @@
 <script lang="ts">
-  import {page} from '$app/stores';
-
   import Flashes from '$lib/components/Flashes.svelte';
+
+  import {page} from '$app/stores';
 </script>
 
 <Flashes />

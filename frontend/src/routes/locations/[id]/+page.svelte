@@ -2,6 +2,7 @@
   import CountryFlag from '$lib/components/CountryFlag.svelte';
   import Flashes from '$lib/components/Flashes.svelte';
   import MapComponent from '$lib/components/Map.svelte';
+
   import type {Data} from './+page';
 
   export let data: Data;

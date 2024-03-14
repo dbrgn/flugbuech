@@ -1,10 +1,11 @@
-import type {SvelteKitFetch} from '$lib';
-import {z} from 'zod';
 import {error} from '@sveltejs/kit';
-import {AuthenticationError, ensureClientOrServerErrorCode} from '$lib/errors';
+import {z} from 'zod';
+
+import type {SvelteKitFetch} from '$lib';
 import {apiPost, apiPostBlob, extractResponseError} from '$lib/api';
-import {SCHEMA_DATETIME_STRING} from '$lib/zod-helpers';
+import {AuthenticationError, ensureClientOrServerErrorCode} from '$lib/errors';
 import {ensureXContestTracktype, type XContestTracktype} from '$lib/xcontest';
+import {SCHEMA_DATETIME_STRING} from '$lib/zod-helpers';
 
 const SCHEMA_API_FLIGHT_LOCATION = z.object({
     id: z.number(),

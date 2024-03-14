@@ -1,8 +1,8 @@
 <script lang="ts">
   import {onMount} from 'svelte';
 
-  import {ResolvablePromise} from '$lib/resolvable-promise';
   import Flashes from '$lib/components/Flashes.svelte';
+  import {ResolvablePromise} from '$lib/resolvable-promise';
 
   import {_loadApiStats, type GlobalStats} from './+page';
 

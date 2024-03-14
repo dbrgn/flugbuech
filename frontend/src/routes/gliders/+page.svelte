@@ -1,11 +1,13 @@
 <script lang="ts">
-  import {goto, invalidateAll} from '$app/navigation';
   import {apiDelete, extractResponseError} from '$lib/api';
   import DialogModal from '$lib/components/DialogModal.svelte';
   import Flashes from '$lib/components/Flashes.svelte';
   import MessageModal from '$lib/components/MessageModal.svelte';
-  import {addFlash} from '$lib/stores';
   import {formatDuration} from '$lib/formatters';
+  import {addFlash} from '$lib/stores';
+
+  import {goto, invalidateAll} from '$app/navigation';
+
   import type {Data} from './+page';
   import type {Glider} from './api';
 

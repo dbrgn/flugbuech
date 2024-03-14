@@ -1,10 +1,13 @@
 <script lang="ts">
-  import FlightForm from '../FlightForm.svelte';
-  import Flashes from '$lib/components/Flashes.svelte';
-  import type {Data} from './+page';
-  import {requireLogin} from '$lib/auth';
-  import {loginState} from '$lib/stores';
   import {onMount} from 'svelte';
+
+  import {requireLogin} from '$lib/auth';
+  import Flashes from '$lib/components/Flashes.svelte';
+  import {loginState} from '$lib/stores';
+
+  import FlightForm from '../FlightForm.svelte';
+
+  import type {Data} from './+page';
 
   export let data: Data;
 

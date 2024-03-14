@@ -1,12 +1,12 @@
 <script lang="ts">
   import {onMount} from 'svelte';
 
-  import Flashes from '$lib/components/Flashes.svelte';
-  import {addFlash, refreshLoginState} from '$lib/stores';
   import {ensureError} from '$lib/assert';
+  import Flashes from '$lib/components/Flashes.svelte';
   import MessageModal from '$lib/components/MessageModal.svelte';
-  import {reactive} from '$lib/svelte';
   import {MIN_PASSWORD_LENGTH} from '$lib/constants';
+  import {addFlash, refreshLoginState} from '$lib/stores';
+  import {reactive} from '$lib/svelte';
 
   import {goto} from '$app/navigation';
 
