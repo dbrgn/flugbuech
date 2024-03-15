@@ -114,11 +114,7 @@ const SCHEMA_API_LAUNCH_LANDING_INFO = z.object({
     }),
     alt: z.number(),
     timeHms: z.tuple([z.number(), z.number(), z.number()]),
-    locationId: z
-        .number()
-        .optional()
-        .nullable()
-        .transform((value) => (value === null ? undefined : value)),
+    locationId: z.number().optional(),
 });
 
 const SCHEMA_API_IGC_METADATA = z.object({

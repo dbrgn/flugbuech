@@ -30,6 +30,7 @@ struct LaunchLandingInfo {
     pos: LatLng,
     alt: i16,
     time_hms: (u8, u8, u8),
+    #[serde(skip_serializing_if = "Option::is_none")]
     location_id: Option<i32>,
 }
 
@@ -37,16 +38,22 @@ struct LaunchLandingInfo {
 #[serde(rename_all = "camelCase")]
 pub struct FlightInfo {
     /// Name of the pilot, as configured in the flight instrument.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pilot: Option<String>,
     /// Name of the glider, as configured in the flight instrument.
+    #[serde(skip_serializing_if = "Option::is_none")]
     glidertype: Option<String>,
     /// Name of the launch site, as configured in the flight instrument.
+    #[serde(skip_serializing_if = "Option::is_none")]
     site: Option<String>,
     /// Date of flight (YYYY, MM, DD).
+    #[serde(skip_serializing_if = "Option::is_none")]
     date_ymd: Option<(u16, u8, u8)>,
     /// Lauch infos.
+    #[serde(skip_serializing_if = "Option::is_none")]
     launch: Option<LaunchLandingInfo>,
     /// Landing infos.
+    #[serde(skip_serializing_if = "Option::is_none")]
     landing: Option<LaunchLandingInfo>,
     /// Track length in kilometers.
     track_distance: f64,
