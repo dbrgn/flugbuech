@@ -39,6 +39,7 @@ pub struct Registration {
     username: String,
     email: String,
     password: String,
+    news_opt_in: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -204,6 +205,7 @@ pub async fn registration(
                         &registration.username,
                         &registration.email,
                         &registration.password,
+                        registration.news_opt_in,
                     )
                 })
                 .await;
