@@ -2,9 +2,6 @@ import {loadApiGliders, type Glider} from '../../gliders/api';
 import {loadApiLocations} from '../../locations/api';
 import {loadApiFlights, type FlightLocation} from '../api';
 
-// Disable server-side rendering for this page
-export const ssr = false;
-
 export interface Data {
     /**
      * A sorted array of flight numbers associated with existing flights.

@@ -1,5 +1,6 @@
 // Always use trailing slash
 export const trailingSlash = 'always';
 
-// Prerender all pages by default
+// Disable SSR and prerender all pages by default
+export const ssr = false;
 export const prerender = true;
