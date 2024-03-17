@@ -6,9 +6,9 @@ import {loadApiFlights, type FlightLocation, loadApiFlight, type Flight} from '.
 
 // Disable server-side rendering for this page
 export const ssr = false;
-export function entries() {
-    return [{id: '1'}];
-}
+
+// Dynamic URL, don't prerender
+export const prerender = false;
 
 export interface Data {
     /**
