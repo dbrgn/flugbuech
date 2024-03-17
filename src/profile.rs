@@ -12,6 +12,7 @@ pub struct ApiProfile {
     username: String,
     email: String,
     signed_up: DateTime<Utc>,
+    news_opt_in: bool,
 }
 
 #[get("/profile")]
@@ -21,6 +22,7 @@ pub fn get(user: auth::AuthUser) -> Json<ApiProfile> {
         username: user.username,
         email: user.email,
         signed_up: user.signed_up,
+        news_opt_in: user.news_opt_in,
     })
 }
 
