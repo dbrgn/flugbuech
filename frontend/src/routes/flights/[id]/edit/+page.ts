@@ -4,9 +4,6 @@ import {loadApiGliders, type Glider} from '../../../gliders/api';
 import {loadApiLocations} from '../../../locations/api';
 import {loadApiFlights, type FlightLocation, loadApiFlight, type Flight} from '../../api';
 
-// Disable server-side rendering for this page
-export const ssr = false;
-
 // Dynamic URL, don't prerender
 export const prerender = false;
 

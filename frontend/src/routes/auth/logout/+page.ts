@@ -4,9 +4,6 @@ import {goto} from '$app/navigation';
 
 import {apiLogout} from './api';
 
-// Disable server-side rendering for this page
-export const ssr = false;
-
 export async function load({fetch}): Promise<void> {
     await apiLogout(fetch);
 

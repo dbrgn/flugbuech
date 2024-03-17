@@ -3,9 +3,6 @@ import {z} from 'zod';
 
 import {loadApiGliders, type Glider} from '../../api';
 
-// Disable server-side rendering for this page
-export const ssr = false;
-
 // Dynamic URL, don't prerender
 export const prerender = false;
 

@@ -3,9 +3,6 @@ import {redirect} from '@sveltejs/kit';
 import {getCookiesMap} from '$lib/cookies';
 import {sanitizeRedirectPath} from '$lib/urls';
 
-// Disable server-side rendering for this page
-export const ssr = false;
-
 export async function load({url}): Promise<void> {
     const cookies = getCookiesMap(document.cookie);
     // Note: The user_id cookie is HTTP only, so we cannot fetch it.
