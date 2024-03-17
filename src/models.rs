@@ -22,6 +22,8 @@ pub struct User {
     pub email: String,
     /// When the user was created
     pub signed_up: DateTime<Utc>,
+    /// Whether the user has opted in to receive news
+    pub news_opt_in: bool,
 }
 
 #[derive(Identifiable, Queryable, Associations, AsChangeset, Serialize, PartialEq, Debug, Clone)]

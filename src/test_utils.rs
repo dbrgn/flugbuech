@@ -71,8 +71,8 @@ impl<'a> DbTestContext<'a> {
             .expect("Could not run database migrations");
 
         // Create test user
-        let testuser1 = create_user(&mut conn, "testuser1", "user1@example.com", "testpass");
-        let testuser2 = create_user(&mut conn, "testuser2", "user2@example.com", "testpass");
+        let testuser1 = create_user(&mut conn, "testuser1", "user1@example.com", "testpass", false);
+        let testuser2 = create_user(&mut conn, "testuser2", "user2@example.com", "testpass", false);
 
         DbTestContext {
             conn: Mutex::new(conn),

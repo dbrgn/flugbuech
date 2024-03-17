@@ -17,6 +17,7 @@
   let email: string = '';
   let password1: string = '';
   let password2: string = '';
+  let newsletter: boolean = false;
 
   // Element bindings
   let flashes: Flashes;
@@ -97,7 +98,7 @@
     console.log('Registering via API');
     let registrationResult;
     try {
-      registrationResult = await apiRegister(username, email, password1);
+      registrationResult = await apiRegister(username, email, password1, newsletter);
     } catch (error) {
       submitError = {
         type: 'api-error',
@@ -185,7 +186,7 @@
   {/if}
 
   <div class="field">
-    <label class="label" for="username">E-mail</label>
+    <label class="label" for="email">E-mail</label>
     <div class="control has-icons-left">
       <input
         id="email"
@@ -205,7 +206,7 @@
   {/if}
 
   <div class="field">
-    <label class="label" for="password">Password</label>
+    <label class="label" for="password1">Password</label>
     <div class="control has-icons-left">
       <input
         id="password1"
@@ -226,7 +227,7 @@
   {/if}
 
   <div class="field">
-    <label class="label" for="password">Password Confirmation</label>
+    <label class="label" for="password2">Password Confirmation</label>
     <div class="control has-icons-left">
       <input
         id="password2"
@@ -246,7 +247,16 @@
     <div class="field-error">Error: {fieldErrors.password2}</div>
   {/if}
 
-  <p class="content">
+  <div class="field newsletter">
+    <div class="control has-icons-left">
+      <label class="checkbox" for="newsletter">
+        <input id="newsletter" type="checkbox" bind:checked={newsletter} />
+        I want to receive occasional news about Flugbuech through e-mail
+      </label>
+    </div>
+  </div>
+
+  <p class="content privacy-policy-hint">
     By registering, you acknowledge the <a href="/privacy-policy/">privacy policy</a>.
   </p>
   <div class="field">
@@ -266,5 +276,14 @@
     font-size: 0.8em;
     margin-top: -12px;
     margin-bottom: 12px;
+  }
+
+  .field.newsletter {
+    margin-top: 2em;
+  }
+
+  .privacy-policy-hint {
+    margin-top: 2em;
+    font-style: italic;
   }
 </style>

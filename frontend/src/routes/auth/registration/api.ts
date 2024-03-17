@@ -20,11 +20,13 @@ export async function apiRegister(
     username: string,
     email: string,
     password: string,
+    newsOptIn: boolean,
 ): Promise<RegistrationResult> {
     const res = await apiPost('/api/v1/auth/registration', {
         username,
         email,
         password,
+        newsOptIn,
     });
     switch (res.status) {
         case 204:

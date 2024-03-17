@@ -163,12 +163,14 @@ pub fn create_user(
     username: impl Into<String>,
     email: impl Into<String>,
     password: impl Into<String>,
+    news_opt_in: bool,
 ) -> User {
     diesel::insert_into(users::table)
         .values(&(
             users::username.eq(username.into()),
             users::password.eq(crypt(password.into(), gen_salt("bf", PW_SALT_ITERATIONS))),
             users::email.eq(email.into()),
+            users::news_opt_in.eq(news_opt_in),
         ))
         .get_result(conn)
         .expect("Could not create user")

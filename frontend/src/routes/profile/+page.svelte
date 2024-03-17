@@ -44,6 +44,10 @@
         <th>Registered Since</th>
         <td>{data.profile.signedUp}</td>
       </tr>
+      <tr>
+        <th>Newsletter</th>
+        <td>{data.profile.newsOptIn ? 'Yes' : 'No'}</td>
+      </tr>
     </tbody>
   </table>
 </div>

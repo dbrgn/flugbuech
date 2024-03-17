@@ -12,6 +12,7 @@ const SCHEMA_API_PROFILE = z.object({
         .string()
         .transform((datestring) => new Date(datestring))
         .optional(),
+    newsOptIn: z.boolean(),
 });
 
 export type Profile = z.infer<typeof SCHEMA_API_PROFILE>;

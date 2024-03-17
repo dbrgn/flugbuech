@@ -89,6 +89,7 @@ table! {
         last_glider_id -> Nullable<Int4>,
         email -> Text,
         signed_up -> Timestamptz,
+        news_opt_in -> Bool,
     }
 }
 
