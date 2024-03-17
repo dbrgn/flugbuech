@@ -1,8 +1,8 @@
 on:
   workflow_run:
     workflows: [backend, frontend]
-    types:
-      - completed
+    branches: [main]
+    types: [completed]
 
 name: Publish
 
@@ -10,7 +10,7 @@ jobs:
   docker_image:
     name: Build Docker image
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: actions/checkout@v4
       - name: Build Docker image
