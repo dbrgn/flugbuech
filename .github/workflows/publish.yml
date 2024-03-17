@@ -1,16 +1,18 @@
 on:
-  workflow_run:
-    workflows: [backend, frontend]
+  push:
     branches: [main]
-    types: [completed]
 
 name: Publish
 
 jobs:
+  test_backend:
+    uses: ./.github/workflows/backend.yml
+  test_frontend:
+    uses: ./.github/workflows/frontend.yml
   docker_image:
     name: Build Docker image
+    needs: [test_backend, test_frontend]
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: actions/checkout@v4
       - name: Build Docker image

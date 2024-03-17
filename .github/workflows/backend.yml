@@ -1,6 +1,5 @@
 on:
-  push:
-    branches: [main]
+  workflow_call:
   pull_request:
   schedule:
     - cron: '30 3 * * 2'
