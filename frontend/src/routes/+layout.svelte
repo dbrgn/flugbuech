@@ -3,6 +3,12 @@
 
   import {loginState, refreshLoginState} from '$lib/stores';
 
+  let menuOpened = false;
+
+  function toggleMenu(): void {
+    menuOpened = !menuOpened;
+  }
+
   onMount(() => {
     refreshLoginState();
   });
@@ -22,13 +28,23 @@
       aria-label="menu"
       aria-expanded="false"
       data-target="navbar-contents"
+      tabindex="0"
+      class:is-active={menuOpened}
+      on:click={toggleMenu}
+      on:keydown={(event) => {
+        if (['Enter', ' '].includes(event.key)) {
+          event.stopPropagation();
+          event.preventDefault();
+          toggleMenu();
+        }
+      }}
     >
       <span aria-hidden="true"></span>
       <span aria-hidden="true"></span>
       <span aria-hidden="true"></span>
     </a>
   </div>
-  <div id="navbar-contents" class="navbar-menu">
+  <div id="navbar-contents" class="navbar-menu" class:is-active={menuOpened}>
     <div class="navbar-start">
       <a class="navbar-item" href="/">Home</a>
       {#if $loginState?.username}
