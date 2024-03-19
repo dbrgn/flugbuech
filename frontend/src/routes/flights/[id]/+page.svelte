@@ -34,6 +34,16 @@
   {#if landingAt}to {landingAt.name}{/if}
 </h2>
 
+<p class="content">
+  <a href="/flights/{flight.id}/edit/" class="button is-light">Edit this flight</a>
+  {#if flight.hasIgc}
+    <a href="/api/v1/flights/{flight.id}/igc/" class="button is-light" data-sveltekit-reload>
+      <span class="icon is-small"><i class="fa-solid fa-download"></i></span>&nbsp;&nbsp;Download
+      IGC
+    </a>
+  {/if}
+</p>
+
 <section>
   <table class="table is-fullwidth is-striped is-hoverable">
     <tr>
@@ -128,18 +138,6 @@
       </th>
       <td>
         {#if flight.videoUrl}<a href={flight.videoUrl}>{flight.videoUrl}</a>{:else}-{/if}
-      </td>
-    </tr>
-    <tr>
-      <th>
-        <span class="icon is-small"><i class="fa-solid fa-download"></i></span>&nbsp;&nbsp;IGC File
-      </th>
-      <td>
-        {#if flight.hasIgc}
-          <a href="/api/v1/flights/{flight.id}/igc/" data-sveltekit-reload>Download</a>
-        {:else}
-          -
-        {/if}
       </td>
     </tr>
   </table>
