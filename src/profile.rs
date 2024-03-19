@@ -19,6 +19,7 @@ pub struct ApiProfile {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiProfileUpdate {
+    #[serde(skip_serializing_if = "Option::is_none")]
     news_opt_in: Option<bool>,
 }
 

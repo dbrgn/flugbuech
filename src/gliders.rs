@@ -85,6 +85,7 @@ pub struct ApiGliders {
     /// List of user's gliders.
     gliders: Vec<ApiGlider>,
     /// The user's last used glider ID.
+    #[serde(skip_serializing_if = "Option::is_none")]
     last_glider_id: Option<i32>,
 }
 
