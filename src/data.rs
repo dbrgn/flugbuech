@@ -184,6 +184,13 @@ pub fn update_password(conn: &mut PgConnection, user: &User, password: impl Into
         .expect("Could not update user password")
 }
 
+/// Update a user's newsletter opt-in, return the updated user model.
+pub fn update_news_opt_in(conn: &mut PgConnection, user: &User, opt_in: bool) -> QueryResult<User> {
+    diesel::update(user)
+        .set(users::news_opt_in.eq(opt_in))
+        .get_result(conn)
+}
+
 pub fn get_glider_count(conn: &mut PgConnection) -> i64 {
     gliders::table
         .select(count(gliders::id))
