@@ -77,43 +77,59 @@
 </p>
 
 <h3 class="title is-size-3">News</h3>
+<h4 class="title is-size-5">2024</h4>
 <ul class="content">
   <li>
-    <strong>2024-03-13:</strong> After a longer development break, the complete Flugbuech UI has
-    been rewritten from scratch! It should still look (mostly) the same, but it should react faster
-    for you and be easier to maintain and extend for me. If you have any feedback (positive or
+    <strong>19.3.</strong> You can now opt-in to an occasional newsletter
+    <a href="/profile/">in your user profile</a>!
+  </li>
+  <li>
+    <strong>13.03.</strong> After a longer development break, the complete Flugbuech UI has been
+    rewritten from scratch! It should still look (mostly) the same, but it should react faster for
+    you and be easier to maintain and extend for me. If you have any feedback (positive or
     negative), contact me at <a href="mailto:flugbuech@bargen.dev">flugbuech@bargen.dev</a> (German or
     English)!
   </li>
+</ul>
+<h4 class="title is-size-5">2023</h4>
+<ul class="content">
   <li>
-    <strong>2023-12-21:</strong> There is now a <a href="/privacy-policy/">privacy policy</a>
+    <strong>21.12.</strong> There is now a <a href="/privacy-policy/">privacy policy</a>
   </li>
-  <li><strong>2021-09-20:</strong> User registration is implemented</li>
+</ul>
+<h4 class="title is-size-5">2021</h4>
+<ul class="content">
+  <li><strong>20.09.</strong> User registration is implemented</li>
   <li>
-    <strong>2021-04-20:</strong> Locations can now be viewed and deleted, number of associated flights
-    is listed
+    <strong>20.04.</strong> Locations can now be viewed and deleted, number of associated flights is
+    listed
   </li>
   <li>
-    <strong>2021-04-19:</strong> Location editing now supports
+    <strong>19.04.</strong> Location editing now supports
     <a href="https://www.swisstopo.admin.ch/de/karten-daten-online/karten-geodaten-online.html"
       >Swisstopo</a
     > maps
   </li>
-  <li><strong>2020-09-25:</strong> Show stats (flights, flight hours) for gliders</li>
+</ul>
+<h4 class="title is-size-5">2020</h4>
+<ul class="content">
+  <li><strong>25.09.</strong> Show stats (flights, flight hours) for gliders</li>
   <li>
-    <strong>2020-07-11:</strong> Allow marking flights as hike&amp;fly, allow deleting flights, enhance
-    stats
+    <strong>11.07.</strong> Allow marking flights as hike&amp;fly, allow deleting flights, enhance stats
   </li>
   <li>
-    <strong>2020-07-10:</strong> Your own password
+    <strong>10.07.</strong> Your own password
     <a href="/auth/password/change/">can now be changed</a>
   </li>
-  <li><strong>2020-06-14:</strong> Allow editing your gliders</li>
+  <li><strong>14.06.</strong> Allow editing your gliders</li>
   <li>
-    <strong>2020-06-12:</strong> Statistics about your flights have been added! Check out
+    <strong>12.06.</strong> Statistics about your flights have been added! Check out
     <a href="/stats/">/stats/</a>.
   </li>
-  <li><strong>2019-12-18:</strong> IGC files from XContest can now be parsed properly</li>
+</ul>
+<h4 class="title is-size-5">2019</h4>
+<ul class="content">
+  <li><strong>18.12.</strong> IGC files from XContest can now be parsed properly</li>
 </ul>
 
 <h3 class="title is-size-3">Stats</h3>

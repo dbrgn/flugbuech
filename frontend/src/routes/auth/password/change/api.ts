@@ -1,17 +1,7 @@
 import {error} from '@sveltejs/kit';
 
-import {apiPost, extractApiError, extractResponseError} from '$lib/api';
+import {apiPost, extractApiError, extractResponseError, type ApiSuccessOrError} from '$lib/api';
 import {ensureClientOrServerErrorCode} from '$lib/errors';
-
-export type PasswordChangeResult =
-    | {
-          readonly success: true;
-      }
-    | {
-          readonly success: false;
-          readonly errorReason: string;
-          readonly errorDescription: string;
-      };
 
 /**
  * Change password via API.
@@ -19,7 +9,7 @@ export type PasswordChangeResult =
 export async function apiChangePassword(
     currentPassword: string,
     newPassword: string,
-): Promise<PasswordChangeResult> {
+): Promise<ApiSuccessOrError> {
     const res = await apiPost('/api/v1/auth/password/change', {
         currentPassword,
         newPassword,

@@ -96,3 +96,16 @@ export async function extractResponseError(response: Response): Promise<string> 
         return `HTTP ${response.status}`;
     }
 }
+
+/**
+ * A type containing a success flag, and - in case of an error - the error details.
+ */
+export type ApiSuccessOrError =
+    | {
+          readonly success: true;
+      }
+    | {
+          readonly success: false;
+          readonly errorReason: string;
+          readonly errorDescription: string;
+      };

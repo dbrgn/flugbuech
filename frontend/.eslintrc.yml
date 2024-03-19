@@ -31,9 +31,10 @@ overrides:
     parserOptions:
       parser: '@typescript-eslint/parser'
 rules:
-  import/no-unresolved: off # Cannot handle $app correctly
+  'import/no-unresolved': off # Cannot handle $app correctly
   '@typescript-eslint/consistent-type-imports': error
   '@typescript-eslint/no-import-type-side-effects': error
+  '@typescript-eslint/no-shadow': 'error'
   'import/order':
     - error
     - newlines-between: always

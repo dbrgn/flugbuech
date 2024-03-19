@@ -36,7 +36,7 @@ export async function load({fetch, params}): Promise<Data> {
     const gliders = await loadApiGliders(fetch);
     const locations = await loadApiLocations(fetch);
     const existingFlightNumbers = flights.flights
-        .map((flight) => flight.number)
+        .map((f) => f.number)
         .filter((n): n is number => n !== undefined)
         .sort();
 

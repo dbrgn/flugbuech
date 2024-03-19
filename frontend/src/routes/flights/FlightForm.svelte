@@ -83,7 +83,7 @@
     };
   }
   $: reactive(validateNumber, [number]);
-  $: gliderIds = gliders.map((glider) => glider.id).filter((g): g is number => g !== undefined);
+  $: gliderIds = gliders.map((g) => g.id).filter((id): id is number => id !== undefined);
   function validateGlider(): void {
     fieldErrors = {
       ...fieldErrors,
@@ -447,10 +447,10 @@
         <div class="select is-fullwidth">
           <select id="glider" class:error={fieldErrors.glider !== undefined} bind:value={glider}>
             <option value={undefined}></option>
-            {#each gliders as glider}
-              <option value={glider.id}>
-                {glider.manufacturer}
-                {glider.model}
+            {#each gliders as g}
+              <option value={g.id}>
+                {g.manufacturer}
+                {g.model}
               </option>
             {/each}
           </select>
