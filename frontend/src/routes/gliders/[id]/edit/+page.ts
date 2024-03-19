@@ -14,7 +14,7 @@ export async function load({fetch, params}): Promise<Data> {
     const id = z.coerce.number().parse(params.id);
     // TODO: Add endpoint to fetch glider by ID
     const info = await loadApiGliders(fetch);
-    const glider = info.gliders.filter((glider) => glider.id === id)[0];
+    const glider = info.gliders.filter((g) => g.id === id)[0];
     if (glider === undefined) {
         throw error(404, `Glider with ID ${id} not found`);
     }

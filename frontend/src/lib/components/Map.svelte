@@ -44,17 +44,17 @@
 
   // Update map style whenever variable above changes
   let prevMapType = mapType;
-  function updateMapType(map: Map, newMapType: typeof mapType) {
+  function updateMapType(initializedMap: Map, newMapType: typeof mapType) {
     // No-op if type did not change
     if (newMapType === prevMapType) {
       return;
     }
 
     // Prepare additional layers that will be added once the style is loaded
-    map.once('style.load', () => {
+    initializedMap.once('style.load', () => {
       switch (newMapType) {
         case 'swisstopo':
-          map.addLayer({
+          initializedMap.addLayer({
             id: 'swisstopo-layer',
             type: 'raster',
             source: {
@@ -65,7 +65,7 @@
           });
           break;
         case 'swissimage':
-          map.addLayer({
+          initializedMap.addLayer({
             id: 'swissimage-layer',
             type: 'raster',
             source: {
@@ -82,14 +82,14 @@
     // This will remove all existing styles and layers.
     switch (newMapType) {
       case 'mapbox-outdoors':
-        map.setStyle(`mapbox://styles/mapbox/${MAPBOX_STYLE_DEFAULT}`, {diff: false});
+        initializedMap.setStyle(`mapbox://styles/mapbox/${MAPBOX_STYLE_DEFAULT}`, {diff: false});
         break;
       case 'mapbox-satellite':
-        map.setStyle(`mapbox://styles/mapbox/${MAPBOX_STYLE_SATELLITE}`, {diff: false});
+        initializedMap.setStyle(`mapbox://styles/mapbox/${MAPBOX_STYLE_SATELLITE}`, {diff: false});
         break;
       case 'swisstopo':
       case 'swissimage':
-        map.setStyle(`mapbox://styles/mapbox/${MAPBOX_STYLE_LIGHT}`, {diff: false});
+        initializedMap.setStyle(`mapbox://styles/mapbox/${MAPBOX_STYLE_LIGHT}`, {diff: false});
         break;
     }
 
