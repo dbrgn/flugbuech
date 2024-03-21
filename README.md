@@ -1,12 +1,12 @@
 # Flugbuech
 
-[![Build status: Backend](https://github.com/dbrgn/flugbuech/workflows/backend/badge.svg)](https://github.com/dbrgn/flugbuech/actions?query=branch%3Amaster)
-[![Build status: Frontend](https://github.com/dbrgn/flugbuech/workflows/frontend/badge.svg)](https://github.com/dbrgn/flugbuech/actions?query=branch%3Amaster)
+[![Build status: Backend](https://github.com/dbrgn/flugbuech/actions/workflows/backend.yml/badge.svg)](https://github.com/dbrgn/flugbuech/actions/workflows/backend.yml)
+[![Build status: Frontend](https://github.com/dbrgn/flugbuech/actions/workflows/frontend.yml/badge.svg)](https://github.com/dbrgn/flugbuech/actions/workflows/frontend.yml)
 [![Docker image](https://img.shields.io/badge/docker%20image-dbrgn%2Fflugbuech-blue)](https://hub.docker.com/r/dbrgn/flugbuech/)
 
 Personal flight log for paragliding pilots. Written with
 [Rust](https://www.rust-lang.org/) / [Rocket](https://rocket.rs/) in
-the backend and Bulma CSS / Svelte in the frontend.
+the backend and Bulma CSS / SvelteKit in the frontend.
 
 ![Screenshot](screenshot.png)
 
@@ -14,39 +14,35 @@ This software is mostly aimed at pilots that track their flights using a GPS
 tracker which generates IGC files, but it can also be used without an IGC file
 for every flight.
 
-A free hosted version of the flight book can be found at
-[flugbuech.bargen.dev](https://flugbuech.bargen.dev/). If you want a
-beta-account, just send me an e-mail to
-[flugbuech@bargen.dev](mailto:flugbuech@bargen.dev). Alternatively you can also
-host the software yourself.
-
 The IGC file is stored together with the flight data. Every flight can be
 linked to an [XContest](https://www.xcontest.org/) upload.
+
+A free hosted version of the flight book can be found at
+[flugbuech.bargen.dev](https://flugbuech.bargen.dev/). Registration is open!
+
+If you have any question, you can contact me at
+[flugbuech@bargen.dev](mailto:flugbuech@bargen.dev).
 
 
 ## Status
 
-Right now this software is still under active development. There has been no
-release so far.
-
 ### What works
 
-- [x] User login / authentication
-- [x] Adding flights to the database
+- [x] User registration / login / authentication
+- [x] Adding flights manually to the database
 - [x] Simple submission of of flights by uploading IGC file (all
   relevant flight data like launch time/location, landing time/location,
   duration, distance, etc can be extracted from that file)
 - [x] Manage locations
 - [x] Show stats about the past flights
-- [x] Simple user registration
 
 ### What's not yet implemented
 
 - [ ] Password recovery
 - [ ] Map with all your flights
-- [ ] Make it easy to self-host
+- [ ] Make it easier to self-host
 - [ ] Import launch / landing locations from a public database
-- [ ] Adding links to other XC platforms like [XCR](https://xc-paragliding.com/)
+- [ ] Direct upload to XContest
 
 
 ## Setup
@@ -79,23 +75,22 @@ Prepare database and run migrations:
 
 Install frontend dependencies:
 
-    npm install
+    (cd frontend && npm install)
 
-Build frontend components:
-
-    npm run build
-
-Start server:
+You're set up! To start the development API server:
 
     cargo run
 
+And to run the development frontend server in a second terminal window:
 
-## Registration
+    cd frontend && npm run dev
 
-In order to register a new user, head to localhost:8000/auth/registration.
-Both e-mail and username have to be unique and the password has to match password confirmation.
-Upon successful registration you will be redirect to the root_path and will see
-a welcome message bearing your username.
+Then go to <http://localhost:5173/> to view the local application.
+
+
+## Creating test users
+
+Head to <http://localhost:5173/auth/registration> and sign up regularly.
 
 
 ## Testing
@@ -104,9 +99,14 @@ First, set up a test database:
 
     docker exec flugbuech-pg createdb -U flugbuech flugbuech_test
 
-Run tests:
+Run backend tests:
 
     cargo test
+
+To run frontend tests:
+
+    cd frontend
+    npm run test
 
 
 ## Deployment
