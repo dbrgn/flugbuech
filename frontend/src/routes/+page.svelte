@@ -84,7 +84,7 @@
     <a href="/profile/">in your user profile</a>!
   </li>
   <li>
-    <strong>13.03.</strong> After a longer development break, the complete Flugbuech UI has been
+    <strong>13.3.</strong> After a longer development break, the complete Flugbuech UI has been
     rewritten from scratch! It should still look (mostly) the same, but it should react faster for
     you and be easier to maintain and extend for me. If you have any feedback (positive or
     negative), contact me at <a href="mailto:flugbuech@bargen.dev">flugbuech@bargen.dev</a> (German or
@@ -99,13 +99,13 @@
 </ul>
 <h4 class="title is-size-5">2021</h4>
 <ul class="content">
-  <li><strong>20.09.</strong> User registration is implemented</li>
+  <li><strong>20.9.</strong> User registration is implemented</li>
   <li>
-    <strong>20.04.</strong> Locations can now be viewed and deleted, number of associated flights is
+    <strong>20.4.</strong> Locations can now be viewed and deleted, number of associated flights is
     listed
   </li>
   <li>
-    <strong>19.04.</strong> Location editing now supports
+    <strong>19.4.</strong> Location editing now supports
     <a href="https://www.swisstopo.admin.ch/de/karten-daten-online/karten-geodaten-online.html"
       >Swisstopo</a
     > maps
@@ -113,17 +113,17 @@
 </ul>
 <h4 class="title is-size-5">2020</h4>
 <ul class="content">
-  <li><strong>25.09.</strong> Show stats (flights, flight hours) for gliders</li>
+  <li><strong>25.9.</strong> Show stats (flights, flight hours) for gliders</li>
   <li>
-    <strong>11.07.</strong> Allow marking flights as hike&amp;fly, allow deleting flights, enhance stats
+    <strong>11.7.</strong> Allow marking flights as hike&amp;fly, allow deleting flights, enhance stats
   </li>
   <li>
-    <strong>10.07.</strong> Your own password
+    <strong>10.7.</strong> Your own password
     <a href="/auth/password/change/">can now be changed</a>
   </li>
-  <li><strong>14.06.</strong> Allow editing your gliders</li>
+  <li><strong>14.6.</strong> Allow editing your gliders</li>
   <li>
-    <strong>12.06.</strong> Statistics about your flights have been added! Check out
+    <strong>12.6.</strong> Statistics about your flights have been added! Check out
     <a href="/stats/">/stats/</a>.
   </li>
 </ul>
