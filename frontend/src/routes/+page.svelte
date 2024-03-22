@@ -101,8 +101,7 @@
 <ul class="content">
   <li><strong>20.9.</strong> User registration is implemented</li>
   <li>
-    <strong>20.4.</strong> Locations can now be viewed and deleted, number of associated flights is
-    listed
+    <strong>20.4.</strong> Locations can now be viewed and deleted, number of associated flights is listed
   </li>
   <li>
     <strong>19.4.</strong> Location editing now supports
