@@ -261,7 +261,7 @@
   </p>
   <div class="field">
     <div class="control">
-      <button class="button is-info" disabled={!submitEnabled} type="submit">Register</button>
+      <button class="button is-primary" disabled={!submitEnabled} type="submit">Register</button>
     </div>
   </div>
 </form>

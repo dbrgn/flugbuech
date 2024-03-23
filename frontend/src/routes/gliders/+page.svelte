@@ -86,7 +86,7 @@
     dialogClass="is-danger"
   >
     <section slot="buttons">
-      <button class="button is-light" on:click={() => (gliderToDelete = undefined)}
+      <button class="button is-white" on:click={() => (gliderToDelete = undefined)}
         >No, cancel</button
       >
       <button class="button is-danger" disabled={deleting} on:click={() => void deleteGlider()}
@@ -112,7 +112,7 @@
     You flew {data.gliders.length} glider{data.gliders.length === 1 ? '' : 's'} so far!
   </p>
   <p class="content">
-    <a href="/gliders/add/" class="button is-info">Add glider</a>
+    <a href="/gliders/add/" class="button is-primary">Add glider</a>
   </p>
   <table class="table is-fullwidth is-striped is-hoverable">
     <thead>

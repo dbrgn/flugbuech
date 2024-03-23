@@ -692,7 +692,7 @@
     </div>
 
     <div class="content control submitcontrols">
-      <button class="button is-info" disabled={!submitEnabled} type="submit">Submit</button>
+      <button class="button is-primary" disabled={!submitEnabled} type="submit">Submit</button>
     </div>
   </form>
 </div>
