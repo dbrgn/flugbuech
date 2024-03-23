@@ -1,7 +1,9 @@
 <script lang="ts">
+  import {bytesToHex} from '$lib/byte';
   import CountryFlag from '$lib/components/CountryFlag.svelte';
   import Flashes from '$lib/components/Flashes.svelte';
   import XContestSummary from '$lib/components/XContestSummary.svelte';
+  import {randomBytes} from '$lib/crypto';
   import {formatDate, formatDistance, formatDuration, formatTime} from '$lib/formatters';
 
   import type {Data} from './+page';
@@ -11,6 +13,8 @@
   $: flight = data.flight;
   $: launchAt = data.flight.launchAt;
   $: landingAt = data.flight.landingAt;
+
+  const xcontestX = bytesToHex(randomBytes(new Uint8Array(16)));
 </script>
 
 <nav class="breadcrumb" aria-label="breadcrumbs">
@@ -142,6 +146,18 @@
     </tr>
   </table>
 </section>
+
+<form
+  method="post"
+  action="https://www.xcontest.org/world/en/flight-claim/"
+  enctype="multipart/form-data"
+  rel="external noreferrer"
+  target="_blank"
+>
+  <input type="file" name="flight[tracklog]" />
+  <input type="text" name="flight[__x__]" value={xcontestX} />
+  <button class="button" type="submit">Go</button>
+</form>
 
 <style>
   table th {
