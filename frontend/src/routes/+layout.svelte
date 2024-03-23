@@ -116,4 +116,47 @@
   .main-header .subtitle {
     color: #eee;
   }
+
+  /** Bulma CSS variable customization */
+
+  :root {
+    /* Link color: A more soft, slightly desaturated blue */
+    --bulma-link-h: 204.1deg;
+    --bulma-link-s: 80%;
+    --bulma-link-on-scheme-l: 45%;
+    --bulma-active-color-l-delta: -25%;
+
+    /* Primary color: Blue instead of teal */
+    --bulma-primary-h: 204.1deg;
+    --bulma-primary-s: 85.8%;
+    --bulma-primary-l: 50.4%;
+  }
+
+  :global(.button) {
+    /* Button: Slightly less padding */
+    --bulma-button-padding-vertical: 0.4em;
+    --bulma-button-padding-horizontal: 0.75em;
+  }
+
+  :global(.button.is-primary),
+  :global(.button.is-danger) {
+    /* Button: White text instead of black */
+    --bulma-button-color-l: 100%;
+  }
+
+  :global(.message.is-primary),
+  :global(.message.is-danger) {
+    /* Message header: White text instead of black */
+    --bulma-message-header-color-l: 100%;
+  }
+
+  :global(.modal-background) {
+    /* Slightly less dark modal background */
+    --bulma-modal-background-background-color: hsla(
+      var(--bulma-scheme-h),
+      var(--bulma-scheme-s),
+      var(--bulma-scheme-invert-l),
+      0.78
+    );
+  }
 </style>

@@ -192,7 +192,7 @@
 
   <div class="field">
     <div class="control">
-      <button class="button is-info" disabled={!submitEnabled} type="submit">Submit</button>
+      <button class="button is-primary" disabled={!submitEnabled} type="submit">Submit</button>
     </div>
   </div>
 </form>

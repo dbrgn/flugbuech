@@ -1,3 +1,20 @@
+/* Preserve newlines */
+
+.preserve-newlines {
+  white-space: pre;
+}
+
+/* More subtle link colors, used e.g. in the flight list */
+
+a.subtle-link {
+  color: #363636;
+}
+a.subtle-link:hover {
+  color: #777;
+}
+
+/* Old */
+
 .navbar-brand .navbar-item {
   margin-left: 8px;
 }
@@ -47,19 +64,4 @@ footer {
 
 div.control + label.checkbox {
   margin-top: 8px;
-}
-
-/* Preserve newlines */
-
-.preserve-newlines {
-  white-space: pre;
-}
-
-/* More subtle link colors, used e.g. in the flight list */
-
-a.subtle-link {
-  color: #363636;
-}
-a.subtle-link:hover {
-  color: #777;
 }

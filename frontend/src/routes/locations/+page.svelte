@@ -86,7 +86,7 @@
     dialogClass="is-danger"
   >
     <section slot="buttons">
-      <button class="button is-light" on:click={() => (locationToDelete = undefined)}
+      <button class="button is-white" on:click={() => (locationToDelete = undefined)}
         >No, cancel</button
       >
       <button class="button is-danger" disabled={deleting} on:click={() => void deleteLocation()}
@@ -120,7 +120,7 @@
     You've been at {data.locations.length} location{data.locations.length === 1 ? '' : 's'} so far!
   </p>
   <p class="content">
-    <a href="/locations/add/" class="button is-info">Add location</a>
+    <a href="/locations/add/" class="button is-primary">Add location</a>
   </p>
   <table class="table is-fullwidth is-striped is-hoverable">
     <thead>
