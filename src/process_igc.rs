@@ -211,8 +211,6 @@ fn parse_igc(reader: impl BufRead, user: &models::User, db: &mut diesel::PgConne
 }
 
 /// Process IGC file, return parsed data.
-///
-/// This endpoint is meant to be called from a fetch request.
 #[post(
     "/flights/add/process_igc",
     format = "application/octet-stream",
@@ -226,7 +224,7 @@ pub async fn process_igc(
     let user = user.into_inner();
 
     // Open IGC file
-    let igc_bytes = match data.open(crate::MAX_UPLOAD_BYTES.bytes()).into_bytes().await {
+    let igc_bytes = match data.open(crate::MAX_IGC_UPLOAD_BYTES.bytes()).into_bytes().await {
         Ok(capped_vec) if capped_vec.is_complete() => capped_vec.into_inner(),
         Ok(_) => {
             return Json(FlightInfoResult::Error {
