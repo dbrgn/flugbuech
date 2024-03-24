@@ -4,6 +4,7 @@ use std::{
     sync::{Mutex, MutexGuard},
 };
 
+use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use diesel::{connection::SimpleConnection, pg::PgConnection, prelude::*};
 use diesel_migrations::MigrationHarness;
 use dotenv;
@@ -130,4 +131,14 @@ pub fn make_test_config() -> rocket::figment::Figment {
     Figment::from(Config::default())
         .select(Config::DEBUG_PROFILE)
         .merge(("databases.flugbuech", database))
+}
+
+pub fn utc_datetime(year: i32, month: u32, day: u32, hour: u32, min: u32, sec: u32) -> DateTime<Utc> {
+    DateTime::from_naive_utc_and_offset(
+        NaiveDateTime::new(
+            NaiveDate::from_ymd_opt(year, month, day).unwrap(),
+            NaiveTime::from_hms_opt(hour, min, sec).unwrap(),
+        ),
+        Utc,
+    )
 }

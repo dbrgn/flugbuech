@@ -9,6 +9,7 @@ mod cors;
 mod data;
 mod flights;
 mod gliders;
+mod import_csv;
 mod locations;
 mod models;
 mod process_igc;
@@ -18,13 +19,17 @@ mod schema;
 mod stats;
 #[cfg(test)]
 mod test_utils;
+mod xcontest;
 
 use anyhow::{Context, Result};
 use clap::{Arg, ArgAction, Command};
 use rocket::{catch, catchers, get, request::Request, routes};
 use serde::Deserialize;
 
-pub const MAX_UPLOAD_BYTES: u64 = 50 * 1024 * 1024;
+// Limits
+pub const MAX_IGC_UPLOAD_BYTES: u64 = 50 * 1024 * 1024;
+pub const MAX_CSV_UPLOAD_BYTES: u64 = 10 * 1024 * 1024;
+
 pub const NAME: &str = "flugbuech-api";
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const DESCRIPTION: &str = "Paragliding flight book.";
@@ -114,6 +119,7 @@ async fn main() -> Result<()> {
                 gliders::api_routes(),
                 flights::api_routes(),
                 process_igc::api_routes(),
+                import_csv::api_routes(),
             ]
             .concat(),
         );
