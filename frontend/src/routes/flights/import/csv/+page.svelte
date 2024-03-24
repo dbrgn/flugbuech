@@ -89,6 +89,7 @@
       <li>Character set: UTF-8</li>
       <li>Delimiter: Comma (<code>,</code>)</li>
       <li>Quoting: Double quotes (<code>"</code>)</li>
+      <li>Max file size: 10 MiB</li>
     </ul>
     <details>
       <summary><em>Click to expand full CSV format description</em></summary>
@@ -139,8 +140,8 @@
         <tr>
           <td><code>launch_time_utc</code></td>
           <td>ISO&nbsp;String</td>
-          <td>The launch time (UTC!) as ISO time string</td>
-          <td class="example"><code>13:37</code></td>
+          <td>The launch time (UTC!) as ISO time string (including seconds)</td>
+          <td class="example"><code>13:37:00</code></td>
         </tr>
         <tr>
           <td><code>landing_site</code></td>
@@ -154,8 +155,8 @@
         <tr>
           <td><code>landing_time_utc</code></td>
           <td>ISO&nbsp;String</td>
-          <td>The landing time (UTC!) as ISO time string</td>
-          <td class="example"><code>15:42</code></td>
+          <td>The landing time (UTC!) as ISO time string (including seconds)</td>
+          <td class="example"><code>15:42:23</code></td>
         </tr>
         <tr>
           <td><code>track_distance</code></td>

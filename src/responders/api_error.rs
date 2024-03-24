@@ -44,6 +44,7 @@ impl RocketError {
 pub enum ApiError {
     MissingAuthentication,
     InvalidData { message: String },
+    IoError { message: String },
     NotFound,
 }
 
@@ -68,6 +69,17 @@ impl<'r> response::Responder<'r, 'static> for ApiError {
                     error: RocketErrorInner {
                         code: 400,
                         reason: "InvalidData",
+                        description: message.into(),
+                    },
+                })
+                .unwrap(),
+            ),
+            ApiError::IoError { message } => (
+                Status::InternalServerError,
+                json::to_string(&RocketError {
+                    error: RocketErrorInner {
+                        code: 500,
+                        reason: "IoError",
                         description: message.into(),
                     },
                 })
