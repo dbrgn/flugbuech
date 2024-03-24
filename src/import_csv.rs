@@ -203,6 +203,17 @@ fn analyze_csv(csv_bytes: Vec<u8>, user: &User, conn: &mut PgConnection) -> CsvA
                     headers.iter().collect::<Vec<_>>().join(","),
                 ));
             }
+            let mut unknown_fields = given_header_set
+                .difference(&valid_header_set)
+                .cloned()
+                .collect::<Vec<_>>();
+            if !unknown_fields.is_empty() {
+                unknown_fields.sort();
+                warnings.push(format!(
+                    "Some CSV header fields are unknown and will be ignored: {}",
+                    unknown_fields.join(",")
+                ));
+            }
         }
         Err(e) => fail!(format!("Error while reading headers from CSV: {e}")),
     };
@@ -417,8 +428,11 @@ mod tests {
 
     #[test]
     fn analyze_empty_csv_with_some_valid_headers() {
-        let result = analyze("a,number,b\n", None);
-        assert_eq!(result.warnings, empty_vec());
+        let result = analyze("a,number,c,b\n", None);
+        assert_eq!(
+            result.warnings,
+            vec!["Some CSV header fields are unknown and will be ignored: a,b,c"],
+        );
         assert_eq!(result.errors, vec!["CSV is empty"]);
     }
 
