@@ -134,9 +134,12 @@
   <p class="content">
     You've logged {data.flights.length} flight{data.flights.length === 1 ? '' : 's'} so far!
   </p>
-  <p class="content">
+
+  <p class="content" style="display: flex; justify-content: space-between;">
     <a href="/flights/add/" class="button is-primary">Add flight</a>
+    <a href="/flights/import/csv/" class="button is-light">Import from CSV</a>
   </p>
+
   <table class="table is-fullwidth is-striped is-hoverable">
     <thead>
       <tr>
