@@ -31,8 +31,8 @@
 
   // Form values
   // Note: Values for number inputs must allow null!
-  let files: FileList | undefined = undefined;
-  let igcBase64: string | undefined = undefined;
+  let files: FileList | undefined;
+  let igcBase64: string | undefined;
   let number: number | null = flight?.number ?? null;
   let glider: number | undefined = flight?.gliderId ?? lastGliderId;
   // Note: For the select input value binding to work correctly, entries from `locations` must be

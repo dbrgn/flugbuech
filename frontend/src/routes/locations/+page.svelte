@@ -110,7 +110,7 @@
 <section>
   <article class="message is-info">
     <div class="message-body">
-      <i class="fa-solid fa-circle-info" />&emsp;Note: A location can be used both as launch
+      <i class="fa-solid fa-circle-info" />&ensp;Note: A location can be used both as launch
       location and as landing location. Locations are not global, i.e. you are creating and
       maintaining your own location database.
     </div>
