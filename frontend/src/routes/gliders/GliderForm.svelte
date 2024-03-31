@@ -315,7 +315,7 @@
     {/if}
 
     <div class="content control submitcontrols">
-      <button class="button is-info" disabled={!submitEnabled} type="submit">Submit</button>
+      <button class="button is-primary" disabled={!submitEnabled} type="submit">Submit</button>
     </div>
 
     <p class="content"><small><em>* Required fields</em></small></p>

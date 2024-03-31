@@ -109,7 +109,7 @@
     dialogClass="is-danger"
   >
     <section slot="buttons">
-      <button class="button is-light" on:click={() => (flightToDelete = undefined)}
+      <button class="button is-white" on:click={() => (flightToDelete = undefined)}
         >No, cancel</button
       >
       <button class="button is-danger" disabled={deleting} on:click={() => void deleteFlight()}
@@ -135,7 +135,7 @@
     You've logged {data.flights.length} flight{data.flights.length === 1 ? '' : 's'} so far!
   </p>
   <p class="content">
-    <a href="/flights/add/" class="button is-info">Add flight</a>
+    <a href="/flights/add/" class="button is-primary">Add flight</a>
   </p>
   <table class="table is-fullwidth is-striped is-hoverable">
     <thead>

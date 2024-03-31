@@ -16,7 +16,7 @@
 
 <Flashes />
 
-<article class="message is-info">
+<article class="message is-primary">
   <div class="message-header">
     <p>Update March 2024</p>
   </div>
