@@ -336,6 +336,7 @@
           messages[NO_ROW].warnings.length > 0 ||
           messages[flight.csvRow]?.[NO_FIELD].warnings.length > 0}
 
+        {@const numberMessages = messages[flight.csvRow]?.['number'] ?? defaultMessageGroup()}
         {@const gliderIdMessages = messages[flight.csvRow]?.['glider-id'] ?? defaultMessageGroup()}
         {@const launchTimeMessages =
           messages[flight.csvRow]?.['launch-time'] ?? defaultMessageGroup()}
@@ -354,7 +355,25 @@
           class:is-warning={!hasUnspecificErrors && hasUnspecificWarnings}
         >
           <td>{flight.csvRow}</td>
-          <td>{flight.number ?? '-'}</td>
+          <td
+            class:is-danger={numberMessages.errors.length > 0}
+            class:is-warning={numberMessages.warnings.length > 0}
+            title={[...numberMessages.errors, ...numberMessages.warnings]
+              .map((m) => m.message)
+              .join('\n')}
+          >
+            {#if flight.number === undefined}
+              {#if numberMessages.errors.length > 0}
+                <i class="fa-solid fa-danger" />
+              {:else if numberMessages.warnings.length > 0}
+                <i class="fa-solid fa-warning" />
+              {:else}
+                -
+              {/if}
+            {:else}
+              {flight.number}
+            {/if}
+          </td>
           <td
             class:is-danger={gliderIdMessages.errors.length > 0}
             class:is-warning={gliderIdMessages.warnings.length > 0}

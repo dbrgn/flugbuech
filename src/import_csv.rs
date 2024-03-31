@@ -262,6 +262,12 @@ fn analyze_csv(csv_bytes: Vec<u8>, user: &User, conn: &mut PgConnection) -> CsvA
         Err(e) => fail!(format!("Error while reading headers from CSV: {e}"), None),
     };
 
+    // Get user's existing flight numbers
+    let numbers: Vec<i32> = match data::get_flight_numbers_for_user(conn, user) {
+        Ok(numbers) => numbers,
+        Err(e) => fail!(format!("Error while fetching flight numbers: {e}"), None),
+    };
+
     // Get user's gliders
     let gliders: Vec<(i32, String)> = data::get_gliders_for_user(conn, user)
         .into_iter()
@@ -292,7 +298,6 @@ fn analyze_csv(csv_bytes: Vec<u8>, user: &User, conn: &mut PgConnection) -> CsvA
         // Prepare flight preview struct
         let mut flight = ApiCsvFlightPreview {
             csv_row: row_number1,
-            number: record.number,
             track_distance: record.track_distance,
             comment: record.comment.clone(),
             video_url: record.video_url.clone(),
@@ -300,6 +305,7 @@ fn analyze_csv(csv_bytes: Vec<u8>, user: &User, conn: &mut PgConnection) -> CsvA
             ..Default::default()
         };
 
+        flight_process_number(&record, row_number1, &mut flight, &numbers, &mut warnings);
         flight_process_glider(&record, row_number1, &mut flight, &gliders, &mut warnings);
         flight_process_locations(&record, row_number1, &mut flight, &locations, &mut warnings);
         flight_process_date_time(&record, row_number1, &mut flight, &mut warnings);
@@ -316,6 +322,26 @@ fn analyze_csv(csv_bytes: Vec<u8>, user: &User, conn: &mut PgConnection) -> CsvA
         warnings,
         errors,
         flights,
+    }
+}
+
+fn flight_process_number(
+    record: &CsvRecord,
+    row_number1: usize,
+    flight: &mut ApiCsvFlightPreview,
+    numbers: &Vec<i32>,
+    warnings: &mut Vec<Message>,
+) {
+    if let Some(number) = record.number.as_ref() {
+        if !numbers.contains(number) {
+            flight.number = Some(*number);
+        } else {
+            warnings.push(Message::for_field(
+                row_number1,
+                "number",
+                format!("Flight number {number} is already in your flight list, importing without number"),
+            ));
+        }
     }
 }
 
@@ -474,7 +500,7 @@ fn flight_process_xcontest_info(
 #[cfg(test)]
 mod tests {
     use crate::{
-        models::{NewGlider, NewLocation},
+        models::{NewFlight, NewGlider, NewLocation},
         test_utils::{utc_datetime, DbTestContext},
     };
 
@@ -526,6 +552,44 @@ mod tests {
             )],
         );
         assert_eq!(result.errors, vec![Message::without_row("CSV is empty")]);
+    }
+
+    #[test]
+    fn analyze_csv_taken_number() {
+        let ctx = DbTestContext::new();
+
+        // Create two flights: One by the user, one by another user
+        data::create_flight(
+            &mut *ctx.force_get_conn(),
+            &NewFlight {
+                user_id: ctx.testuser1.user.id,
+                number: Some(12),
+                ..Default::default()
+            },
+            None,
+        );
+        data::create_flight(
+            &mut *ctx.force_get_conn(),
+            &NewFlight {
+                user_id: ctx.testuser2.user.id,
+                number: Some(34),
+                ..Default::default()
+            },
+            None,
+        );
+
+        let result = analyze("number\n34\n12", Some(ctx));
+        assert_eq!(
+            result.warnings,
+            vec![Message::for_field(
+                2,
+                "number",
+                "Flight number 12 is already in your flight list, importing without number",
+            )]
+        );
+        assert_eq!(result.errors, empty_vec());
+        assert_eq!(result.flights[0].number, Some(34));
+        assert_eq!(result.flights[1].number, None);
     }
 
     #[test]

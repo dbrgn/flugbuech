@@ -304,6 +304,15 @@ pub fn get_flights_for_user(conn: &mut PgConnection, user: &User) -> Vec<Flight>
         .expect("Error loading flights")
 }
 
+/// Retrieve all flight numbers of a specific user.
+pub fn get_flight_numbers_for_user(conn: &mut PgConnection, user: &User) -> QueryResult<Vec<i32>> {
+    let numbers: Vec<Option<i32>> = Flight::belonging_to(user)
+        .select(flights::number)
+        .order((flights::number.desc(), flights::launch_time.desc()))
+        .load(conn)?;
+    Ok(numbers.into_iter().filter_map(|number_opt| number_opt).collect())
+}
+
 /// Retrieve flight with the specified ID.
 pub fn get_flight_with_id(conn: &mut PgConnection, id: i32) -> Option<Flight> {
     flights::table

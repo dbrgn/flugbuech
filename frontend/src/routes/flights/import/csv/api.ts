@@ -8,6 +8,7 @@ import {ensureXContestTracktype} from '$lib/xcontest';
  * List of all possible CSV validation message fields.
  */
 const API_MESSAGE_FIELDS = [
+    'number',
     'glider-id',
     'launch-at',
     'landing-at',
