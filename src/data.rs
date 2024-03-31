@@ -274,6 +274,13 @@ pub fn create_flight(conn: &mut PgConnection, flight: &NewFlight, igc: Option<Ve
     .expect("Transaction for create_flight failed")
 }
 
+/// Create multiple new flights. Return the number of rows affected.
+///
+/// Note: Adding an IGC file is not supported here!
+pub fn create_flights(conn: &mut PgConnection, flights: &[NewFlight]) -> QueryResult<usize> {
+    diesel::insert_into(flights::table).values(flights).execute(conn)
+}
+
 /// Save an updated flight in the database.
 pub fn update_flight(conn: &mut PgConnection, flight: &Flight) {
     diesel::update(flight)

@@ -4,11 +4,16 @@ use std::{collections::HashSet, io::Cursor};
 
 use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use diesel::PgConnection;
-use log::{error, info};
+use log::{error, info, warn};
 use rocket::{data::ToByteUnit, post, routes, serde::json::Json, Data, Route};
 use serde::{Deserialize, Serialize};
 
-use crate::{auth, data, models::User, responders::ApiError, xcontest::is_valid_tracktype};
+use crate::{
+    auth, data,
+    models::{NewFlight, User},
+    responders::ApiError,
+    xcontest::is_valid_tracktype,
+};
 
 // API types
 
@@ -53,6 +58,19 @@ pub struct CsvAnalyzeResult {
     warnings: Vec<Message>,
     errors: Vec<Message>,
     flights: Vec<ApiCsvFlightPreview>,
+}
+
+#[derive(Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CsvImportResult {
+    success: bool,
+}
+
+#[derive(Debug, PartialEq, Serialize)]
+#[serde(untagged)]
+pub enum CsvAnalyzeOrImportResult {
+    Analyze(CsvAnalyzeResult),
+    Import(CsvImportResult),
 }
 
 #[derive(Debug, Default, PartialEq, Serialize)]
@@ -155,7 +173,7 @@ pub async fn process_csv(
     database: data::Database,
     mode: &'_ str,
     data: Data<'_>,
-) -> Result<Json<CsvAnalyzeResult>, ApiError> {
+) -> Result<Json<CsvAnalyzeOrImportResult>, ApiError> {
     info!("Processing CSV with mode '{mode}'");
     let user = user.into_inner();
 
@@ -185,13 +203,29 @@ pub async fn process_csv(
     };
 
     // Process and analyze the CSV file
-    let analyze_result = database.run(move |db| analyze_csv(csv_bytes, &user, db)).await;
+    let analyze_result = database
+        .run({
+            let user = user.clone();
+            move |db| analyze_csv(csv_bytes, &user, db)
+        })
+        .await;
 
+    // If desired, import CSV data
     if mode == "import" {
-        todo!("Import not yet implemented");
-    }
+        if !analyze_result.errors.is_empty() {
+            return Err(ApiError::InvalidData {
+                message: format!("Submitted CSV data with analyze errors"),
+            });
+        }
 
-    Ok(Json(analyze_result))
+        let import_result = database
+            .run(move |db| import_flights(analyze_result.flights, &user, db))
+            .await;
+
+        Ok(Json(CsvAnalyzeOrImportResult::Import(import_result)))
+    } else {
+        Ok(Json(CsvAnalyzeOrImportResult::Analyze(analyze_result)))
+    }
 }
 
 /// Return vec of all API routes.
@@ -493,6 +527,45 @@ fn flight_process_xcontest_info(
                 "xcontest-url",
                 format!("XContest URL must start with https:// or http://"),
             ));
+        }
+    }
+}
+
+/// Import flights into the database
+fn import_flights(
+    flights: Vec<ApiCsvFlightPreview>,
+    user: &User,
+    conn: &mut PgConnection,
+) -> CsvImportResult {
+    let new_flights: Vec<NewFlight> = flights
+        .into_iter()
+        .map(|flight| NewFlight {
+            number: flight.number,
+            user_id: user.id,
+            glider_id: flight.glider_id,
+            launch_at: flight.launch_at,
+            landing_at: flight.landing_at,
+            launch_time: flight.launch_time,
+            landing_time: flight.landing_time,
+            track_distance: flight.track_distance,
+            xcontest_tracktype: flight.xcontest_tracktype,
+            xcontest_distance: flight.xcontest_distance,
+            xcontest_url: flight.xcontest_url,
+            comment: flight.comment,
+            video_url: flight.video_url,
+            hikeandfly: flight.hikeandfly,
+        })
+        .collect();
+
+    match data::create_flights(conn, &new_flights) {
+        Ok(count) if count == new_flights.len() => CsvImportResult { success: true },
+        Ok(other_count) => {
+            warn!("Flight insert query returned different number of affected rows than expected (expected {}, affected {})", new_flights.len(), other_count);
+            CsvImportResult { success: true }
+        }
+        Err(e) => {
+            error!("Failed to import flights: {e}");
+            CsvImportResult { success: false }
         }
     }
 }

@@ -109,7 +109,7 @@
 
 <Flashes bind:this={flashes} />
 
-<h2 class="title is-2">Import Flights from CSV: Step {state.step}</h2>
+<h2 class="title is-2">Import Flights from CSV: Step {state.step}/3</h2>
 
 <article class="message is-warning">
   <div class="message-body">
@@ -304,6 +304,15 @@
               {/if}{warning.message}
             </li>{/each}
         </ul>
+      </div>
+    </article>
+  {/if}
+  {#if state.result.errors.length === 0 && state.result.warnings.length === 0}
+    <article class="message is-success">
+      <div class="message-body content">
+        Hooray, CSV file looks valid, no warnings or errors were detected. Click the
+        <strong>Import CSV</strong> button below, to import {state.result.flights.length} flights into
+        your flight book.<br />
       </div>
     </article>
   {/if}
@@ -551,7 +560,8 @@
   >
     <div class="message-body">
       {#if state.result.success}
-        Successfully imported flights from CSV!<br />Go to your <a href="/flights/">flight list</a>
+        <i class="fa-solid fa-circle-check" />&nbsp;Successfully imported flights from CSV! Go to
+        your <a href="/flights/">flight list</a> to see them.
       {:else}
         <strong>Error: </strong>Failed to import flights from CSV.
       {/if}
