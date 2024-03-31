@@ -26,6 +26,13 @@ export function formatTime(time: Date): string {
 }
 
 /**
+ * Format a datetime as "YYYY-mm-dd hh:mm".
+ */
+export function formatDateTime(datetime: Date): string {
+    return `${formatDate(datetime)} ${formatTime(datetime)}`;
+}
+
+/**
  * Format a distance in km.
  *
  * Example: formatDistance(13.37123) === "13.37 km"

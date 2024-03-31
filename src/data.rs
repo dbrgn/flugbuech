@@ -274,6 +274,13 @@ pub fn create_flight(conn: &mut PgConnection, flight: &NewFlight, igc: Option<Ve
     .expect("Transaction for create_flight failed")
 }
 
+/// Create multiple new flights. Return the number of rows affected.
+///
+/// Note: Adding an IGC file is not supported here!
+pub fn create_flights(conn: &mut PgConnection, flights: &[NewFlight]) -> QueryResult<usize> {
+    diesel::insert_into(flights::table).values(flights).execute(conn)
+}
+
 /// Save an updated flight in the database.
 pub fn update_flight(conn: &mut PgConnection, flight: &Flight) {
     diesel::update(flight)
@@ -302,6 +309,15 @@ pub fn get_flights_for_user(conn: &mut PgConnection, user: &User) -> Vec<Flight>
         .order((flights::number.desc(), flights::launch_time.desc()))
         .load(conn)
         .expect("Error loading flights")
+}
+
+/// Retrieve all flight numbers of a specific user.
+pub fn get_flight_numbers_for_user(conn: &mut PgConnection, user: &User) -> QueryResult<Vec<i32>> {
+    let numbers: Vec<Option<i32>> = Flight::belonging_to(user)
+        .select(flights::number)
+        .order((flights::number.desc(), flights::launch_time.desc()))
+        .load(conn)?;
+    Ok(numbers.into_iter().filter_map(|number_opt| number_opt).collect())
 }
 
 /// Retrieve flight with the specified ID.
