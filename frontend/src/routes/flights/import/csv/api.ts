@@ -5,12 +5,19 @@ import {AuthenticationError} from '$lib/errors';
 import {ensureXContestTracktype} from '$lib/xcontest';
 
 const SCHEMA_API_CSV_FLIGHT_PREVIEW = z.object({
+    csvRow: z.number(),
     number: z.number().optional(),
     gliderId: z.number().optional(),
     launchAt: z.number().optional(),
     landingAt: z.number().optional(),
-    launchTime: z.string().optional(),
-    landingTime: z.string().optional(),
+    launchTime: z
+        .string()
+        .transform((datetime) => new Date(datetime))
+        .optional(),
+    landingTime: z
+        .string()
+        .transform((datetime) => new Date(datetime))
+        .optional(),
     trackDistance: z.number().optional(),
     xcontestTracktype: z.string().transform(ensureXContestTracktype).optional(),
     xcontestDistance: z.number().optional(),
@@ -20,9 +27,14 @@ const SCHEMA_API_CSV_FLIGHT_PREVIEW = z.object({
     hikeandfly: z.boolean(),
 });
 
+const SCHEMA_API_MESSAGE = z.object({
+    csvRow: z.number().nullable(),
+    message: z.string(),
+});
+
 const SCHEMA_API_ANALYZE_RESULT = z.object({
-    warnings: z.array(z.string()),
-    errors: z.array(z.string()),
+    warnings: z.array(SCHEMA_API_MESSAGE),
+    errors: z.array(SCHEMA_API_MESSAGE),
     flights: z.array(SCHEMA_API_CSV_FLIGHT_PREVIEW),
 });
 
@@ -30,8 +42,8 @@ const SCHEMA_API_IMPORT_RESULT = z.object({
     success: z.boolean(),
 });
 
-type CsvAnalyzeResult = z.infer<typeof SCHEMA_API_ANALYZE_RESULT>;
-type CsvImportResult = z.infer<typeof SCHEMA_API_IMPORT_RESULT>;
+export type CsvAnalyzeResult = z.infer<typeof SCHEMA_API_ANALYZE_RESULT>;
+export type CsvImportResult = z.infer<typeof SCHEMA_API_IMPORT_RESULT>;
 
 /**
  * Analyze CSV file through API.

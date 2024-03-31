@@ -14,15 +14,50 @@ use crate::{auth, data, models::User, responders::ApiError, xcontest::is_valid_t
 
 #[derive(Debug, Default, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct Message {
+    message: String,
+    csv_row: Option<usize>,
+    field: Option<String>,
+}
+
+impl Message {
+    fn without_row(message: impl Into<String>) -> Self {
+        Message {
+            message: message.into(),
+            ..Default::default()
+        }
+    }
+
+    fn for_row(csv_row: usize, message: impl Into<String>) -> Self {
+        Message {
+            message: message.into(),
+            csv_row: Some(csv_row),
+            ..Default::default()
+        }
+    }
+
+    fn for_field(csv_row: usize, field: impl Into<String>, message: impl Into<String>) -> Self {
+        Message {
+            message: message.into(),
+            csv_row: Some(csv_row),
+            field: Some(field.into()),
+        }
+    }
+}
+
+#[derive(Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CsvAnalyzeResult {
-    warnings: Vec<String>,
-    errors: Vec<String>,
+    warnings: Vec<Message>,
+    errors: Vec<Message>,
     flights: Vec<ApiCsvFlightPreview>,
 }
 
 #[derive(Debug, Default, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiCsvFlightPreview {
+    /// The row number in the CSV (starting with 1)
+    pub csv_row: usize,
     /// The user-defined flight number
     #[serde(skip_serializing_if = "Option::is_none")]
     pub number: Option<i32>,
@@ -171,8 +206,12 @@ fn analyze_csv(csv_bytes: Vec<u8>, user: &User, conn: &mut PgConnection) -> CsvA
     let mut flights = vec![];
 
     macro_rules! fail {
-        ($msg:expr) => {{
-            errors.push($msg);
+        ($msg:expr, $csv_row:expr) => {{
+            errors.push(Message {
+                message: $msg.into(),
+                csv_row: $csv_row,
+                field: None,
+            });
             return CsvAnalyzeResult {
                 warnings,
                 errors,
@@ -193,15 +232,18 @@ fn analyze_csv(csv_bytes: Vec<u8>, user: &User, conn: &mut PgConnection) -> CsvA
     match reader.headers() {
         Ok(headers) => {
             if headers.is_empty() {
-                fail!("CSV does not contain any columns".into());
+                fail!("CSV does not contain any columns", None);
             }
 
             let given_header_set = headers.into_iter().collect::<HashSet<_>>();
             if valid_header_set.is_disjoint(&given_header_set) {
-                fail!(format!(
-                    "CSV header fields ({}) don't contain any valid header",
-                    headers.iter().collect::<Vec<_>>().join(","),
-                ));
+                fail!(
+                    format!(
+                        "CSV header fields ({}) don't contain any valid header",
+                        headers.iter().collect::<Vec<_>>().join(","),
+                    ),
+                    None
+                );
             }
             let mut unknown_fields = given_header_set
                 .difference(&valid_header_set)
@@ -209,13 +251,13 @@ fn analyze_csv(csv_bytes: Vec<u8>, user: &User, conn: &mut PgConnection) -> CsvA
                 .collect::<Vec<_>>();
             if !unknown_fields.is_empty() {
                 unknown_fields.sort();
-                warnings.push(format!(
+                warnings.push(Message::without_row(format!(
                     "Some CSV header fields are unknown and will be ignored: {}",
-                    unknown_fields.join(",")
-                ));
+                    unknown_fields.join(","),
+                )));
             }
         }
-        Err(e) => fail!(format!("Error while reading headers from CSV: {e}")),
+        Err(e) => fail!(format!("Error while reading headers from CSV: {e}"), None),
     };
 
     // Get user's gliders
@@ -232,17 +274,22 @@ fn analyze_csv(csv_bytes: Vec<u8>, user: &User, conn: &mut PgConnection) -> CsvA
 
     // Parse and validate records
     for (row_number, result) in reader.deserialize().enumerate() {
+        let row_number1 = row_number + 1;
+
         let record: CsvRecord = match result {
             Ok(r) => r,
             Err(e) => {
-                warnings.push(format!("Error while reading record from CSV: {e}"));
+                warnings.push(Message::for_row(
+                    row_number1,
+                    format!("Error while reading record from CSV: {e}"),
+                ));
                 continue;
             }
         };
-        let row_number1 = row_number + 1;
 
         // Prepare flight preview struct
         let mut flight = ApiCsvFlightPreview {
+            csv_row: row_number1,
             number: record.number,
             track_distance: record.track_distance,
             comment: record.comment.clone(),
@@ -251,8 +298,8 @@ fn analyze_csv(csv_bytes: Vec<u8>, user: &User, conn: &mut PgConnection) -> CsvA
             ..Default::default()
         };
 
-        flight_process_glider(&record, &mut flight, &gliders, &mut warnings);
-        flight_process_locations(&record, &mut flight, &locations, &mut warnings);
+        flight_process_glider(&record, row_number1, &mut flight, &gliders, &mut warnings);
+        flight_process_locations(&record, row_number1, &mut flight, &locations, &mut warnings);
         flight_process_date_time(&record, row_number1, &mut flight, &mut warnings);
         flight_process_xcontest_info(&record, row_number1, &mut flight, &mut warnings);
 
@@ -260,7 +307,7 @@ fn analyze_csv(csv_bytes: Vec<u8>, user: &User, conn: &mut PgConnection) -> CsvA
     }
 
     if flights.is_empty() {
-        fail!("CSV is empty".into());
+        fail!("CSV is empty", None);
     }
 
     CsvAnalyzeResult {
@@ -272,17 +319,20 @@ fn analyze_csv(csv_bytes: Vec<u8>, user: &User, conn: &mut PgConnection) -> CsvA
 
 fn flight_process_glider(
     record: &CsvRecord,
+    row_number1: usize,
     flight: &mut ApiCsvFlightPreview,
     gliders: &Vec<(i32, String)>,
-    warnings: &mut Vec<String>,
+    warnings: &mut Vec<Message>,
 ) {
     if let Some(glider) = record.glider.as_ref() {
         flight.glider_id = gliders
             .iter()
             .find_map(|(id, name)| if name == glider { Some(*id) } else { None });
         if flight.glider_id.is_none() {
-            warnings.push(format!(
-                "Could not find glider with name \"{glider}\" in your list of gliders"
+            warnings.push(Message::for_field(
+                row_number1,
+                "glider_id",
+                format!("Could not find glider with name \"{glider}\" in your list of gliders"),
             ));
         }
     }
@@ -290,9 +340,10 @@ fn flight_process_glider(
 
 fn flight_process_locations(
     record: &CsvRecord,
+    row_number1: usize,
     flight: &mut ApiCsvFlightPreview,
     locations: &Vec<(i32, String)>,
-    warnings: &mut Vec<String>,
+    warnings: &mut Vec<Message>,
 ) {
     // Look up launch and landing location
     if let Some(launch_site) = record.launch_site.as_ref() {
@@ -300,8 +351,10 @@ fn flight_process_locations(
             .iter()
             .find_map(|(id, name)| if name == launch_site { Some(*id) } else { None });
         if flight.launch_at.is_none() {
-            warnings.push(format!(
-                "Could not find launch site with name \"{launch_site}\" in your list of locations"
+            warnings.push(Message::for_field(
+                row_number1,
+                "launch_at",
+                format!("Could not find launch site with name \"{launch_site}\" in your list of locations"),
             ));
         }
     }
@@ -310,8 +363,10 @@ fn flight_process_locations(
             .iter()
             .find_map(|(id, name)| if name == landing_site { Some(*id) } else { None });
         if flight.landing_at.is_none() {
-            warnings.push(format!(
-                "Could not find landing site with name \"{landing_site}\" in your list of locations"
+            warnings.push(Message::for_field(
+                row_number1,
+                "landing_at",
+                format!("Could not find landing site with name \"{landing_site}\" in your list of locations"),
             ));
         }
     }
@@ -321,28 +376,49 @@ fn flight_process_date_time(
     record: &CsvRecord,
     row_number1: usize,
     flight: &mut ApiCsvFlightPreview,
-    warnings: &mut Vec<String>,
+    warnings: &mut Vec<Message>,
 ) {
     let date_parts = record.date.as_ref().map(|_| 1).unwrap_or_default()
         + record.launch_time_utc.as_ref().map(|_| 1).unwrap_or_default()
         + record.landing_time_utc.as_ref().map(|_| 1).unwrap_or_default();
     if date_parts > 0 && date_parts < 3 {
-        warnings.push(format!("Row {row_number1}: If you specify date, launch time or landing time, then the other two values must be provided as well"));
+        warnings.push(
+            Message::for_row(
+                row_number1,
+                "If you specify date, launch time or landing time, then the other two values must be provided as well",
+        ));
     }
     if let (Some(date), Some(launch_time), Some(landing_time)) = (
         record.date.as_ref().and_then(|date_str| {
             NaiveDate::parse_from_str(date_str, "%Y-%m-%d")
-                .map_err(|_| warnings.push(format!("Row {row_number1}: Invalid ISO date: {}", date_str)))
+                .map_err(|_| {
+                    warnings.push(Message::for_row(
+                        row_number1,
+                        format!("Invalid ISO date: {}", date_str),
+                    ))
+                })
                 .ok()
         }),
         record.launch_time_utc.as_ref().and_then(|time_str| {
             NaiveTime::parse_from_str(time_str, "%H:%M:%S")
-                .map_err(|_| warnings.push(format!("Row {row_number1}: Invalid launch time: {}", time_str)))
+                .map_err(|_| {
+                    warnings.push(Message::for_field(
+                        row_number1,
+                        "launch_time",
+                        format!("Invalid launch time: {}", time_str),
+                    ))
+                })
                 .ok()
         }),
         record.landing_time_utc.as_ref().and_then(|time_str| {
             NaiveTime::parse_from_str(time_str, "%H:%M:%S")
-                .map_err(|_| warnings.push(format!("Row {row_number1}: Invalid landing time: {}", time_str)))
+                .map_err(|_| {
+                    warnings.push(Message::for_field(
+                        row_number1,
+                        "landing_time",
+                        format!("Invalid landing time: {}", time_str),
+                    ))
+                })
                 .ok()
         }),
     ) {
@@ -361,12 +437,14 @@ fn flight_process_xcontest_info(
     record: &CsvRecord,
     row_number1: usize,
     flight: &mut ApiCsvFlightPreview,
-    warnings: &mut Vec<String>,
+    warnings: &mut Vec<Message>,
 ) {
     if let Some(tracktype) = record.xcontest_tracktype.as_ref() {
         if !is_valid_tracktype(tracktype) {
-            warnings.push(format!(
-                "Row {row_number1}: Invalid XContest tracktype: {tracktype}"
+            warnings.push(Message::for_field(
+                row_number1,
+                "xcontest_tracktype",
+                format!("Invalid XContest tracktype: {tracktype}"),
             ));
         } else {
             flight.xcontest_tracktype = Some(tracktype.into());
@@ -379,8 +457,10 @@ fn flight_process_xcontest_info(
         } else if url.starts_with("http://") {
             flight.xcontest_url = Some(format!("https://{}", &url[7..]));
         } else {
-            warnings.push(format!(
-                "Row {row_number1}: XContest URL must start with https:// or http://"
+            warnings.push(Message::for_field(
+                row_number1,
+                "xcontest_url",
+                format!("XContest URL must start with https:// or http://"),
             ));
         }
     }
@@ -404,7 +484,7 @@ mod tests {
         );
     }
 
-    fn empty_vec() -> Vec<String> {
+    fn empty_vec() -> Vec<Message> {
         vec![]
     }
 
@@ -412,7 +492,10 @@ mod tests {
     fn analyze_empty_csv() {
         let result = analyze("", None);
         assert_eq!(result.warnings, empty_vec());
-        assert_eq!(result.errors, vec!["CSV does not contain any columns"]);
+        assert_eq!(
+            result.errors,
+            vec![Message::without_row("CSV does not contain any columns")]
+        );
         assert_eq!(result.flights, vec![]);
     }
 
@@ -422,7 +505,9 @@ mod tests {
         assert_eq!(result.warnings, empty_vec());
         assert_eq!(
             result.errors,
-            vec!["CSV header fields (a,c,b) don't contain any valid header"]
+            vec![Message::without_row(
+                "CSV header fields (a,c,b) don't contain any valid header"
+            )]
         );
     }
 
@@ -431,9 +516,11 @@ mod tests {
         let result = analyze("a,number,c,b\n", None);
         assert_eq!(
             result.warnings,
-            vec!["Some CSV header fields are unknown and will be ignored: a,b,c"],
+            vec![Message::without_row(
+                "Some CSV header fields are unknown and will be ignored: a,b,c"
+            )],
         );
-        assert_eq!(result.errors, vec!["CSV is empty"]);
+        assert_eq!(result.errors, vec![Message::without_row("CSV is empty")]);
     }
 
     #[test]
@@ -450,7 +537,11 @@ mod tests {
         let result = analyze("number,glider\n42,Advance Omega ULS", None);
         assert_eq!(
             result.warnings,
-            vec!["Could not find glider with name \"Advance Omega ULS\" in your list of gliders"]
+            vec![Message::for_field(
+                1,
+                "glider_id",
+                "Could not find glider with name \"Advance Omega ULS\" in your list of gliders",
+            )]
         );
         assert_eq!(result.errors, empty_vec());
         assert_eq!(result.flights[0].number, Some(42));
@@ -488,8 +579,16 @@ mod tests {
         assert_eq!(
             result.warnings,
             vec![
-                "Could not find launch site with name \"Züri\" in your list of locations",
-                "Could not find landing site with name \"Rappi\" in your list of locations"
+                Message::for_field(
+                    1,
+                    "launch_at",
+                    "Could not find launch site with name \"Züri\" in your list of locations",
+                ),
+                Message::for_field(
+                    1,
+                    "landing_at",
+                    "Could not find landing site with name \"Rappi\" in your list of locations",
+                ),
             ]
         );
         assert_eq!(result.errors, empty_vec());
@@ -577,9 +676,21 @@ mod tests {
         assert_eq!(
             result.warnings,
             vec![
-                "Could not find glider with name \"Advance Alpha\" in your list of gliders",
-                "Could not find launch site with name \"Züri\" in your list of locations",
-                "Could not find landing site with name \"Rappi\" in your list of locations"
+                Message::for_field(
+                    1,
+                    "glider_id",
+                    "Could not find glider with name \"Advance Alpha\" in your list of gliders"
+                ),
+                Message::for_field(
+                    1,
+                    "launch_at",
+                    "Could not find launch site with name \"Züri\" in your list of locations"
+                ),
+                Message::for_field(
+                    1,
+                    "landing_at",
+                    "Could not find landing site with name \"Rappi\" in your list of locations"
+                ),
             ]
         );
         assert_eq!(result.errors, empty_vec());
@@ -595,7 +706,10 @@ mod tests {
         assert_eq!(
             result.warnings,
             vec![
-                "Row 1: If you specify date, launch time or landing time, then the other two values must be provided as well"
+                Message::for_row(
+                    1,
+                    "If you specify date, launch time or landing time, then the other two values must be provided as well",
+                ),
             ]
         );
         assert_eq!(result.errors, empty_vec());
@@ -613,9 +727,9 @@ mod tests {
         assert_eq!(
             result.warnings,
             vec![
-                "Row 1: Invalid ISO date: 2023-13-44",
-                "Row 1: Invalid launch time: asdf",
-                "Row 1: Invalid landing time: 2:15 pm",
+                Message::for_row(1, "Invalid ISO date: 2023-13-44"),
+                Message::for_field(1, "launch_time", "Invalid launch time: asdf"),
+                Message::for_field(1, "landing_time", "Invalid landing time: 2:15 pm"),
             ]
         );
         assert_eq!(result.errors, empty_vec());
@@ -652,8 +766,16 @@ mod tests {
         assert_eq!(
             result.warnings,
             vec![
-                "Row 1: Invalid XContest tracktype: awesome_flight",
-                "Row 1: XContest URL must start with https:// or http://",
+                Message::for_field(
+                    1,
+                    "xcontest_tracktype",
+                    "Invalid XContest tracktype: awesome_flight"
+                ),
+                Message::for_field(
+                    1,
+                    "xcontest_url",
+                    "XContest URL must start with https:// or http://"
+                ),
             ]
         );
         assert_eq!(result.errors, empty_vec());
@@ -726,6 +848,7 @@ mod tests {
         assert_eq!(
             result.flights[0],
             ApiCsvFlightPreview {
+                csv_row: 1,
                 number: Some(1),
                 glider_id: Some(glider.id),
                 launch_at: Some(züri.id),
@@ -744,6 +867,7 @@ mod tests {
         assert_eq!(
             result.flights[1],
             ApiCsvFlightPreview {
+                csv_row: 2,
                 number: Some(2),
                 glider_id: Some(glider.id),
                 launch_at: Some(rappi.id),
@@ -759,6 +883,7 @@ mod tests {
         assert_eq!(
             result.flights[2],
             ApiCsvFlightPreview {
+                csv_row: 3,
                 hikeandfly: false,
                 ..Default::default()
             }
