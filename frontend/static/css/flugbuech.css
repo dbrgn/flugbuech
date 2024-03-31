@@ -1,7 +1,7 @@
 /* Preserve newlines */
 
 .preserve-newlines {
-  white-space: pre;
+  white-space: pre-wrap;
 }
 
 /* More subtle link colors, used e.g. in the flight list */

@@ -308,221 +308,229 @@
     </article>
   {/if}
 
-  <table class="table is-fullwidth is-striped is-hoverable" style="font-size: 14px;">
-    <thead>
-      <tr>
-        <th>Row</th>
-        <th>#</th>
-        <th>Glider</th>
-        <th>Launch<br />Time</th>
-        <th>Launch<br />Location</th>
-        <th>Landing<br />Time</th>
-        <th>Landing<br />Location</th>
-        <th>GPS<br />Distance</th>
-        <th>XContest</th>
-        <th>Comment</th>
-        <th>Video</th>
-        <th>Hike&amp;Fly</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each state.result.flights as flight}
-        {@const messages = state.result.messagesByRowAndField}
-
-        {@const hasUnspecificErrors =
-          messages[NO_ROW].errors.length > 0 ||
-          messages[flight.csvRow]?.[NO_FIELD].errors.length > 0}
-        {@const hasUnspecificWarnings =
-          messages[NO_ROW].warnings.length > 0 ||
-          messages[flight.csvRow]?.[NO_FIELD].warnings.length > 0}
-
-        {@const numberMessages = messages[flight.csvRow]?.['number'] ?? defaultMessageGroup()}
-        {@const gliderIdMessages = messages[flight.csvRow]?.['glider-id'] ?? defaultMessageGroup()}
-        {@const launchTimeMessages =
-          messages[flight.csvRow]?.['launch-time'] ?? defaultMessageGroup()}
-        {@const launchAtMessages = messages[flight.csvRow]?.['launch-at'] ?? defaultMessageGroup()}
-        {@const landingTimeMessages =
-          messages[flight.csvRow]?.['landing-time'] ?? defaultMessageGroup()}
-        {@const landingAtMessages =
-          messages[flight.csvRow]?.['landing-at'] ?? defaultMessageGroup()}
-        {@const xcontestTracktypeMessages =
-          messages[flight.csvRow]?.['xcontest-tracktype'] ?? defaultMessageGroup()}
-        {@const xcontestUrlMessages =
-          messages[flight.csvRow]?.['xcontest-url'] ?? defaultMessageGroup()}
-
-        <tr
-          class:is-danger={hasUnspecificErrors}
-          class:is-warning={!hasUnspecificErrors && hasUnspecificWarnings}
-        >
-          <td>{flight.csvRow}</td>
-          <td
-            class:is-danger={numberMessages.errors.length > 0}
-            class:is-warning={numberMessages.warnings.length > 0}
-            title={[...numberMessages.errors, ...numberMessages.warnings]
-              .map((m) => m.message)
-              .join('\n')}
-          >
-            {#if flight.number === undefined}
-              {#if numberMessages.errors.length > 0}
-                <i class="fa-solid fa-danger" />
-              {:else if numberMessages.warnings.length > 0}
-                <i class="fa-solid fa-warning" />
-              {:else}
-                -
-              {/if}
-            {:else}
-              {flight.number}
-            {/if}
-          </td>
-          <td
-            class:is-danger={gliderIdMessages.errors.length > 0}
-            class:is-warning={gliderIdMessages.warnings.length > 0}
-            title={[...gliderIdMessages.errors, ...gliderIdMessages.warnings]
-              .map((m) => m.message)
-              .join('\n')}
-          >
-            {#if flight.gliderId === undefined}
-              {#if gliderIdMessages.errors.length > 0}
-                <i class="fa-solid fa-danger" />
-              {:else if gliderIdMessages.warnings.length > 0}
-                <i class="fa-solid fa-warning" />
-              {:else}
-                -
-              {/if}
-            {:else}
-              <a href="/gliders/{flight.gliderId}/edit/" target="_blank">
-                {flight.gliderId}
-              </a>
-            {/if}
-          </td>
-          <td
-            class:is-danger={launchTimeMessages.errors.length > 0}
-            class:is-warning={launchTimeMessages.warnings.length > 0}
-            title={[...launchTimeMessages.errors, ...launchTimeMessages.warnings]
-              .map((m) => m.message)
-              .join('\n')}
-          >
-            {#if flight.launchTime === undefined}
-              {#if launchTimeMessages.errors.length > 0}
-                <i class="fa-solid fa-danger" />
-              {:else if launchTimeMessages.warnings.length > 0}
-                <i class="fa-solid fa-warning" />
-              {:else}
-                -
-              {/if}
-            {:else}
-              {formatDateTime(flight.launchTime)}
-            {/if}
-          </td>
-          <td
-            class:is-danger={launchAtMessages.errors.length > 0}
-            class:is-warning={launchAtMessages.warnings.length > 0}
-            title={[...launchAtMessages.errors, ...launchAtMessages.warnings]
-              .map((m) => m.message)
-              .join('\n')}
-          >
-            {#if flight.launchAt === undefined}
-              {#if launchAtMessages.errors.length > 0}
-                <i class="fa-solid fa-danger" />
-              {:else if launchAtMessages.warnings.length > 0}
-                <i class="fa-solid fa-warning" />
-              {:else}
-                -
-              {/if}
-            {:else}
-              {flight.launchAt}
-            {/if}
-          </td>
-          <td
-            class:is-danger={landingTimeMessages.errors.length > 0}
-            class:is-warning={landingTimeMessages.warnings.length > 0}
-            title={[...landingTimeMessages.errors, ...landingTimeMessages.warnings]
-              .map((m) => m.message)
-              .join('\n')}
-          >
-            {#if flight.landingTime === undefined}
-              {#if landingTimeMessages.errors.length > 0}
-                <i class="fa-solid fa-danger" />
-              {:else if landingTimeMessages.warnings.length > 0}
-                <i class="fa-solid fa-warning" />
-              {:else}
-                -
-              {/if}
-            {:else}
-              {formatDateTime(flight.landingTime)}
-            {/if}
-          </td>
-          <td
-            class:is-danger={landingAtMessages.errors.length > 0}
-            class:is-warning={landingAtMessages.warnings.length > 0}
-            title={[...landingAtMessages.errors, ...landingAtMessages.warnings]
-              .map((m) => m.message)
-              .join('\n')}
-          >
-            {#if flight.landingAt === undefined}
-              {#if landingAtMessages.errors.length > 0}
-                <i class="fa-solid fa-danger" />
-              {:else if landingAtMessages.warnings.length > 0}
-                <i class="fa-solid fa-warning" />
-              {:else}
-                -
-              {/if}
-            {:else}
-              {flight.landingAt}
-            {/if}
-          </td>
-          <td>{flight.trackDistance ?? '-'}</td>
-          <td
-            class:is-danger={xcontestTracktypeMessages.errors.length > 0 ||
-              xcontestUrlMessages.errors.length > 0}
-            class:is-warning={xcontestTracktypeMessages.warnings.length > 0 ||
-              messages[flight.csvRow]?.['xcontest-url'].warnings.length > 0}
-            title={[
-              ...xcontestTracktypeMessages.errors,
-              ...xcontestTracktypeMessages.warnings,
-              ...xcontestUrlMessages.errors,
-              ...xcontestUrlMessages.warnings,
-            ]
-              .map((m) => m.message)
-              .join('\n')}
-          >
-            <em>Tracktype:</em>
-            {#if flight.xcontestTracktype === undefined}
-              {#if xcontestTracktypeMessages.errors.length > 0}
-                <i class="fa-solid fa-danger" />
-              {:else if xcontestTracktypeMessages.warnings.length > 0}
-                <i class="fa-solid fa-warning" />
-              {:else}
-                -
-              {/if}
-            {:else}
-              {flight.xcontestTracktype}
-            {/if}
-            <br />
-            <em>Distance:</em>
-            {flight.xcontestDistance ?? '-'}<br />
-            <em>URL:</em>
-            {#if flight.xcontestUrl === undefined}
-              {#if xcontestUrlMessages.errors.length > 0}
-                <i class="fa-solid fa-danger" />
-              {:else if xcontestUrlMessages.warnings.length > 0}
-                <i class="fa-solid fa-warning" />
-              {:else}
-                -
-              {/if}
-            {:else}
-              <a href={flight.xcontestUrl} target="_blank" rel="noopener noreferrer">
-                {flight.xcontestUrl}
-              </a>
-            {/if}
-          </td>
-          <td>{flight.comment ?? '-'}</td>
-          <td>{flight.videoUrl ?? '-'}</td>
-          <td>{flight.hikeandfly ? 'yes' : 'no'}</td>
+  <div class="table-container">
+    <table class="table is-fullwidth is-striped is-hoverable" style="font-size: 14px;">
+      <thead>
+        <tr>
+          <th>Row</th>
+          <th>#</th>
+          <th>Glider</th>
+          <th>Launch<br />Time</th>
+          <th>Launch<br />Location</th>
+          <th>Landing<br />Time</th>
+          <th>Landing<br />Location</th>
+          <th>GPS<br />Distance</th>
+          <th>XContest</th>
+          <th>Comment</th>
+          <th>Video</th>
+          <th>H&amp;F</th>
         </tr>
-      {/each}
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        {#each state.result.flights as flight}
+          {@const messages = state.result.messagesByRowAndField}
+
+          {@const hasUnspecificErrors =
+            messages[NO_ROW].errors.length > 0 ||
+            messages[flight.csvRow]?.[NO_FIELD].errors.length > 0}
+          {@const hasUnspecificWarnings =
+            messages[NO_ROW].warnings.length > 0 ||
+            messages[flight.csvRow]?.[NO_FIELD].warnings.length > 0}
+
+          {@const numberMessages = messages[flight.csvRow]?.['number'] ?? defaultMessageGroup()}
+          {@const gliderIdMessages =
+            messages[flight.csvRow]?.['glider-id'] ?? defaultMessageGroup()}
+          {@const launchTimeMessages =
+            messages[flight.csvRow]?.['launch-time'] ?? defaultMessageGroup()}
+          {@const launchAtMessages =
+            messages[flight.csvRow]?.['launch-at'] ?? defaultMessageGroup()}
+          {@const landingTimeMessages =
+            messages[flight.csvRow]?.['landing-time'] ?? defaultMessageGroup()}
+          {@const landingAtMessages =
+            messages[flight.csvRow]?.['landing-at'] ?? defaultMessageGroup()}
+          {@const xcontestTracktypeMessages =
+            messages[flight.csvRow]?.['xcontest-tracktype'] ?? defaultMessageGroup()}
+          {@const xcontestUrlMessages =
+            messages[flight.csvRow]?.['xcontest-url'] ?? defaultMessageGroup()}
+
+          <tr
+            class:is-danger={hasUnspecificErrors}
+            class:is-warning={!hasUnspecificErrors && hasUnspecificWarnings}
+          >
+            <td>{flight.csvRow}</td>
+            <td
+              class:is-danger={numberMessages.errors.length > 0}
+              class:is-warning={numberMessages.warnings.length > 0}
+              title={[...numberMessages.errors, ...numberMessages.warnings]
+                .map((m) => m.message)
+                .join('\n')}
+            >
+              {#if flight.number === undefined}
+                {#if numberMessages.errors.length > 0}
+                  <i class="fa-solid fa-danger" />
+                {:else if numberMessages.warnings.length > 0}
+                  <i class="fa-solid fa-warning" />
+                {:else}
+                  -
+                {/if}
+              {:else}
+                {flight.number}
+              {/if}
+            </td>
+            <td
+              class:is-danger={gliderIdMessages.errors.length > 0}
+              class:is-warning={gliderIdMessages.warnings.length > 0}
+              title={[...gliderIdMessages.errors, ...gliderIdMessages.warnings]
+                .map((m) => m.message)
+                .join('\n')}
+            >
+              {#if flight.gliderId === undefined}
+                {#if gliderIdMessages.errors.length > 0}
+                  <i class="fa-solid fa-danger" />
+                {:else if gliderIdMessages.warnings.length > 0}
+                  <i class="fa-solid fa-warning" />
+                {:else}
+                  -
+                {/if}
+              {:else}
+                <a href="/gliders/{flight.gliderId}/edit/" target="_blank">
+                  {flight.gliderId}
+                </a>
+              {/if}
+            </td>
+            <td
+              class:is-danger={launchTimeMessages.errors.length > 0}
+              class:is-warning={launchTimeMessages.warnings.length > 0}
+              title={[...launchTimeMessages.errors, ...launchTimeMessages.warnings]
+                .map((m) => m.message)
+                .join('\n')}
+            >
+              {#if flight.launchTime === undefined}
+                {#if launchTimeMessages.errors.length > 0}
+                  <i class="fa-solid fa-danger" />
+                {:else if launchTimeMessages.warnings.length > 0}
+                  <i class="fa-solid fa-warning" />
+                {:else}
+                  -
+                {/if}
+              {:else}
+                {formatDateTime(flight.launchTime)}
+              {/if}
+            </td>
+            <td
+              class:is-danger={launchAtMessages.errors.length > 0}
+              class:is-warning={launchAtMessages.warnings.length > 0}
+              title={[...launchAtMessages.errors, ...launchAtMessages.warnings]
+                .map((m) => m.message)
+                .join('\n')}
+            >
+              {#if flight.launchAt === undefined}
+                {#if launchAtMessages.errors.length > 0}
+                  <i class="fa-solid fa-danger" />
+                {:else if launchAtMessages.warnings.length > 0}
+                  <i class="fa-solid fa-warning" />
+                {:else}
+                  -
+                {/if}
+              {:else}
+                <a href="/locations/{flight.launchAt}/" target="_blank">
+                  {flight.launchAt}
+                </a>
+              {/if}
+            </td>
+            <td
+              class:is-danger={landingTimeMessages.errors.length > 0}
+              class:is-warning={landingTimeMessages.warnings.length > 0}
+              title={[...landingTimeMessages.errors, ...landingTimeMessages.warnings]
+                .map((m) => m.message)
+                .join('\n')}
+            >
+              {#if flight.landingTime === undefined}
+                {#if landingTimeMessages.errors.length > 0}
+                  <i class="fa-solid fa-danger" />
+                {:else if landingTimeMessages.warnings.length > 0}
+                  <i class="fa-solid fa-warning" />
+                {:else}
+                  -
+                {/if}
+              {:else}
+                {formatDateTime(flight.landingTime)}
+              {/if}
+            </td>
+            <td
+              class:is-danger={landingAtMessages.errors.length > 0}
+              class:is-warning={landingAtMessages.warnings.length > 0}
+              title={[...landingAtMessages.errors, ...landingAtMessages.warnings]
+                .map((m) => m.message)
+                .join('\n')}
+            >
+              {#if flight.landingAt === undefined}
+                {#if landingAtMessages.errors.length > 0}
+                  <i class="fa-solid fa-danger" />
+                {:else if landingAtMessages.warnings.length > 0}
+                  <i class="fa-solid fa-warning" />
+                {:else}
+                  -
+                {/if}
+              {:else}
+                <a href="/locations/{flight.landingAt}/" target="_blank">
+                  {flight.landingAt}
+                </a>
+              {/if}
+            </td>
+            <td>{flight.trackDistance ?? '-'}</td>
+            <td
+              class:is-danger={xcontestTracktypeMessages.errors.length > 0 ||
+                xcontestUrlMessages.errors.length > 0}
+              class:is-warning={xcontestTracktypeMessages.warnings.length > 0 ||
+                messages[flight.csvRow]?.['xcontest-url'].warnings.length > 0}
+              title={[
+                ...xcontestTracktypeMessages.errors,
+                ...xcontestTracktypeMessages.warnings,
+                ...xcontestUrlMessages.errors,
+                ...xcontestUrlMessages.warnings,
+              ]
+                .map((m) => m.message)
+                .join('\n')}
+            >
+              <em>Tracktype:</em>
+              {#if flight.xcontestTracktype === undefined}
+                {#if xcontestTracktypeMessages.errors.length > 0}
+                  <i class="fa-solid fa-danger" />
+                {:else if xcontestTracktypeMessages.warnings.length > 0}
+                  <i class="fa-solid fa-warning" />
+                {:else}
+                  -
+                {/if}
+              {:else}
+                {flight.xcontestTracktype}
+              {/if}
+              <br />
+              <em>Distance:</em>
+              {flight.xcontestDistance ?? '-'}<br />
+              <em>URL:</em>
+              {#if flight.xcontestUrl === undefined}
+                {#if xcontestUrlMessages.errors.length > 0}
+                  <i class="fa-solid fa-danger" />
+                {:else if xcontestUrlMessages.warnings.length > 0}
+                  <i class="fa-solid fa-warning" />
+                {:else}
+                  -
+                {/if}
+              {:else}
+                <a href={flight.xcontestUrl} target="_blank" rel="noopener noreferrer">
+                  {flight.xcontestUrl}
+                </a>
+              {/if}
+            </td>
+            <td class="preserve-newlines">{flight.comment ?? '-'}</td>
+            <td>{flight.videoUrl ?? '-'}</td>
+            <td>{flight.hikeandfly ? 'yes' : 'no'}</td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
+  </div>
 
   <div class="content submitbutton">
     <p>Do you want to import the flights above into your flight book?</p>
