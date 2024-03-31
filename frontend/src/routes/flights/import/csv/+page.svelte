@@ -1,7 +1,11 @@
 <script lang="ts">
+  import {onMount} from 'svelte';
+
+  import {requireLogin} from '$lib/auth';
   import Flashes from '$lib/components/Flashes.svelte';
   import MessageModal from '$lib/components/MessageModal.svelte';
   import {formatDateTime} from '$lib/formatters';
+  import {loginState} from '$lib/stores';
 
   import {SubmitError, type SubmitErrorData} from '../../api';
 
@@ -76,6 +80,10 @@
 
   $: hasFile = (files?.length ?? 0) > 0;
   $: fileName = files?.[0].name ?? 'No file selected…';
+
+  onMount(() => {
+    requireLogin($loginState, '/flights/import/csv/');
+  });
 </script>
 
 <nav class="breadcrumb" aria-label="breadcrumbs">
