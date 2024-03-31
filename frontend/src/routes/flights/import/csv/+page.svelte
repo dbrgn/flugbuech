@@ -5,7 +5,15 @@
 
   import {SubmitError, type SubmitErrorData} from '../../api';
 
-  import {analyzeCsv, type CsvAnalyzeResult} from './api';
+  import {
+    analyzeCsv,
+    NO_ROW,
+    type CsvAnalyzeResult,
+    type CsvImportResult,
+    defaultMessageGroup,
+    NO_FIELD,
+    importCsv,
+  } from './api';
 
   let flashes: Flashes;
 
@@ -18,11 +26,12 @@
   // Upload state
   type UploadState =
     | {step: 1; kind: 'upload'}
-    | {step: 2; kind: 'analyzed'; result: CsvAnalyzeResult};
+    | {step: 2; kind: 'analyzed'; result: CsvAnalyzeResult}
+    | {step: 3; kind: 'imported'; result: CsvImportResult};
   let state: UploadState = {step: 1, kind: 'upload'};
 
-  async function submitForm(): Promise<void> {
-    console.log('Sending CSV to API');
+  async function submitFormAnalyze(): Promise<void> {
+    console.log('Sending CSV to API for analysis');
     if (files === undefined || files.length === 0) {
       console.error('Missing CSV file');
       return;
@@ -41,7 +50,28 @@
     }
 
     state = {step: 2, kind: 'analyzed', result: analyzeResult};
-    console.log(analyzeResult); // TODO
+  }
+
+  async function submitFormImport(): Promise<void> {
+    console.log('Sending CSV to API for import');
+    if (files === undefined || files.length === 0) {
+      console.error('Missing CSV file');
+      return;
+    }
+
+    let importResult;
+    try {
+      importResult = await importCsv(files[0]);
+    } catch (error) {
+      if (error instanceof SubmitError) {
+        submitError = error.data;
+      } else {
+        submitError = {type: 'api-error', message: `Unknown API error: ${error}`};
+      }
+      return;
+    }
+
+    state = {step: 3, kind: 'imported', result: importResult};
   }
 
   $: hasFile = (files?.length ?? 0) > 0;
@@ -226,7 +256,7 @@
       method="post"
       on:submit={(event) => {
         event.preventDefault();
-        void submitForm();
+        void submitFormAnalyze();
       }}
     >
       <div class="field">
@@ -254,10 +284,10 @@
   {#if state.result.errors.length > 0}
     <article class="message is-danger">
       <div class="message-body">
-        <i class="fa-solid fa-danger" />&ensp;<strong>Error:</strong>
+        <i class="fa-solid fa-danger" />&ensp;<strong>Errors:</strong>
         <ul>
           {#each state.result.errors as error}<li>
-              {#if error.csvRow !== null}Row {error.csvRow}:
+              {#if error.csvRow !== undefined}Row {error.csvRow}:
               {/if}{error.message}
             </li>{/each}
         </ul>
@@ -267,10 +297,10 @@
   {#if state.result.warnings.length > 0}
     <article class="message is-warning">
       <div class="message-body content">
-        <i class="fa-solid fa-warning" />&ensp;<strong>Warning:</strong>
+        <i class="fa-solid fa-warning" />&ensp;<strong>Warnings:</strong>
         <ul>
           {#each state.result.warnings as warning}<li>
-              {#if warning.csvRow !== null}Row {warning.csvRow}:
+              {#if warning.csvRow !== undefined}Row {warning.csvRow}:
               {/if}{warning.message}
             </li>{/each}
         </ul>
@@ -278,17 +308,17 @@
     </article>
   {/if}
 
-  <table class="table is-fullwidth is-striped is-hoverable">
+  <table class="table is-fullwidth is-striped is-hoverable" style="font-size: 14px;">
     <thead>
       <tr>
         <th>Row</th>
         <th>#</th>
         <th>Glider</th>
-        <th>Launch Time</th>
-        <th>Launch Location ID</th>
-        <th>Landing Time</th>
-        <th>Landing Location ID</th>
-        <th>GPS Distance</th>
+        <th>Launch<br />Time</th>
+        <th>Launch<br />Location</th>
+        <th>Landing<br />Time</th>
+        <th>Landing<br />Location</th>
+        <th>GPS<br />Distance</th>
         <th>XContest</th>
         <th>Comment</th>
         <th>Video</th>
@@ -297,33 +327,176 @@
     </thead>
     <tbody>
       {#each state.result.flights as flight}
-        {@const hasErrors = state.result.errors.some((error) => error.csvRow === flight.csvRow)}
-        {@const hasWarnings = state.result.warnings.some((error) => error.csvRow === flight.csvRow)}
-        <tr class:is-danger={hasErrors} class:is-warning={!hasErrors && hasWarnings}>
-          <td>
-            {flight.csvRow}
-            {#if hasErrors}
-              <i class="fa-solid fa-danger" />
-            {:else if hasWarnings}
-              <i class="fa-solid fa-warning" />
-            {/if}
-          </td>
+        {@const messages = state.result.messagesByRowAndField}
+
+        {@const hasUnspecificErrors =
+          messages[NO_ROW].errors.length > 0 ||
+          messages[flight.csvRow]?.[NO_FIELD].errors.length > 0}
+        {@const hasUnspecificWarnings =
+          messages[NO_ROW].warnings.length > 0 ||
+          messages[flight.csvRow]?.[NO_FIELD].warnings.length > 0}
+
+        {@const gliderIdMessages = messages[flight.csvRow]?.['glider-id'] ?? defaultMessageGroup()}
+        {@const launchTimeMessages =
+          messages[flight.csvRow]?.['launch-time'] ?? defaultMessageGroup()}
+        {@const launchAtMessages = messages[flight.csvRow]?.['launch-at'] ?? defaultMessageGroup()}
+        {@const landingTimeMessages =
+          messages[flight.csvRow]?.['landing-time'] ?? defaultMessageGroup()}
+        {@const landingAtMessages =
+          messages[flight.csvRow]?.['landing-at'] ?? defaultMessageGroup()}
+        {@const xcontestTracktypeMessages =
+          messages[flight.csvRow]?.['xcontest-tracktype'] ?? defaultMessageGroup()}
+        {@const xcontestUrlMessages =
+          messages[flight.csvRow]?.['xcontest-url'] ?? defaultMessageGroup()}
+
+        <tr
+          class:is-danger={hasUnspecificErrors}
+          class:is-warning={!hasUnspecificErrors && hasUnspecificWarnings}
+        >
+          <td>{flight.csvRow}</td>
           <td>{flight.number ?? '-'}</td>
-          <td>
+          <td
+            class:is-danger={gliderIdMessages.errors.length > 0}
+            class:is-warning={gliderIdMessages.warnings.length > 0}
+            title={[...gliderIdMessages.errors, ...gliderIdMessages.warnings]
+              .map((m) => m.message)
+              .join('\n')}
+          >
             {#if flight.gliderId === undefined}
-              -
+              {#if gliderIdMessages.errors.length > 0}
+                <i class="fa-solid fa-danger" />
+              {:else if gliderIdMessages.warnings.length > 0}
+                <i class="fa-solid fa-warning" />
+              {:else}
+                -
+              {/if}
             {:else}
               <a href="/gliders/{flight.gliderId}/edit/" target="_blank">
                 {flight.gliderId}
               </a>
             {/if}
           </td>
-          <td>{flight.launchTime === undefined ? '-' : formatDateTime(flight.launchTime)}</td>
-          <td>{flight.launchAt ?? '-'}</td>
-          <td>{flight.landingTime === undefined ? '-' : formatDateTime(flight.landingTime)}</td>
-          <td>{flight.landingAt ?? '-'}</td>
+          <td
+            class:is-danger={launchTimeMessages.errors.length > 0}
+            class:is-warning={launchTimeMessages.warnings.length > 0}
+            title={[...launchTimeMessages.errors, ...launchTimeMessages.warnings]
+              .map((m) => m.message)
+              .join('\n')}
+          >
+            {#if flight.launchTime === undefined}
+              {#if launchTimeMessages.errors.length > 0}
+                <i class="fa-solid fa-danger" />
+              {:else if launchTimeMessages.warnings.length > 0}
+                <i class="fa-solid fa-warning" />
+              {:else}
+                -
+              {/if}
+            {:else}
+              {formatDateTime(flight.launchTime)}
+            {/if}
+          </td>
+          <td
+            class:is-danger={launchAtMessages.errors.length > 0}
+            class:is-warning={launchAtMessages.warnings.length > 0}
+            title={[...launchAtMessages.errors, ...launchAtMessages.warnings]
+              .map((m) => m.message)
+              .join('\n')}
+          >
+            {#if flight.launchAt === undefined}
+              {#if launchAtMessages.errors.length > 0}
+                <i class="fa-solid fa-danger" />
+              {:else if launchAtMessages.warnings.length > 0}
+                <i class="fa-solid fa-warning" />
+              {:else}
+                -
+              {/if}
+            {:else}
+              {flight.launchAt}
+            {/if}
+          </td>
+          <td
+            class:is-danger={landingTimeMessages.errors.length > 0}
+            class:is-warning={landingTimeMessages.warnings.length > 0}
+            title={[...landingTimeMessages.errors, ...landingTimeMessages.warnings]
+              .map((m) => m.message)
+              .join('\n')}
+          >
+            {#if flight.landingTime === undefined}
+              {#if landingTimeMessages.errors.length > 0}
+                <i class="fa-solid fa-danger" />
+              {:else if landingTimeMessages.warnings.length > 0}
+                <i class="fa-solid fa-warning" />
+              {:else}
+                -
+              {/if}
+            {:else}
+              {formatDateTime(flight.landingTime)}
+            {/if}
+          </td>
+          <td
+            class:is-danger={landingAtMessages.errors.length > 0}
+            class:is-warning={landingAtMessages.warnings.length > 0}
+            title={[...landingAtMessages.errors, ...landingAtMessages.warnings]
+              .map((m) => m.message)
+              .join('\n')}
+          >
+            {#if flight.landingAt === undefined}
+              {#if landingAtMessages.errors.length > 0}
+                <i class="fa-solid fa-danger" />
+              {:else if landingAtMessages.warnings.length > 0}
+                <i class="fa-solid fa-warning" />
+              {:else}
+                -
+              {/if}
+            {:else}
+              {flight.landingAt}
+            {/if}
+          </td>
           <td>{flight.trackDistance ?? '-'}</td>
-          <td>{flight.xcontestTracktype} / {flight.xcontestDistance} / {flight.xcontestUrl}</td>
+          <td
+            class:is-danger={xcontestTracktypeMessages.errors.length > 0 ||
+              xcontestUrlMessages.errors.length > 0}
+            class:is-warning={xcontestTracktypeMessages.warnings.length > 0 ||
+              messages[flight.csvRow]?.['xcontest-url'].warnings.length > 0}
+            title={[
+              ...xcontestTracktypeMessages.errors,
+              ...xcontestTracktypeMessages.warnings,
+              ...xcontestUrlMessages.errors,
+              ...xcontestUrlMessages.warnings,
+            ]
+              .map((m) => m.message)
+              .join('\n')}
+          >
+            <em>Tracktype:</em>
+            {#if flight.xcontestTracktype === undefined}
+              {#if xcontestTracktypeMessages.errors.length > 0}
+                <i class="fa-solid fa-danger" />
+              {:else if xcontestTracktypeMessages.warnings.length > 0}
+                <i class="fa-solid fa-warning" />
+              {:else}
+                -
+              {/if}
+            {:else}
+              {flight.xcontestTracktype}
+            {/if}
+            <br />
+            <em>Distance:</em>
+            {flight.xcontestDistance ?? '-'}<br />
+            <em>URL:</em>
+            {#if flight.xcontestUrl === undefined}
+              {#if xcontestUrlMessages.errors.length > 0}
+                <i class="fa-solid fa-danger" />
+              {:else if xcontestUrlMessages.warnings.length > 0}
+                <i class="fa-solid fa-warning" />
+              {:else}
+                -
+              {/if}
+            {:else}
+              <a href={flight.xcontestUrl} target="_blank" rel="noopener noreferrer">
+                {flight.xcontestUrl}
+              </a>
+            {/if}
+          </td>
           <td>{flight.comment ?? '-'}</td>
           <td>{flight.videoUrl ?? '-'}</td>
           <td>{flight.hikeandfly ? 'yes' : 'no'}</td>
@@ -331,6 +504,32 @@
       {/each}
     </tbody>
   </table>
+
+  <div class="content submitbutton">
+    <p>Do you want to import the flights above into your flight book?</p>
+    <button
+      class="button is-primary"
+      disabled={state.result.errors.length > 0}
+      type="button"
+      on:click={submitFormImport}
+    >
+      Import CSV
+    </button>
+  </div>
+{:else if state.kind === 'imported'}
+  <article
+    class="message"
+    class:is-success={state.result.success}
+    class:is-danger={!state.result.success}
+  >
+    <div class="message-body">
+      {#if state.result.success}
+        Successfully imported flights from CSV!<br />Go to your <a href="/flights/">flight list</a>
+      {:else}
+        <strong>Error: </strong>Failed to import flights from CSV.
+      {/if}
+    </div>
+  </article>
 {/if}
 
 <style>

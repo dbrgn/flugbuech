@@ -16,7 +16,9 @@ use crate::{auth, data, models::User, responders::ApiError, xcontest::is_valid_t
 #[serde(rename_all = "camelCase")]
 pub struct Message {
     message: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     csv_row: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     field: Option<String>,
 }
 
@@ -331,7 +333,7 @@ fn flight_process_glider(
         if flight.glider_id.is_none() {
             warnings.push(Message::for_field(
                 row_number1,
-                "glider_id",
+                "glider-id",
                 format!("Could not find glider with name \"{glider}\" in your list of gliders"),
             ));
         }
@@ -353,7 +355,7 @@ fn flight_process_locations(
         if flight.launch_at.is_none() {
             warnings.push(Message::for_field(
                 row_number1,
-                "launch_at",
+                "launch-at",
                 format!("Could not find launch site with name \"{launch_site}\" in your list of locations"),
             ));
         }
@@ -365,7 +367,7 @@ fn flight_process_locations(
         if flight.landing_at.is_none() {
             warnings.push(Message::for_field(
                 row_number1,
-                "landing_at",
+                "landing-at",
                 format!("Could not find landing site with name \"{landing_site}\" in your list of locations"),
             ));
         }
@@ -394,7 +396,7 @@ fn flight_process_date_time(
                 .map_err(|_| {
                     warnings.push(Message::for_row(
                         row_number1,
-                        format!("Invalid ISO date: {}", date_str),
+                        format!("Invalid ISO date: {} (expected \"yyyy-mm-dd\" format)", date_str),
                     ))
                 })
                 .ok()
@@ -404,8 +406,8 @@ fn flight_process_date_time(
                 .map_err(|_| {
                     warnings.push(Message::for_field(
                         row_number1,
-                        "launch_time",
-                        format!("Invalid launch time: {}", time_str),
+                        "launch-time",
+                        format!("Invalid launch time: {} (expected \"hh:mm:ss\" format)", time_str),
                     ))
                 })
                 .ok()
@@ -415,8 +417,11 @@ fn flight_process_date_time(
                 .map_err(|_| {
                     warnings.push(Message::for_field(
                         row_number1,
-                        "landing_time",
-                        format!("Invalid landing time: {}", time_str),
+                        "landing-time",
+                        format!(
+                            "Invalid landing time: {} (expected \"hh:mm:ss\" format)",
+                            time_str
+                        ),
                     ))
                 })
                 .ok()
@@ -443,7 +448,7 @@ fn flight_process_xcontest_info(
         if !is_valid_tracktype(tracktype) {
             warnings.push(Message::for_field(
                 row_number1,
-                "xcontest_tracktype",
+                "xcontest-tracktype",
                 format!("Invalid XContest tracktype: {tracktype}"),
             ));
         } else {
@@ -459,7 +464,7 @@ fn flight_process_xcontest_info(
         } else {
             warnings.push(Message::for_field(
                 row_number1,
-                "xcontest_url",
+                "xcontest-url",
                 format!("XContest URL must start with https:// or http://"),
             ));
         }
@@ -539,7 +544,7 @@ mod tests {
             result.warnings,
             vec![Message::for_field(
                 1,
-                "glider_id",
+                "glider-id",
                 "Could not find glider with name \"Advance Omega ULS\" in your list of gliders",
             )]
         );
@@ -581,12 +586,12 @@ mod tests {
             vec![
                 Message::for_field(
                     1,
-                    "launch_at",
+                    "launch-at",
                     "Could not find launch site with name \"Züri\" in your list of locations",
                 ),
                 Message::for_field(
                     1,
-                    "landing_at",
+                    "landing-at",
                     "Could not find landing site with name \"Rappi\" in your list of locations",
                 ),
             ]
@@ -678,17 +683,17 @@ mod tests {
             vec![
                 Message::for_field(
                     1,
-                    "glider_id",
+                    "glider-id",
                     "Could not find glider with name \"Advance Alpha\" in your list of gliders"
                 ),
                 Message::for_field(
                     1,
-                    "launch_at",
+                    "launch-at",
                     "Could not find launch site with name \"Züri\" in your list of locations"
                 ),
                 Message::for_field(
                     1,
-                    "landing_at",
+                    "landing-at",
                     "Could not find landing site with name \"Rappi\" in your list of locations"
                 ),
             ]
@@ -727,9 +732,17 @@ mod tests {
         assert_eq!(
             result.warnings,
             vec![
-                Message::for_row(1, "Invalid ISO date: 2023-13-44"),
-                Message::for_field(1, "launch_time", "Invalid launch time: asdf"),
-                Message::for_field(1, "landing_time", "Invalid landing time: 2:15 pm"),
+                Message::for_row(1, "Invalid ISO date: 2023-13-44 (expected \"yyyy-mm-dd\" format)"),
+                Message::for_field(
+                    1,
+                    "launch-time",
+                    "Invalid launch time: asdf (expected \"hh:mm:ss\" format)"
+                ),
+                Message::for_field(
+                    1,
+                    "landing-time",
+                    "Invalid landing time: 2:15 pm (expected \"hh:mm:ss\" format)"
+                ),
             ]
         );
         assert_eq!(result.errors, empty_vec());
@@ -768,12 +781,12 @@ mod tests {
             vec![
                 Message::for_field(
                     1,
-                    "xcontest_tracktype",
+                    "xcontest-tracktype",
                     "Invalid XContest tracktype: awesome_flight"
                 ),
                 Message::for_field(
                     1,
-                    "xcontest_url",
+                    "xcontest-url",
                     "XContest URL must start with https:// or http://"
                 ),
             ]
