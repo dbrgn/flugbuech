@@ -67,6 +67,9 @@
   <a href="mailto:flugbuech@bargen.dev">flugbuech@bargen.dev</a>.
 </p>
 
+<h4 class="title is-size-5">Can I import or export flights?</h4>
+<p class="content">Data import from CSV is possible. Export is not yet implemented.</p>
+
 <h4 class="title is-size-5">Where can I find the source code or report bugs?</h4>
 <p class="content">On <a href="https://github.com/dbrgn/flugbuech">GitHub</a>.</p>
 
@@ -80,8 +83,13 @@
 <h4 class="title is-size-5">2024</h4>
 <ul class="content">
   <li>
+    <strong>1.4.</strong> Do you have a lot of old flights logged in a spreadsheet application (like
+    Excel or Google Sheets), and don't want to type all this information into Flugbuech by hand? In
+    that case, try the new <a href="/flights/import/csv/">CSV import</a>!
+  </li>
+  <li>
     <strong>19.3.</strong> You can now opt-in to an occasional newsletter
-    <a href="/profile/">in your user profile</a>!
+    <a href="/profile/">in your user profile</a>.
   </li>
   <li>
     <strong>13.3.</strong> After a longer development break, the complete Flugbuech UI has been
