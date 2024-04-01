@@ -53,6 +53,8 @@
         <a class="navbar-item" href="/flights/">My Flights</a>
         <a class="navbar-item" href="/stats/">Stats</a>
         <a class="navbar-item" href="/flights/add/">Submit flight</a>
+      {:else}
+        <a class="navbar-item" href="/screenshots/">Screenshots</a>
       {/if}
     </div>
     <div class="navbar-end">
