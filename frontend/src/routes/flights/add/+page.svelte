@@ -45,5 +45,25 @@
       <a href="/locations/add">add it</a> before filling out this form! Currently locations cannot be
       created automatically.
     </p>
+
+    {#if data.locations.length === 0}
+      <article class="message is-warning">
+        <div class="message-body">
+          <i class="fa-solid fa-warning" />&ensp;Warning: You haven't added any locations so far. To
+          be able to link a launch or landing location to your flight,
+          <a href="/locations/">add a location</a> before adding a flight.
+        </div>
+      </article>
+    {/if}
+
+    {#if data.gliders.length === 0}
+      <article class="message is-warning">
+        <div class="message-body">
+          <i class="fa-solid fa-warning" />&ensp;Warning: You haven't added any gliders so far. To
+          be able to link a glider to your flight,
+          <a href="/gliders/">add a glider</a> before adding a flight.
+        </div>
+      </article>
+    {/if}
   </section>
 </FlightForm>
