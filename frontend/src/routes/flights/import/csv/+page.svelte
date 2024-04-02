@@ -121,9 +121,17 @@
 
 <article class="message is-warning">
   <div class="message-body">
-    <i class="fa-solid fa-warning" />&ensp;Warning: This import is still experimental. If you
-    experience any problems, please contact me at
+    <i class="fa-solid fa-warning" />&ensp;<strong>Warning:</strong> This import is still
+    experimental. If you experience any problems, please contact me at
     <a href="mailto:flugbuech@bargen.dev">flugbuech@bargen.dev</a>!
+  </div>
+</article>
+
+<article class="message is-info">
+  <div class="message-body">
+    <strong>Note:</strong> The CSV import can import flights, but not gliders or locations. You
+    should make sure to add <a href="/locations/">locations</a> or <a href="/gliders/">gliders</a>
+    before you import your flights CSV, otherwise this information will be lost.
   </div>
 </article>
 
