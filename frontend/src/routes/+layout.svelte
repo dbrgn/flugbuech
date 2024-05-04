@@ -1,12 +1,17 @@
 <script lang="ts">
   import {onMount} from 'svelte';
 
+  import NavbarItem from '$lib/components/NavbarItem.svelte';
   import {loginState, refreshLoginState} from '$lib/stores';
 
   let menuOpened = false;
 
   function toggleMenu(): void {
     menuOpened = !menuOpened;
+  }
+
+  function closeMenu(): void {
+    menuOpened = false;
   }
 
   onMount(() => {
@@ -46,26 +51,32 @@
   </div>
   <div id="navbar-contents" class="navbar-menu" class:is-active={menuOpened}>
     <div class="navbar-start">
-      <a class="navbar-item" href="/">Home</a>
+      <NavbarItem text="Home" href="/" {closeMenu} />
       {#if $loginState?.username}
-        <a class="navbar-item" href="/gliders/">My Gliders</a>
-        <a class="navbar-item" href="/locations/">My Locations</a>
-        <a class="navbar-item" href="/flights/">My Flights</a>
-        <a class="navbar-item" href="/stats/">Stats</a>
-        <a class="navbar-item" href="/flights/add/">Submit flight</a>
+        <NavbarItem text="My Gliders" href="/gliders/" {closeMenu} />
+        <NavbarItem text="My Locations" href="/locations/" {closeMenu} />
+        <NavbarItem text="My Flights" href="/flights/" {closeMenu} />
+        <NavbarItem text="Stats" href="/stats/" {closeMenu} />
+        <NavbarItem text="Submit flight" href="/flights/add/" {closeMenu} />
       {:else}
-        <a class="navbar-item" href="/screenshots/">Screenshots</a>
+        <NavbarItem text="Screenshots" href="/screenshots/" {closeMenu} />
       {/if}
     </div>
     <div class="navbar-end">
       <div class="navbar-item">
         <div class="buttons">
           {#if $loginState?.username}
-            <a class="button" href="/profile/">Profile</a>
-            <a class="button" href="/auth/logout/" data-sveltekit-reload>Logout</a>
+            <NavbarItem text="Profile" href="/profile/" type="button" {closeMenu} />
+            <NavbarItem
+              text="Logout"
+              href="/auth/logout/"
+              type="button"
+              reload={true}
+              {closeMenu}
+            />
           {:else}
-            <a class="button is-light" href="/auth/login/">Login</a>
-            <a class="button is-light" href="/auth/registration/">Register</a>
+            <NavbarItem text="Login" href="/auth/login/" type="button" {closeMenu} />
+            <NavbarItem text="Register" href="/auth/registration/" type="button" {closeMenu} />
           {/if}
         </div>
       </div>
