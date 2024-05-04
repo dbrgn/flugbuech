@@ -109,6 +109,15 @@ To run frontend tests:
     npm run test
 
 
+## Resetting Password
+
+To reset a password directly in the database:
+
+    UPDATE users
+    SET password = crypt('newpassword', gen_salt('bf', 10))
+    WHERE username = 'user';
+
+
 ## Deployment
 
 If you want to deploy this software using Docker, please take a look at the
