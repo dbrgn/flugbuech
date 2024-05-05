@@ -22,8 +22,28 @@
 
 <h2 class="title is-2">Location: {location.name}</h2>
 
-<p class="content">
+<p class="buttons content">
   <a href="/locations/{location.id}/edit/" class="button is-light">Edit this location</a>
+  {#if location.coordinates !== undefined}
+    {@const lon = location.coordinates.lon}
+    {@const lat = location.coordinates.lat}
+    <a
+      class="button is-light"
+      href="https://www.google.com/maps/place/{lat},{lon}/"
+      title="View on Google Maps"
+      target="_blank"
+    >
+      View on Google Maps
+    </a>
+    <a
+      class="button is-light"
+      href="https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=16/{lat}/{lon}"
+      title="View on OpenStreetMap"
+      target="_blank"
+    >
+      View on OpenStreetMap
+    </a>
+  {/if}
 </p>
 
 <section class="data">
