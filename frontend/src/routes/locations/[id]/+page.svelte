@@ -1,7 +1,7 @@
 <script lang="ts">
   import CountryFlag from '$lib/components/CountryFlag.svelte';
   import Flashes from '$lib/components/Flashes.svelte';
-  import MapComponent from '$lib/components/Map.svelte';
+  import SingleMap from '$lib/components/SingleMap.svelte';
 
   import type {Data} from './+page';
 
@@ -99,7 +99,7 @@
 
 {#if location.coordinates}
   <section class="map">
-    <MapComponent editable={false} position={location.coordinates} zoom={13} />
+    <SingleMap editable={false} center={location.coordinates} zoom={13} />
   </section>
 {/if}
 

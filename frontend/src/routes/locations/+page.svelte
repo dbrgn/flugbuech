@@ -1,9 +1,11 @@
 <script lang="ts">
+  import {notUndefined} from '$lib';
   import {apiDelete, extractResponseError} from '$lib/api';
   import CountryFlag from '$lib/components/CountryFlag.svelte';
   import DialogModal from '$lib/components/DialogModal.svelte';
   import Flashes from '$lib/components/Flashes.svelte';
   import MessageModal from '$lib/components/MessageModal.svelte';
+  import MultiMap from '$lib/components/MultiMap.svelte';
   import {addFlash} from '$lib/stores';
 
   import {goto, invalidateAll} from '$app/navigation';
@@ -116,12 +118,25 @@
     </div>
   </article>
 
-  <p class="content">
+  <p class="mb-4">
     You've been at {data.locations.length} location{data.locations.length === 1 ? '' : 's'} so far!
   </p>
-  <p class="content">
+  <div class="mb-5">
     <a href="/locations/add/" class="button is-primary">Add location</a>
-  </p>
+  </div>
+  {#if data.locations.some((location) => location.coordinates !== undefined)}
+    <section class="map mb-5">
+      <MultiMap
+        markers={data.locations
+          .map((location) =>
+            location.coordinates === undefined
+              ? undefined
+              : {name: location.name, ...location.coordinates},
+          )
+          .filter(notUndefined)}
+      />
+    </section>
+  {/if}
   <table class="table is-fullwidth is-striped is-hoverable">
     <thead>
       <tr>
