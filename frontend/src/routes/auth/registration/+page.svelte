@@ -257,7 +257,8 @@
   </div>
 
   <p class="content privacy-policy-hint">
-    By registering, you acknowledge the <a href="/privacy-policy/">privacy policy</a>.
+    By registering, you acknowledge the <a href="/privacy-policy/" target="_blank">privacy policy</a
+    >.
   </p>
   <div class="field">
     <div class="control">
