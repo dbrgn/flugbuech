@@ -22,9 +22,43 @@
 
 <h2 class="title is-2">Location: {location.name}</h2>
 
-<p class="content">
-  <a href="/locations/{location.id}/edit/" class="button is-light">Edit this location</a>
-</p>
+<div class="is-flex is-justify-content-space-between mb-5">
+  <div class="left">
+    <a href="/locations/{location.id}/edit/" class="button is-light">Edit this location</a>
+  </div>
+  <div class="right">
+    {#if location.coordinates !== undefined}
+      {@const lon = location.coordinates.lon}
+      {@const lat = location.coordinates.lat}
+      <a
+        class="button is-light"
+        href="https://www.google.com/maps/place/{lat},{lon}/"
+        title="View on Google Maps"
+        target="_blank"
+      >
+        <i class="fa-solid fa-map-marker-alt"></i>&nbsp;View on Google Maps
+      </a>
+      <a
+        class="button is-light"
+        href="https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=16/{lat}/{lon}"
+        title="View on OpenStreetMap"
+        target="_blank"
+      >
+        <i class="fa-solid fa-map-pin"></i>&nbsp;View on OpenStreetMap
+      </a>
+      {#if lat > 45.8 && lat < 48 && lon > 5.9 && lon < 11.4}
+        <a
+          class="button is-light"
+          href="https://map.geo.admin.ch/?swisssearch={lat},{lon}"
+          title="View on SwissTopo"
+          target="_blank"
+        >
+          <i class="fa-solid fa-map"></i>&nbsp;View on SwissTopo
+        </a>
+      {/if}
+    {/if}
+  </div>
+</div>
 
 <section class="data">
   <table class="table is-fullwidth is-striped is-hoverable">

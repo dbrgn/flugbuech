@@ -34,15 +34,19 @@
   {#if landingAt}to {landingAt.name}{/if}
 </h2>
 
-<p class="content">
-  <a href="/flights/{flight.id}/edit/" class="button is-light">Edit this flight</a>
-  {#if flight.hasIgc}
-    <a href="/api/v1/flights/{flight.id}/igc/" class="button is-light" data-sveltekit-reload>
-      <span class="icon is-small"><i class="fa-solid fa-download"></i></span>&nbsp;&nbsp;Download
-      IGC
-    </a>
-  {/if}
-</p>
+<div class="is-flex is-justify-content-space-between mb-5">
+  <div class="left">
+    <a href="/flights/{flight.id}/edit/" class="button is-light">Edit this flight</a>
+  </div>
+  <div class="right">
+    {#if flight.hasIgc}
+      <a href="/api/v1/flights/{flight.id}/igc/" class="button is-light" data-sveltekit-reload>
+        <span class="icon is-small"><i class="fa-solid fa-download"></i></span>&nbsp;&nbsp;Download
+        IGC
+      </a>
+    {/if}
+  </div>
+</div>
 
 <section>
   <table class="table is-fullwidth is-striped is-hoverable">

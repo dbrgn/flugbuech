@@ -166,7 +166,7 @@
               <a
                 class="icon"
                 href="https://www.google.com/maps/place/{lat},{lon}/"
-                title="View in Google Maps"
+                title="View on Google Maps"
                 target="_blank"
               >
                 <i class="fa-solid fa-map-marker-alt"></i>
@@ -174,7 +174,7 @@
               <a
                 class="icon"
                 href="https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=16/{lat}/{lon}"
-                title="View in OpenStreetMap"
+                title="View on OpenStreetMap"
                 target="_blank"
               >
                 <i class="fa-solid fa-map-pin"></i>
