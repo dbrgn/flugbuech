@@ -11,7 +11,7 @@
 # profile.
 
 [global.limits]
-form = "3 MiB"
+form = "12 MiB"
 
 [debug]
 secret_key = "eXqSA0wz+qLlg8umREPesnkBzNlhwaNcp34BttIWLes="
