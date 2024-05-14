@@ -2,8 +2,8 @@
   import {onMount} from 'svelte';
 
   import {apiPost, extractResponseError} from '$lib/api';
-  import MapComponent from '$lib/components/Map.svelte';
   import MessageModal from '$lib/components/MessageModal.svelte';
+  import SingleMap from '$lib/components/SingleMap.svelte';
   import {addFlash} from '$lib/stores';
   import {reactive} from '$lib/svelte';
 
@@ -308,13 +308,15 @@
       <div class="field-error">Error: {fieldErrors.longitude}</div>
     {/if}
 
-    <MapComponent
-      bind:latitude
-      bind:longitude
-      editable={true}
-      position={location?.coordinates}
-      zoom={location?.coordinates !== undefined ? 13 : undefined}
-    />
+    <div class="map mt-5">
+      <SingleMap
+        bind:latitude
+        bind:longitude
+        editable={true}
+        center={location?.coordinates}
+        zoom={location?.coordinates !== undefined ? 13 : undefined}
+      />
+    </div>
 
     <p><em>Note: Double-click on the map to update the location coordinates.</em></p>
 

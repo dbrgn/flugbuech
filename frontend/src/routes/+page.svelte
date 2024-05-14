@@ -110,6 +110,10 @@
 <h4 class="title is-size-5">2024</h4>
 <ul class="content">
   <li>
+    <strong>14.5.</strong> The <a href="/locations">location list</a> now shows an overview map of all
+    locations you've been to (launch or landing locations).
+  </li>
+  <li>
     <strong>1.4.</strong> Do you have a lot of old flights logged in a spreadsheet application (like
     Excel or Google Sheets), and don't want to type all this information into Flugbuech by hand? In
     that case, try the new <a href="/flights/import/csv/">CSV import</a>!
