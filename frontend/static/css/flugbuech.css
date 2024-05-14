@@ -31,23 +31,6 @@ p + .spaced-headers {
   margin-top: 48px;
 }
 
-.map {
-  height: 400px;
-  position: relative;
-}
-
-.map-style-switcher {
-  position: absolute;
-  top: 0;
-  left: 0;
-  padding: 8px;
-  z-index: 9999;
-}
-
-.map-style-switcher select {
-  font-size: 14px;
-}
-
 footer {
   color: #777;
   font-size: 0.8em;

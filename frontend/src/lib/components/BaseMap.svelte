@@ -1,6 +1,6 @@
 <script lang="ts">
   import {Map, NavigationControl, Marker, type LngLatLike} from 'maplibre-gl';
-  import {onMount} from 'svelte';
+  import {onMount, tick} from 'svelte';
 
   import {unreachable} from '$lib/assert';
   import {reactive} from '$lib/svelte';
@@ -17,7 +17,14 @@
     type NamedCoordinates,
   } from './map';
 
+  // Map heights
+  const MAP_HEIGHT_SMALL = '400px';
+  const MAP_HEIGHT_LARGE = 'max(100vh, 800px)';
+
   export let mode: 'single' | 'multi';
+
+  // Common props
+  export let mapMode: 'small' | 'large' = 'small';
 
   // Props only used for mode 'single'
   export let center: LngLatLike = DEFAULT_MAP_CENTER;
@@ -34,6 +41,7 @@
   let mapType: MapType = 'mapbox-outdoors';
 
   // Map variable
+  let container: HTMLElement;
   let map: Map | null = null;
 
   // Markers
@@ -48,6 +56,14 @@
       mapMarker.addTo(map);
       markersLoaded = true;
     }
+  }
+
+  /**
+   * Toggle map height.
+   */
+  function toggleMapSize() {
+    mapMode = mapMode === 'small' ? 'large' : 'small';
+    tick().then(() => map?.resize());
   }
 
   /**
@@ -249,7 +265,7 @@
   onMount(() => {
     // Create map
     map = new Map({
-      container: 'map',
+      container,
       style: `mapbox://styles/mapbox/${MAPBOX_STYLE_DEFAULT}`,
       doubleClickZoom: !editable,
       center: center,
@@ -262,7 +278,20 @@
   });
 </script>
 
-<div id="map" class="map">
+<div
+  class="map"
+  bind:this={container}
+  style:height={mapMode === 'small' ? MAP_HEIGHT_SMALL : MAP_HEIGHT_LARGE}
+>
+  <button type="button" class="map-resize-button button" on:click={toggleMapSize}>
+    <span class="icon">
+      {#if mapMode === 'small'}
+        <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
+      {:else}
+        <i class="fa-solid fa-down-left-and-up-right-to-center"></i>
+      {/if}
+    </span>
+  </button>
   <div class="map-style-switcher" title="Map type">
     <select bind:value={mapType}>
       <option value="mapbox-outdoors">Mapbox Outdoors</option>
@@ -272,3 +301,31 @@
     </select>
   </div>
 </div>
+
+<style>
+  .map {
+    position: relative;
+  }
+
+  .map-style-switcher {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 8px;
+    z-index: 9999;
+  }
+
+  .map-style-switcher select {
+    font-size: 14px;
+  }
+
+  .map-resize-button {
+    position: absolute;
+    top: 110px;
+    right: 10px;
+    width: 29px;
+    height: 29px;
+    z-index: 9999;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+  }
+</style>
