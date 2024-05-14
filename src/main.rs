@@ -27,6 +27,8 @@ use rocket::{catch, catchers, get, request::Request, routes};
 use serde::Deserialize;
 
 // Limits
+//
+// Note: Other limits are configured in Rocket.toml!
 pub const MAX_IGC_UPLOAD_BYTES: u64 = 50 * 1024 * 1024;
 pub const MAX_CSV_UPLOAD_BYTES: u64 = 10 * 1024 * 1024;
 

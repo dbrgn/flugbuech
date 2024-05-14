@@ -11,7 +11,10 @@
 # profile.
 
 [global.limits]
-form = "12 MiB"
+# See https://api.rocket.rs/master/rocket/data/struct.Limits#built-in-limits
+form = "1 MiB"
+data-form = "10 MiB"
+json = "10 MiB"
 
 [debug]
 secret_key = "eXqSA0wz+qLlg8umREPesnkBzNlhwaNcp34BttIWLes="
