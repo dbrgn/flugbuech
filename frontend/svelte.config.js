@@ -16,6 +16,10 @@ const config = {
             strict: true,
         }),
 
+        alias: {
+            $translations: 'src/translations',
+        },
+
         // TODO: CSP rules
     },
 };

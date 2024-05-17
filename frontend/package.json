@@ -21,10 +21,13 @@
     "lint:prettier": "prettier --check --ignore-path=../.prettierignore --ignore-path=.gitignore --ignore-path=../.gitignore .",
     "lint": "npm run lint:prettier && npm run lint:eslint",
     "format": "prettier --write .",
+    "i18n:parse": "i18next 'src/**/*.{ts,svelte}' -o 'src/translations/$LOCALE/$NAMESPACE.json' -c i18next-parser.config.js",
     "test:integration": "playwright test",
     "test:unit": "vitest"
   },
   "dependencies": {
+    "i18next": "^23.11.4",
+    "i18next-icu": "^2.3.0",
     "maplibre-gl": "^1.15.1",
     "vite": "^5.1.7",
     "zod": "^3.22.4"
@@ -42,6 +45,7 @@
     "eslint-import-resolver-typescript": "^3.6.1",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-svelte": "^2.35.1",
+    "i18next-parser": "^8.13.0",
     "prettier": "^3.1.1",
     "prettier-plugin-svelte": "^3.1.2",
     "svelte": "^4.2.7",

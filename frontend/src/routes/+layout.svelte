@@ -2,6 +2,7 @@
   import {onMount} from 'svelte';
 
   import NavbarItem from '$lib/components/NavbarItem.svelte';
+  import {i18n} from '$lib/i18n';
   import {loginState, refreshLoginState} from '$lib/stores';
 
   let menuOpened = false;
@@ -89,7 +90,9 @@
   <header class="hero-body">
     <div class="container">
       <h1 class="title">Flugbuech</h1>
-      <p class="subtitle">Welcome, {$loginState?.username || 'Guest'}!</p>
+      <p class="subtitle">
+        {$i18n.t('welcome', 'Welcome, {name}!', {name: $loginState?.username || 'Guest'})}
+      </p>
     </div>
   </header>
 </section>
