@@ -2,6 +2,7 @@
   import {onMount} from 'svelte';
 
   import Flashes from '$lib/components/Flashes.svelte';
+  import {i18n} from '$lib/i18n';
   import {ResolvablePromise} from '$lib/resolvable-promise';
 
   import {_loadApiStats, type GlobalStats} from './+page';
@@ -28,11 +29,13 @@
   </div>
 </article>
 
-<h2 class="title is-size-2">Overview</h2>
+<h2 class="title is-size-2">{$i18n.t('home.title--overview', 'Overview')}</h2>
 
 <p class="content">
-  Welcome to <em>Flugbuech</em>! This is a free, open source and ad-free platform for keeping track
-  of your free flights (paragliding or hang gliding).
+  {$i18n.t(
+    'home.intro',
+    'Welcome to Flugbuech! This is a free, open source and ad-free platform for keeping track of your free flights (paragliding or hang gliding).',
+  )}
 </p>
 
 <div class="content">

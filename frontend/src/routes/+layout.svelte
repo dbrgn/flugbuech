@@ -96,7 +96,7 @@
     <div class="container">
       <h1 class="title">Flugbuech</h1>
       <p class="subtitle">
-        {$i18n.t('welcome', 'Welcome, {name}!', {name: $loginState?.username || 'Guest'})}
+        {$i18n.t('layout.welcome', 'Welcome, {name}!', {name: $loginState?.username || 'Guest'})}
       </p>
     </div>
   </header>

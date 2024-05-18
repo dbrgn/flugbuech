@@ -1,3 +1,9 @@
 {
-  "welcome": "Willkommen, {name}!"
+  "layout": {
+    "welcome": "Willkommen, {name}!"
+  },
+  "home": {
+    "intro": "Willkommen zu Flugbuech! Dies ist eine kostenlose, quelloffene und werbefreie Plattform zur Eintragung deiner Gleitschirm- und Drachenflüge.",
+    "title--overview": "Überblick"
+  }
 }
