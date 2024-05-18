@@ -35,6 +35,8 @@ export const LOCALES = keys(resources);
 
 /**
  * Mapping from locale identifier to name in that language.
+ *
+ * Can be used for language switchers.
  */
 export const LOCALE_NAMES: {[Locale in keyof typeof resources]: string} = {
     de: 'Deutsch',
@@ -45,24 +47,42 @@ export type Locale = (typeof LOCALES)[number];
 
 const FALLBACK_LOCALE: Locale = 'en' as const;
 
-export function ensureLocale(locale: string | undefined): Locale {
-    if (locale === undefined) {
-        return FALLBACK_LOCALE;
+/**
+ * Determine the browser's most preferred locale that we support, or fall back to the default locale
+ * otherwise.
+ */
+export function determineBrowserLocale(): Locale {
+    console.debug('i18n: Determine browser locale...');
+    if (navigator.languages !== undefined) {
+        for (const language of navigator.languages) {
+            const locale = getClosestAvailableLocale(language);
+            if (locale !== undefined) {
+                console.debug(
+                    `i18n: Found supported language "${locale}" for browser locale "${language}"`,
+                );
+                return locale;
+            }
+            console.debug(`i18n: Skipping browser locale "${language}", not supported`);
+        }
     }
-
-    return getClosestAvailableLocale(locale);
+    console.debug(`i18n: Falling back to "${FALLBACK_LOCALE}"`);
+    return FALLBACK_LOCALE;
 }
 
 export function isLocale(locale: string): locale is Locale {
     return (LOCALES as readonly string[]).includes(locale);
 }
 
-function getClosestAvailableLocale(locale: string): Locale {
+function getClosestAvailableLocale(locale: string): Locale | undefined {
+    // If specified string is a supported locale, use it directly
     if (isLocale(locale)) {
         return locale;
     }
 
-    // TODO(DESK-1122): This is somewhat naive. Use a more intelligent algorithm.
+    // If the primary language subtag associated with the specified locale string is a supported
+    // locale, use it.
+    //
+    // Example: If the specified locale string is "de_CH", use the "de" locale.
     try {
         const minimizedLocale = new Intl.Locale(locale).language;
         if (isLocale(minimizedLocale)) {
@@ -73,7 +93,8 @@ function getClosestAvailableLocale(locale: string): Locale {
         // Ignoring error.
     }
 
-    return FALLBACK_LOCALE;
+    // Give up
+    return undefined;
 }
 
 function createI18nStore(i18n: I18nextType): Writable<{i18n: I18nextType}> {

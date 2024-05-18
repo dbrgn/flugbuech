@@ -1,11 +1,11 @@
 import {writable} from 'svelte/store';
 
 import {getCookiesMap} from './cookies';
-import {initialize as initializeI18n, type Locale} from './i18n';
+import {determineBrowserLocale, initialize as initializeI18n, type Locale} from './i18n';
 
 // Locale
 
-export const locale = writable<Locale>('en'); // TODO detect locale
+export const locale = writable<Locale>(determineBrowserLocale());
 
 initializeI18n(locale);
 
