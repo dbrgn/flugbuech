@@ -3,7 +3,7 @@
     "welcome": "Welcome, {name}!"
   },
   "home": {
-    "intro": "Welcome to Flugbuech! This is a free, open source and ad-free platform for keeping track of your free flights (paragliding or hang gliding).",
+    "intro": "Welcome to <1>Flugbuech</1>! This is a free, open source and ad-free platform for keeping track of your free flights (paragliding or hang gliding).",
     "title--overview": "Overview"
   }
 }

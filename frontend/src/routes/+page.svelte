@@ -2,6 +2,7 @@
   import {onMount} from 'svelte';
 
   import Flashes from '$lib/components/Flashes.svelte';
+  import SubstitutableText from '$lib/components/SubstitutableText.svelte';
   import {i18n} from '$lib/i18n';
   import {ResolvablePromise} from '$lib/resolvable-promise';
 
@@ -32,10 +33,14 @@
 <h2 class="title is-size-2">{$i18n.t('home.title--overview', 'Overview')}</h2>
 
 <p class="content">
-  {$i18n.t(
-    'home.intro',
-    'Welcome to Flugbuech! This is a free, open source and ad-free platform for keeping track of your free flights (paragliding or hang gliding).',
-  )}
+  <SubstitutableText
+    text={$i18n.t(
+      'home.intro',
+      'Welcome to <1>Flugbuech</1>! This is a free, open source and ad-free platform for keeping track of your free flights (paragliding or hang gliding).',
+    )}
+  >
+    <em slot="1" let:text>{text}</em>
+  </SubstitutableText>
 </p>
 
 <div class="content">

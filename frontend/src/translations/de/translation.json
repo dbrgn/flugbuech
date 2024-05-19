@@ -3,7 +3,7 @@
     "welcome": "Willkommen, {name}!"
   },
   "home": {
-    "intro": "Willkommen zu Flugbuech! Dies ist eine kostenlose, quelloffene und werbefreie Plattform zur Eintragung deiner Gleitschirm- und Drachenflüge.",
+    "intro": "Willkommen zu <1>Flugbuech</1>! Dies ist eine kostenlose, quelloffene und werbefreie Plattform zur Eintragung deiner Gleitschirm- und Drachenflüge.",
     "title--overview": "Überblick"
   }
 }
