@@ -14,5 +14,6 @@
     "**/node_modules": true
   },
   "rewrap.wrappingColumn": 100,
-  "rust-analyzer.cargo.features": "all"
+  "rust-analyzer.cargo.features": "all",
+  "typescript.tsdk": "frontend/node_modules/typescript/lib"
 }
