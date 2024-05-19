@@ -4,6 +4,7 @@
   import Flashes from '$lib/components/Flashes.svelte';
   import MessageModal from '$lib/components/MessageModal.svelte';
   import {formatDuration} from '$lib/formatters';
+  import {i18n} from '$lib/i18n';
   import {addFlash} from '$lib/stores';
 
   import {goto, invalidateAll} from '$app/navigation';
@@ -29,7 +30,10 @@
         case 204:
           // Success
           addFlash({
-            message: `Glider "${gliderToDelete.manufacturer} ${gliderToDelete.model}" successfully deleted`,
+            message: $i18n.t('gliders.prose--delete-success', {
+              manufacturer: gliderToDelete.manufacturer,
+              model: gliderToDelete.model,
+            }),
             severity: 'success',
             icon: 'fa-trash-can',
           });
@@ -63,67 +67,76 @@
 {#if deleteError?.type === 'authentication'}
   <MessageModal
     type="warning"
-    title="Authentication Error"
-    message="Your login session has expired. Please log in again."
+    title={$i18n.t('common.error--authentication-error')}
+    message={$i18n.t('common.error--login-session-expired')}
     showClose={false}
   >
     <section slot="buttons">
-      <a href="/auth/login/" class="button is-warning">Login</a>
+      <a href="/auth/login/" class="button is-warning">{$i18n.t('navigation.login')}</a>
     </section>
   </MessageModal>
 {:else if deleteError?.type === 'api-error'}
   <MessageModal
     type="error"
-    title="API Error"
-    message="The glider could not be deleted due to an error on the server: {deleteError.message}"
+    title={$i18n.t('common.error--api-error')}
+    message={$i18n.t('gliders.prose--delete-error', {message: deleteError.message})}
     showClose={true}
     on:closed={() => (deleteError = undefined)}
   />
 {:else if gliderToDelete !== undefined}
   <DialogModal
-    title="Delete Glider"
-    message="Are you sure that you want to delete the glider &ldquo;{gliderToDelete.manufacturer} {gliderToDelete.model}&rdquo;?"
+    title={$i18n.t('gliders.action--delete-glider')}
+    message={$i18n.t(
+      'gliders.prose--delete-confirm',
+      'Are you sure that you want to delete the glider «{manufacturer} {model}»?',
+      {
+        manufacturer: gliderToDelete.manufacturer,
+        model: gliderToDelete.model,
+      },
+    )}
     dialogClass="is-danger"
   >
     <section slot="buttons">
-      <button class="button is-white" on:click={() => (gliderToDelete = undefined)}
-        >No, cancel</button
-      >
-      <button class="button is-danger" disabled={deleting} on:click={() => void deleteGlider()}
-        >Yes, delete!</button
-      >
+      <button class="button is-white" on:click={() => (gliderToDelete = undefined)}>
+        {$i18n.t('common.action--no-cancel')}
+      </button>
+      <button class="button is-danger" disabled={deleting} on:click={() => void deleteGlider()}>
+        {$i18n.t('common.action--yes-delete')}
+      </button>
     </section>
   </DialogModal>
 {/if}
 
 <nav class="breadcrumb" aria-label="breadcrumbs">
   <ul>
-    <li><a href="/">Home</a></li>
-    <li class="is-active"><a href="./" aria-current="page">Gliders</a></li>
+    <li><a href="/">{$i18n.t('navigation.home')}</a></li>
+    <li class="is-active"><a href="./" aria-current="page">{$i18n.t('navigation.gliders')}</a></li>
   </ul>
 </nav>
 
 <Flashes bind:this={flashes} />
 
-<h2 class="title is-2">Your Gliders</h2>
+<h2 class="title is-2">{$i18n.t('gliders.title--your-gliders')}</h2>
 
 <section>
   <p class="content">
-    You flew {data.gliders.length} glider{data.gliders.length === 1 ? '' : 's'} so far!
+    {$i18n.t('gliders.prose--glider-count', {count: data.gliders.length})}
   </p>
   <p class="content">
-    <a href="/gliders/add/" class="button is-primary">Add glider</a>
+    <a href="/gliders/add/" class="button is-primary">
+      {$i18n.t('gliders.action--add-glider')}
+    </a>
   </p>
   <table class="table is-fullwidth is-striped is-hoverable">
     <thead>
       <tr>
-        <th>Manufacturer</th>
-        <th>Model</th>
-        <th>Since</th>
-        <th>Until</th>
-        <th>Flights</th>
-        <th>Hours</th>
-        <th>Actions</th>
+        <th>{$i18n.t('gliders.column--manufacturer')}</th>
+        <th>{$i18n.t('gliders.column--model')}</th>
+        <th>{$i18n.t('gliders.column--since')}</th>
+        <th>{$i18n.t('gliders.column--until')}</th>
+        <th>{$i18n.t('gliders.column--flights')}</th>
+        <th>{$i18n.t('gliders.column--hours')}</th>
+        <th>{$i18n.t('gliders.column--actions')}</th>
       </tr>
     </thead>
     <tbody>
@@ -148,7 +161,7 @@
           <td>
             <a
               class="icon"
-              title="Edit Glider"
+              title={$i18n.t('gliders.action--edit-glider')}
               href="/gliders/{glider.id}/edit/"
               data-sveltekit-preload-data="tap"
             >
@@ -157,7 +170,7 @@
             {#if glider.stats.flights === 0}
               <button
                 class="icon has-text-danger"
-                title="Delete Glider"
+                title={$i18n.t('gliders.action--delete-glider')}
                 on:click={() => (gliderToDelete = glider)}
               >
                 <i class="fa-solid fa-trash-alt"></i>
@@ -173,8 +186,8 @@
 {#if data.gliders.some((glider) => !glider.stats.secondsComplete)}
   <p class="incomplete-warning">
     <small>
-      <sup>1</sup> Warning: There are flights without launch date/time in your flight book, these will
-      not contribute towards the glider hour stats.
+      <sup>1</sup>
+      {$i18n.t('gliders.prose--warning-incomplete')}
     </small>
   </p>
 {/if}

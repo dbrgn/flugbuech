@@ -2,6 +2,7 @@
   import {ensureError} from '$lib/assert';
   import Flashes from '$lib/components/Flashes.svelte';
   import MessageModal from '$lib/components/MessageModal.svelte';
+  import {i18n} from '$lib/i18n';
   import {addFlash, refreshLoginState} from '$lib/stores';
   import {sanitizeRedirectPath} from '$lib/urls';
 
@@ -69,7 +70,7 @@
 {#if submitError?.type === 'api-error'}
   <MessageModal
     type="error"
-    title="API Error"
+    title={$i18n.t('common.error--api-error')}
     message={submitError.message}
     showClose={true}
     on:closed={() => (submitError = undefined)}
@@ -78,7 +79,7 @@
 
 <Flashes bind:this={flashes} />
 
-<h2 class="title is-size-2">Login</h2>
+<h2 class="title is-size-2">{$i18n.t('navigation.login')}</h2>
 
 <form
   method="post"
@@ -123,7 +124,9 @@
   </div>
   <div class="field">
     <div class="control">
-      <button class="button is-primary" disabled={!submitEnabled} type="submit">Login</button>
+      <button class="button is-primary" disabled={!submitEnabled} type="submit">
+        {$i18n.t('navigation.login')}
+      </button>
     </div>
   </div>
 

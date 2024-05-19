@@ -4,6 +4,7 @@
   import {apiPost, extractResponseError} from '$lib/api';
   import MessageModal from '$lib/components/MessageModal.svelte';
   import SingleMap from '$lib/components/SingleMap.svelte';
+  import {i18n} from '$lib/i18n';
   import {addFlash} from '$lib/stores';
   import {reactive} from '$lib/svelte';
 
@@ -42,7 +43,7 @@
   function validateName(): void {
     fieldErrors = {
       ...fieldErrors,
-      name: name.length < 1 ? 'Name must not be empty' : undefined,
+      name: name.length < 1 ? $i18n.t('location.error--name-empty') : undefined,
     };
   }
   $: reactive(validateName, [name]);
@@ -50,14 +51,16 @@
     fieldErrors = {
       ...fieldErrors,
       countryCode:
-        countryCode.match(/^[A-Z]{2}$/u) === null ? 'Country code must have 2 letters' : undefined,
+        countryCode.match(/^[A-Z]{2}$/u) === null
+          ? $i18n.t('location.error--country-code-2-letters')
+          : undefined,
     };
   }
   $: reactive(validateCountryCode, [countryCode]);
   function validateElevation(): void {
     fieldErrors = {
       ...fieldErrors,
-      elevation: elevation === null ? 'Elevation must not be empty' : undefined,
+      elevation: elevation === null ? $i18n.t('location.error--elevation-empty') : undefined,
     };
   }
   $: reactive(validateElevation, [elevation]);
@@ -66,7 +69,7 @@
       ...fieldErrors,
       latitude:
         longitude !== null && latitude === null
-          ? 'If longitude is set, latitude must not be empty'
+          ? $i18n.t('location.error--latitude-empty')
           : undefined,
     };
   }
@@ -76,7 +79,7 @@
       ...fieldErrors,
       longitude:
         latitude !== null && longitude === null
-          ? 'If latitude is set, longitude must not be empty'
+          ? $i18n.t('location.error--longitude-empty')
           : undefined,
     };
   }
@@ -123,8 +126,8 @@
           addFlash({
             message:
               location === undefined
-                ? `Location successfully added`
-                : `Location "${name}" successfully updated`,
+                ? $i18n.t('location.prose--add-success')
+                : $i18n.t('location.prose--update-success'),
             severity: 'success',
             icon: 'fa-circle-check',
           });
@@ -157,24 +160,24 @@
 {#if submitError?.type === 'authentication'}
   <MessageModal
     type="warning"
-    title="Authentication Error"
-    message="Your login session has expired. Please log in again."
+    title={$i18n.t('common.error--authentication-error')}
+    message={$i18n.t('common.error--login-session-expired')}
     showClose={false}
   >
     <section slot="buttons">
       <a
         href="/auth/login/?redirect=/locations/{location == undefined ? '' : `${location.id}/edit`}"
-        class="button is-warning">Login</a
+        class="button is-warning">{$i18n.t('navigation.login')}</a
       >
     </section>
   </MessageModal>
 {:else if submitError?.type === 'api-error'}
   <MessageModal
     type="error"
-    title="API Error"
-    message="The location could not be {location === undefined
-      ? 'added'
-      : 'updated'} due to an error on the server: {submitError.message}"
+    title={$i18n.t('common.error--api-error')}
+    message={location === undefined
+      ? $i18n.t('location.error--add-error', {message: submitError.message})
+      : $i18n.t('location.error--update-error', {message: submitError.message})}
     showClose={true}
     on:closed={() => (submitError = undefined)}
   />
@@ -190,7 +193,7 @@
       void submitForm();
     }}
   >
-    <label class="label" for="name">Name *</label>
+    <label class="label" for="name">{$i18n.t('location.title--name')} *</label>
     <div class="field">
       <div class="control has-icons-left">
         <input
@@ -208,10 +211,14 @@
       </div>
     </div>
     {#if fieldErrors.name !== undefined}
-      <div class="field-error">Error: {fieldErrors.name}</div>
+      <div class="field-error">
+        {$i18n.t('common.error', {message: fieldErrors.longitude})}
+      </div>
     {/if}
 
-    <label class="label" for="country">Country Code (2 Letters) *</label>
+    <label class="label" for="country">
+      {$i18n.t('location.title--country-code')} *
+    </label>
     <div class="field">
       <div class="control has-icons-left">
         <input
@@ -231,10 +238,14 @@
       </div>
     </div>
     {#if fieldErrors.countryCode !== undefined}
-      <div class="field-error">Error: {fieldErrors.countryCode}</div>
+      <div class="field-error">
+        {$i18n.t('common.error', {message: fieldErrors.countryCode})}
+      </div>
     {/if}
 
-    <label class="label" for="elevation">Elevation (m ASL) *</label>
+    <label class="label" for="elevation"
+      >{$i18n.t('location.title--elevation')} ({$i18n.t('common.unit--m-asl')}) *</label
+    >
     <div class="field">
       <div class="control has-icons-left">
         <input
@@ -255,10 +266,14 @@
       </div>
     </div>
     {#if fieldErrors.elevation !== undefined}
-      <div class="field-error">Error: {fieldErrors.elevation}</div>
+      <div class="field-error">
+        {$i18n.t('common.error', {message: fieldErrors.elevation})}
+      </div>
     {/if}
 
-    <label class="label" for="lat">Latitude</label>
+    <label class="label" for="lat">
+      {$i18n.t('location.title--latitude')} (WGS 84)
+    </label>
     <div class="field">
       <div class="control has-icons-left">
         <input
@@ -280,10 +295,14 @@
       </div>
     </div>
     {#if fieldErrors.latitude !== undefined}
-      <div class="field-error">Error: {fieldErrors.latitude}</div>
+      <div class="field-error">
+        {$i18n.t('common.error', {message: fieldErrors.latitude})}
+      </div>
     {/if}
 
-    <label class="label" for="lng">Longitude</label>
+    <label class="label" for="lng">
+      {$i18n.t('location.title--longitude')} (WGS 84)
+    </label>
     <div class="field">
       <div class="control has-icons-left">
         <input
@@ -305,7 +324,9 @@
       </div>
     </div>
     {#if fieldErrors.longitude !== undefined}
-      <div class="field-error">Error: {fieldErrors.longitude}</div>
+      <div class="field-error">
+        {$i18n.t('common.error', {message: fieldErrors.longitude})}
+      </div>
     {/if}
 
     <div class="map mt-5">
@@ -318,13 +339,21 @@
       />
     </div>
 
-    <p><em>Note: Double-click on the map to update the location coordinates.</em></p>
+    <p>
+      <em>
+        {$i18n.t('location.prose--hint-double-click')}
+      </em>
+    </p>
 
     <div class="content control submitcontrols">
-      <button class="button is-primary" disabled={!submitEnabled} type="submit">Submit</button>
+      <button class="button is-primary" disabled={!submitEnabled} type="submit">
+        {$i18n.t('common.action--submit')}
+      </button>
     </div>
 
-    <p class="content"><small><em>* Required fields</em></small></p>
+    <p class="content">
+      <small><em>* {$i18n.t('common.hint--required-fields')}</em></small>
+    </p>
   </form>
 </div>
 

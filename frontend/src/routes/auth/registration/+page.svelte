@@ -5,6 +5,7 @@
   import Flashes from '$lib/components/Flashes.svelte';
   import MessageModal from '$lib/components/MessageModal.svelte';
   import {MIN_PASSWORD_LENGTH} from '$lib/constants';
+  import {i18n} from '$lib/i18n';
   import {addFlash, refreshLoginState} from '$lib/stores';
   import {reactive} from '$lib/svelte';
 
@@ -143,7 +144,7 @@
 {#if submitError?.type === 'api-error'}
   <MessageModal
     type="error"
-    title="API Error"
+    title={$i18n.t('common.error--api-error')}
     message={submitError.message}
     showClose={true}
     on:closed={() => (submitError = undefined)}
@@ -182,7 +183,7 @@
     </div>
   </div>
   {#if fieldErrors.username !== undefined}
-    <div class="field-error">Error: {fieldErrors.username}</div>
+    <div class="field-error">{$i18n.t('common.error', {message: fieldErrors.username})}</div>
   {/if}
 
   <div class="field">
@@ -202,7 +203,7 @@
     </div>
   </div>
   {#if fieldErrors.email !== undefined}
-    <div class="field-error">Error: {fieldErrors.email}</div>
+    <div class="field-error">{$i18n.t('common.error', {message: fieldErrors.email})}</div>
   {/if}
 
   <div class="field">
@@ -223,7 +224,7 @@
     </div>
   </div>
   {#if fieldErrors.password1 !== undefined}
-    <div class="field-error">Error: {fieldErrors.password1}</div>
+    <div class="field-error">{$i18n.t('common.error', {message: fieldErrors.password1})}</div>
   {/if}
 
   <div class="field">
@@ -244,7 +245,7 @@
     </div>
   </div>
   {#if fieldErrors.password2 !== undefined}
-    <div class="field-error">Error: {fieldErrors.password2}</div>
+    <div class="field-error">{$i18n.t('common.error', {message: fieldErrors.password2})}</div>
   {/if}
 
   <div class="field newsletter">

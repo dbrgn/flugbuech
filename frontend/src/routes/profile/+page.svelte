@@ -1,6 +1,8 @@
 <script lang="ts">
   import Flashes from '$lib/components/Flashes.svelte';
   import MessageModal from '$lib/components/MessageModal.svelte';
+  import SubstitutableText from '$lib/components/SubstitutableText.svelte';
+  import {i18n} from '$lib/i18n';
 
   import {invalidateAll} from '$app/navigation';
 
@@ -39,7 +41,7 @@
 {#if errorModal?.type === 'api-error'}
   <MessageModal
     type="error"
-    title="API Error"
+    title={$i18n.t('common.error--api-error')}
     message={errorModal.message}
     showClose={true}
     on:closed={() => (errorModal = undefined)}
@@ -48,38 +50,41 @@
 
 <nav class="breadcrumb" aria-label="breadcrumbs">
   <ul>
-    <li><a href="/">Home</a></li>
-    <li class="is-active"><a href="./" aria-current="page">Profile</a></li>
+    <li><a href="/">{$i18n.t('navigation.home')}</a></li>
+    <li class="is-active"><a href="./" aria-current="page">{$i18n.t('navigation.profile')}</a></li>
   </ul>
 </nav>
 
 <Flashes bind:this={flashes} />
 
-<h2 class="title is-2">Profile</h2>
+<h2 class="title is-2">{$i18n.t('navigation.profile')}</h2>
 
 <p class="block">
-  Welcome, <strong>{data.profile.username}</strong>! Here you can view and update your user profile.
+  <SubstitutableText text={$i18n.t('profile.prose--welcome')}>
+    <strong slot="1">{data.profile.username}</strong>
+  </SubstitutableText>
 </p>
 
 <p class="block">
-  If you want to change your login password,
-  <a href="/auth/password/change/">click here</a>.
+  <SubstitutableText text={$i18n.t('profile.prose--change-password')}>
+    <a slot="1" href="/auth/password/change/" let:text>{text}</a>
+  </SubstitutableText>
 </p>
 
 <div class="block">
-  <h3 class="title is-4">User Info</h3>
+  <h3 class="title is-4">{$i18n.t('profile.title--user-info')}</h3>
   <table class="table is-hoverable">
     <tbody>
       <tr>
-        <th>Username</th>
+        <th>{$i18n.t('profile.title--username')}</th>
         <td>{data.profile.username}</td>
       </tr>
       <tr>
-        <th>E-mail</th>
+        <th>{$i18n.t('profile.title--email')}</th>
         <td>{data.profile.email}</td>
       </tr>
       <tr>
-        <th>Registered Since</th>
+        <th>{$i18n.t('profile.title--registered-since')}</th>
         <td>{data.profile.signedUp}</td>
       </tr>
     </tbody>
@@ -87,19 +92,24 @@
 </div>
 
 <div class="block">
-  <h3 class="title is-4">News</h3>
+  <h3 class="title is-4">{$i18n.t('profile.title--news')}</h3>
 
   <article class="message is-info">
     <div class="message-body">
-      If you agree, I will send you occasional, tracking-free e-mails with news about Flugbuech.
-      These e-mails are purely about aspects of the flight book software itself. There will probably
-      be only 1-3 e-mails per year. You can unsubscribe here at any time.
+      {$i18n.t('profile.prose--news')}
     </div>
   </article>
 
   <div class="content">
     <p>
-      You currently <strong>{data.profile.newsOptIn ? 'allow' : "don't want"}</strong> news e-mails.
+      {#if data.profile.newsOptIn}
+        <SubstitutableText text={$i18n.t('profile.newsletter-allowed')}>
+          <strong slot="1" let:text>{text}</strong>
+        </SubstitutableText>
+      {:else}
+        <SubstitutableText text={$i18n.t('profile.newsletter-disallowed')}>
+          <strong slot="1" let:text>{text}</strong>
+        </SubstitutableText>{/if}
     </p>
   </div>
 
@@ -110,7 +120,9 @@
       class:is-primary={!data.profile.newsOptIn}
       on:click={() => updateNewsOptIn(!data.profile.newsOptIn)}
     >
-      {data.profile.newsOptIn ? 'Unsubscribe from news' : 'Subscribe to news'}
+      {data.profile.newsOptIn
+        ? $i18n.t('profile.newsletter-unsubscribe')
+        : $i18n.t('profile.newsletter-subscribe')}
     </button>
   </div>
 </div>

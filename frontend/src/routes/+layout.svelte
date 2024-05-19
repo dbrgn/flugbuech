@@ -57,32 +57,67 @@
   </div>
   <div id="navbar-contents" class="navbar-menu" class:is-active={menuOpened}>
     <div class="navbar-start">
-      <NavbarItem text="Home" href="/" {closeMenu} />
+      <NavbarItem text={$i18n.t('navigation.home', 'Home')} href="/" {closeMenu} />
       {#if $loginState?.username}
-        <NavbarItem text="My Gliders" href="/gliders/" {closeMenu} />
-        <NavbarItem text="My Locations" href="/locations/" {closeMenu} />
-        <NavbarItem text="My Flights" href="/flights/" {closeMenu} />
-        <NavbarItem text="Stats" href="/stats/" {closeMenu} />
-        <NavbarItem text="Submit flight" href="/flights/add/" {closeMenu} />
+        <NavbarItem
+          text={$i18n.t('navigation.gliders', 'My Gliders')}
+          href="/gliders/"
+          {closeMenu}
+        />
+        <NavbarItem
+          text={$i18n.t('navigation.locations', 'My Locations')}
+          href="/locations/"
+          {closeMenu}
+        />
+        <NavbarItem
+          text={$i18n.t('navigation.flights', 'My Flights')}
+          href="/flights/"
+          {closeMenu}
+        />
+        <NavbarItem text={$i18n.t('navigation.stats', 'Stats')} href="/stats/" {closeMenu} />
+        <NavbarItem
+          text={$i18n.t('navigation.submit', 'Submit flight')}
+          href="/flights/add/"
+          {closeMenu}
+        />
       {:else}
-        <NavbarItem text="Screenshots" href="/screenshots/" {closeMenu} />
+        <NavbarItem
+          text={$i18n.t('navigation.screenshots', 'Screenshots')}
+          href="/screenshots/"
+          {closeMenu}
+        />
       {/if}
     </div>
     <div class="navbar-end">
       <div class="navbar-item">
         <div class="buttons">
           {#if $loginState?.username}
-            <NavbarItem text="Profile" href="/profile/" type="button" {closeMenu} />
             <NavbarItem
-              text="Logout"
+              text={$i18n.t('navigation.profile', 'Profile')}
+              href="/profile/"
+              type="button"
+              {closeMenu}
+            />
+            <NavbarItem
+              text={$i18n.t('navigation.logout', 'Logout')}
               href="/auth/logout/"
               type="button"
               reload={true}
               {closeMenu}
             />
           {:else}
-            <NavbarItem text="Login" href="/auth/login/" type="button" {closeMenu} />
-            <NavbarItem text="Register" href="/auth/registration/" type="button" {closeMenu} />
+            <NavbarItem
+              text={$i18n.t('navigation.login', 'Login')}
+              href="/auth/login/"
+              type="button"
+              {closeMenu}
+            />
+            <NavbarItem
+              text={$i18n.t('navigation.register', 'Register')}
+              href="/auth/registration/"
+              type="button"
+              {closeMenu}
+            />
           {/if}
         </div>
       </div>
@@ -112,12 +147,21 @@
 <!-- Footer -->
 <footer class="section">
   <div class="container">
-    &copy; 2019&ndash;2024 Danilo Bargen | <a href="https://github.com/dbrgn/flugbuech"
-      >Source Code</a
-    >
-    | <a href="https://github.com/dbrgn/flugbuech/issues">Bug reports and feature requests</a> |
-    <a href="/privacy-policy/">Privacy Policy</a>
-    | <a href="mailto:flugbuech@bargen.dev">Contact</a>
+    &copy; 2019&ndash;2024 Danilo Bargen | <a href="https://github.com/dbrgn/flugbuech">
+      {$i18n.t('layout.sourcecode', 'Source Code')}
+    </a>
+    |
+    <a href="https://github.com/dbrgn/flugbuech/issues">
+      {$i18n.t('layout.issue-tracker', 'Issue Tracker')}
+    </a>
+    |
+    <a href="/privacy-policy/">
+      {$i18n.t('layout.privacy-policy', 'Privacy Policy')}
+    </a>
+    |
+    <a href="mailto:flugbuech@bargen.dev">
+      {$i18n.t('layout.contact', 'Contact')}
+    </a>
   </div>
 </footer>
 

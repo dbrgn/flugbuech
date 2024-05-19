@@ -6,6 +6,7 @@
   import Flashes from '$lib/components/Flashes.svelte';
   import MessageModal from '$lib/components/MessageModal.svelte';
   import MultiMap from '$lib/components/MultiMap.svelte';
+  import {i18n} from '$lib/i18n';
   import {addFlash} from '$lib/stores';
 
   import {goto, invalidateAll} from '$app/navigation';
@@ -31,7 +32,9 @@
         case 204:
           // Success
           addFlash({
-            message: `Location "${locationToDelete.name}" successfully deleted`,
+            message: $i18n.t('locations.prose--delete-success', {
+              name: locationToDelete.name,
+            }),
             severity: 'success',
             icon: 'fa-trash-can',
           });
@@ -65,64 +68,66 @@
 {#if deleteError?.type === 'authentication'}
   <MessageModal
     type="warning"
-    title="Authentication Error"
-    message="Your login session has expired. Please log in again."
+    title={$i18n.t('common.error--authentication-error')}
+    message={$i18n.t('common.error--login-session-expired')}
     showClose={false}
   >
     <section slot="buttons">
-      <a href="/auth/login/" class="button is-warning">Login</a>
+      <a href="/auth/login/" class="button is-warning">{$i18n.t('navigation.login')}</a>
     </section>
   </MessageModal>
 {:else if deleteError?.type === 'api-error'}
   <MessageModal
     type="error"
-    title="API Error"
-    message="The location could not be deleted due to an error on the server: {deleteError.message}"
+    title={$i18n.t('common.error--api-error')}
+    message={$i18n.t('locations.prose--delete-error', {message: deleteError.message})}
     showClose={true}
     on:closed={() => (deleteError = undefined)}
   />
 {:else if locationToDelete !== undefined}
   <DialogModal
-    title="Delete Location"
-    message="Are you sure that you want to delete the location &ldquo;{locationToDelete.name}&rdquo;?"
+    title={$i18n.t('locations.action--delete-location')}
+    message={$i18n.t('locations.prose--delete-confirm', {name: locationToDelete.name})}
     dialogClass="is-danger"
   >
     <section slot="buttons">
-      <button class="button is-white" on:click={() => (locationToDelete = undefined)}
-        >No, cancel</button
-      >
-      <button class="button is-danger" disabled={deleting} on:click={() => void deleteLocation()}
-        >Yes, delete!</button
-      >
+      <button class="button is-white" on:click={() => (locationToDelete = undefined)}>
+        {$i18n.t('common.action--no-cancel')}
+      </button>
+      <button class="button is-danger" disabled={deleting} on:click={() => void deleteLocation()}>
+        {$i18n.t('common.action--yes-delete')}
+      </button>
     </section>
   </DialogModal>
 {/if}
 
 <nav class="breadcrumb" aria-label="breadcrumbs">
   <ul>
-    <li><a href="/">Home</a></li>
-    <li class="is-active"><a href="./" aria-current="page">Locations</a></li>
+    <li><a href="/">{$i18n.t('navigation.home')}</a></li>
+    <li class="is-active">
+      <a href="./" aria-current="page">{$i18n.t('navigation.locations')}</a>
+    </li>
   </ul>
 </nav>
 
 <Flashes bind:this={flashes} />
 
-<h2 class="title is-2">Your Locations</h2>
+<h2 class="title is-2">{$i18n.t('locations.title--your-locations')}</h2>
 
 <section>
   <article class="message is-info">
     <div class="message-body">
-      <i class="fa-solid fa-circle-info" />&ensp;Note: A location can be used both as launch
-      location and as landing location. Locations are not global, i.e. you are creating and
-      maintaining your own location database.
+      <i class="fa-solid fa-circle-info" />&ensp;{$i18n.t('locations.prose--hint-nonglobal')}
     </div>
   </article>
 
   <p class="mb-4">
-    You've been at {data.locations.length} location{data.locations.length === 1 ? '' : 's'} so far!
+    {$i18n.t('locations.prose--location-count', {count: data.locations.length})}
   </p>
   <div class="mb-5">
-    <a href="/locations/add/" class="button is-primary">Add location</a>
+    <a href="/locations/add/" class="button is-primary">
+      {$i18n.t('locations.action--add-location')}
+    </a>
   </div>
   {#if data.locations.some((location) => location.coordinates !== undefined)}
     <section class="map mb-5">
@@ -140,11 +145,11 @@
   <table class="table is-fullwidth is-striped is-hoverable">
     <thead>
       <tr>
-        <th>Name</th>
-        <th>Country</th>
-        <th>Elevation</th>
-        <th>Flights</th>
-        <th>Actions</th>
+        <th>{$i18n.t('locations.column--name')}</th>
+        <th>{$i18n.t('locations.column--country')}</th>
+        <th>{$i18n.t('locations.column--elevation')}</th>
+        <th>{$i18n.t('locations.column--flights')}</th>
+        <th>{$i18n.t('locations.column--actions')}</th>
       </tr>
     </thead>
     <tbody>
@@ -152,15 +157,19 @@
         <tr>
           <td>{location.name}</td>
           <td><CountryFlag countryCode={location.countryCode} /> {location.countryCode}</td>
-          <td>{location.elevation} m ASL</td>
+          <td>{location.elevation} {$i18n.t('common.unit--m-asl')}</td>
           <td>{location.flightCount}</td>
           <td>
-            <a class="icon" title="View Location" href="/locations/{location.id}/">
+            <a
+              class="icon"
+              title={$i18n.t('locations.action--view-location')}
+              href="/locations/{location.id}/"
+            >
               <i class="fa-solid fa-eye"></i>
             </a>
             <a
               class="icon"
-              title="Edit Location"
+              title={$i18n.t('locations.action--edit-location')}
               href="/locations/{location.id}/edit/"
               data-sveltekit-preload-data="tap"
             >
@@ -169,7 +178,7 @@
             {#if location.flightCount === 0}
               <button
                 class="icon has-text-danger"
-                title="Delete Location"
+                title={$i18n.t('locations.action--delete-location')}
                 on:click={() => (locationToDelete = location)}
               >
                 <i class="fa-solid fa-trash-alt"></i>
@@ -181,7 +190,7 @@
               <a
                 class="icon"
                 href="https://www.google.com/maps/place/{lat},{lon}/"
-                title="View on Google Maps"
+                title={$i18n.t('locations.action--view-google-maps')}
                 target="_blank"
               >
                 <i class="fa-solid fa-map-marker-alt"></i>
@@ -189,7 +198,7 @@
               <a
                 class="icon"
                 href="https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=16/{lat}/{lon}"
-                title="View on OpenStreetMap"
+                title={$i18n.t('locations.action--view-osm')}
                 target="_blank"
               >
                 <i class="fa-solid fa-map-pin"></i>

@@ -5,6 +5,7 @@
   import Flashes from '$lib/components/Flashes.svelte';
   import MessageModal from '$lib/components/MessageModal.svelte';
   import {formatDateTime} from '$lib/formatters';
+  import {i18n} from '$lib/i18n';
   import {loginState} from '$lib/stores';
 
   import {SubmitError, type SubmitErrorData} from '../../api';
@@ -48,7 +49,10 @@
       if (error instanceof SubmitError) {
         submitError = error.data;
       } else {
-        submitError = {type: 'api-error', message: `Unknown API error: ${error}`};
+        submitError = {
+          type: 'api-error',
+          message: `${$i18n.t('common.error--api-error')}: ${error}`,
+        };
       }
       return;
     }
@@ -70,7 +74,10 @@
       if (error instanceof SubmitError) {
         submitError = error.data;
       } else {
-        submitError = {type: 'api-error', message: `Unknown API error: ${error}`};
+        submitError = {
+          type: 'api-error',
+          message: `${$i18n.t('common.error--api-error')}: ${error}`,
+        };
       }
       return;
     }
@@ -88,27 +95,31 @@
 
 <nav class="breadcrumb" aria-label="breadcrumbs">
   <ul>
-    <li><a href="/">Home</a></li>
-    <li><a href="/flights/">Flights</a></li>
-    <li class="is-active"><a href="./" aria-current="page">Import from CSV</a></li>
+    <li><a href="/">{$i18n.t('navigation.home')}</a></li>
+    <li><a href="/flights/">{$i18n.t('navigation.flights')}</a></li>
+    <li class="is-active">
+      <a href="./" aria-current="page">{$i18n.t('flights.action--import-csv')}</a>
+    </li>
   </ul>
 </nav>
 
 {#if submitError?.type === 'authentication'}
   <MessageModal
     type="warning"
-    title="Authentication Error"
-    message="Your login session has expired. Please log in again."
+    title={$i18n.t('common.error--authentication-error')}
+    message={$i18n.t('common.error--login-session-expired')}
     showClose={false}
   >
     <section slot="buttons">
-      <a href="/auth/login/?redirect=/flights/import/csv/" class="button is-warning">Login</a>
+      <a href="/auth/login/?redirect=/flights/import/csv/" class="button is-warning"
+        >{$i18n.t('navigation.login')}</a
+      >
     </section>
   </MessageModal>
 {:else if submitError?.type === 'api-error'}
   <MessageModal
     type="error"
-    title="API Error"
+    title={$i18n.t('common.error--api-error')}
     message="The CSV could not be processed due to an error on the server: {submitError.message}"
     showClose={true}
     on:closed={() => (submitError = undefined)}
