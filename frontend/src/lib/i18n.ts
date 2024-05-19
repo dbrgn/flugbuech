@@ -53,7 +53,7 @@ const FALLBACK_LOCALE: Locale = 'en' as const;
  */
 export function determineBrowserLocale(): Locale {
     console.debug('i18n: Determine browser locale...');
-    if (navigator.languages !== undefined) {
+    if (typeof window !== 'undefined' && window.navigator.languages !== undefined) {
         for (const language of navigator.languages) {
             const locale = getClosestAvailableLocale(language);
             if (locale !== undefined) {

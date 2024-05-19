@@ -1,10 +1,12 @@
 <script lang="ts">
   import {onMount} from 'svelte';
+  import {writable, type Writable} from 'svelte/store';
 
   import NavbarItem from '$lib/components/NavbarItem.svelte';
-  import {i18n} from '$lib/i18n';
+  import {determineBrowserLocale, i18n, initialize as initializeI18n, type Locale} from '$lib/i18n';
   import {loginState, refreshLoginState} from '$lib/stores';
 
+  let locale: Writable<Locale>;
   let menuOpened = false;
 
   function toggleMenu(): void {
@@ -17,6 +19,9 @@
 
   onMount(() => {
     refreshLoginState();
+
+    locale = writable<Locale>(determineBrowserLocale());
+    initializeI18n(locale);
   });
 </script>
 
