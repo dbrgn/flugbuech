@@ -9,7 +9,7 @@
   import GliderForm from '../GliderForm.svelte';
 
   onMount(() => {
-    requireLogin($loginState, '/flights/add/');
+    requireLogin($loginState, '/gliders/add/');
   });
 </script>
 
