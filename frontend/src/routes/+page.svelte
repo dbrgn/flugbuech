@@ -124,6 +124,10 @@
 <h4 class="title is-size-5">2024</h4>
 <ul class="content">
   <li>
+    <strong>25.5.</strong>
+    {$i18n.t('home.news.2024-05-25')}
+  </li>
+  <li>
     <strong>14.5.</strong>
     <SubstitutableText text={$i18n.t('home.news.2024-05-14')}>
       <a slot="1" href="/locations/" let:text>{text}</a>

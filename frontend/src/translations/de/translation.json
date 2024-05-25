@@ -154,7 +154,8 @@
       "2024-03-13": "Nach einer längeren Entwicklungspause wurde die komplette Flugbuech-Benutzeroberfläche von Grund auf neu geschrieben! Sie sollte immer noch gleich aussehen, aber schneller reagieren und für mich einfacher zu warten und zu erweitern sein. Wenn du Feedback (positiv oder negativ) hast, kontaktiere mich unter <1>flugbuech@bargen.dev</1>!",
       "2024-03-19": "Du kannst dich jetzt <1>in deinem Benutzerprofil</1> für einen unregelmässigen Newsletter anmelden.",
       "2024-04-01": "Hast du viele alte Flüge in einer Excel-Tabelle und möchtest diese Informationen nicht alle von Hand in Flugbuech eingeben? Dann probiere den neuen <1>CSV-Import</1> aus!",
-      "2024-05-14": "Die <1>Standortliste</1> zeigt jetzt eine Übersichtskarte aller Orte, die du besucht hast (Start- oder Landeplätze)."
+      "2024-05-14": "Die <1>Standortliste</1> zeigt jetzt eine Übersichtskarte aller Orte, die du besucht hast (Start- oder Landeplätze).",
+      "2024-05-25": "Flugbuech ist jetzt auch auf Deutsch verfügbar!"
     },
     "prose--intro": "Willkommen bei <1>Flugbuech</1>! Dies ist eine kostenlose, quelloffene und werbefreie Plattform zur Eintragung deiner Gleitschirm- oder Drachenflüge.",
     "prose--screenshots": "Um unverbindlich einen Blick auf die Benutzeroberfläche zu werfen, schau dir <1>die Screenshots</1> an. Die Liste der Funktionen und den aktuellen Projektstatus findest du <2>auf der GitHub-Seite des Projekts</2>.",
