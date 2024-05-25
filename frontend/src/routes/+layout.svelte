@@ -2,6 +2,7 @@
   import {onMount} from 'svelte';
   import {writable, type Writable} from 'svelte/store';
 
+  import CountryFlag from '$lib/components/CountryFlag.svelte';
   import NavbarItem from '$lib/components/NavbarItem.svelte';
   import {determineBrowserLocale, i18n, initialize as initializeI18n, type Locale} from '$lib/i18n';
   import {loginState, refreshLoginState} from '$lib/stores';
@@ -15,6 +16,10 @@
 
   function closeMenu(): void {
     menuOpened = false;
+  }
+
+  function changeLanguage(language: Locale): void {
+    locale.set(language);
   }
 
   onMount(() => {
@@ -89,6 +94,10 @@
       {/if}
     </div>
     <div class="navbar-end">
+      <div class="navbar-item language-switcher">
+        <a href="." on:click={() => changeLanguage('de')}><CountryFlag countryCode="de" /></a>
+        <a href="." on:click={() => changeLanguage('en')}><CountryFlag countryCode="gb" /></a>
+      </div>
       <div class="navbar-item">
         <div class="buttons">
           {#if $loginState?.username}
@@ -180,6 +189,13 @@
 
   .main-header .subtitle {
     color: #eee;
+  }
+
+  .language-switcher {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    padding-right: 0;
   }
 
   /** Bulma CSS variable customization */
