@@ -7,6 +7,8 @@ import type {StrictPartial} from '$lib/types';
 import translationDeJson from '$translations/de/translation.json';
 import translationEnJson from '$translations/en/translation.json';
 
+const LOCALSTORAGE_KEY_LANGUAGE = 'language';
+
 /**
  * Define English as the base translation. All other translations will only be able to (optionally)
  * provide keys defined by the base translation.
@@ -51,7 +53,7 @@ const FALLBACK_LOCALE: Locale = 'en' as const;
  * Determine the browser's most preferred locale that we support, or fall back to the default locale
  * otherwise.
  */
-export function determineBrowserLocale(): Locale {
+function determineBrowserLocale(): Locale {
     console.debug('i18n: Determine browser locale...');
     if (typeof window !== 'undefined' && window.navigator.languages !== undefined) {
         for (const language of navigator.languages) {
@@ -114,7 +116,7 @@ function createI18nStore(i18n: I18nextType): Writable<{i18n: I18nextType}> {
 
 const i18nStore = createI18nStore(i18next);
 
-export async function initialize(localeStore: Readable<Locale>): Promise<void> {
+async function initialize(localeStore: Readable<Locale>): Promise<void> {
     const i18n = get(i18nStore).i18n;
 
     if (i18n.isInitialized) {
@@ -154,4 +156,40 @@ export async function initialize(localeStore: Readable<Locale>): Promise<void> {
     });
 }
 
+/**
+ * Store containing the i18n API.
+ */
 export const i18n = derived(i18nStore, (value) => value.i18n);
+
+let localeStore: Writable<Locale>;
+
+/**
+ * Initialize the i18n subsystem and return the store that contains the current locale, as well as
+ * the i18n API instance.
+ */
+export function initializeI18n(): {locale: Readable<Locale>; i18n: I18nextType} {
+    if (localeStore !== undefined) {
+        return {locale: localeStore, i18n: get(i18n)};
+    }
+
+    // Determine the initial language. If a valid language is set in local storage, use it.
+    // Otherwise, determine the default language based on browser info.
+    const localStorageLanguage = localStorage.getItem(LOCALSTORAGE_KEY_LANGUAGE);
+    const initialLanguage =
+        localStorageLanguage !== null && isLocale(localStorageLanguage)
+            ? localStorageLanguage
+            : determineBrowserLocale();
+
+    // Instantiate i18n and return store
+    localeStore = writable<Locale>(initialLanguage);
+    initialize(localeStore);
+    return {locale: localeStore, i18n: get(i18n)};
+}
+
+/**
+ * Change language at the request of the user and persist the choice in local storage.
+ */
+export function changeLanguage(language: Locale): void {
+    localeStore.set(language);
+    localStorage.setItem(LOCALSTORAGE_KEY_LANGUAGE, language);
+}

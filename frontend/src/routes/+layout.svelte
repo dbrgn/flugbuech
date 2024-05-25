@@ -1,21 +1,11 @@
 <script lang="ts">
   import {onMount} from 'svelte';
-  import {writable, type Writable} from 'svelte/store';
 
   import CountryFlag from '$lib/components/CountryFlag.svelte';
   import NavbarItem from '$lib/components/NavbarItem.svelte';
-  import {
-    determineBrowserLocale,
-    i18n,
-    initialize as initializeI18n,
-    isLocale,
-    type Locale,
-  } from '$lib/i18n';
+  import {changeLanguage, i18n, initializeI18n} from '$lib/i18n';
   import {loginState, refreshLoginState} from '$lib/stores';
 
-  const LOCALSTORAGE_KEY_LANGUAGE = 'language';
-
-  let locale: Writable<Locale>;
   let menuOpened = false;
 
   function toggleMenu(): void {
@@ -26,28 +16,9 @@
     menuOpened = false;
   }
 
-  /**
-   * Change language at the request of the user and persist the choice in local storage.
-   */
-  function changeLanguage(language: Locale): void {
-    locale.set(language);
-    localStorage.setItem(LOCALSTORAGE_KEY_LANGUAGE, language);
-  }
-
   onMount(() => {
+    initializeI18n();
     refreshLoginState();
-
-    // Determine the initial language. If a valid language is set in local storage, use it.
-    // Otherwise, determine the default language based on browser info.
-    const localStorageLanguage = localStorage.getItem(LOCALSTORAGE_KEY_LANGUAGE);
-    const initialLanguage =
-      localStorageLanguage !== null && isLocale(localStorageLanguage)
-        ? localStorageLanguage
-        : determineBrowserLocale();
-
-    // Instantiate i18n
-    locale = writable<Locale>(initialLanguage);
-    initializeI18n(locale);
   });
 </script>
 
