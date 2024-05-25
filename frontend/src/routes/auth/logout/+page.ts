@@ -1,3 +1,4 @@
+import {initializeI18n} from '$lib/i18n';
 import {addFlash, refreshLoginState} from '$lib/stores';
 
 import {goto} from '$app/navigation';
@@ -7,9 +8,11 @@ import {apiLogout} from './api';
 export async function load({fetch}): Promise<void> {
     await apiLogout(fetch);
 
+    const {i18n} = initializeI18n();
+
     // Logout successful! Add flash.
     addFlash({
-        message: 'Logged out, goodbye and happy landings!',
+        message: i18n.t('auth.prose--logged-out'),
         severity: 'success',
         icon: 'fa-circle-check',
     });

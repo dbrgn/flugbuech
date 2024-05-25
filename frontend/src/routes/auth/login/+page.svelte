@@ -2,6 +2,7 @@
   import {ensureError} from '$lib/assert';
   import Flashes from '$lib/components/Flashes.svelte';
   import MessageModal from '$lib/components/MessageModal.svelte';
+  import SubstitutableText from '$lib/components/SubstitutableText.svelte';
   import {i18n} from '$lib/i18n';
   import {addFlash, refreshLoginState} from '$lib/stores';
   import {sanitizeRedirectPath} from '$lib/urls';
@@ -41,8 +42,7 @@
     if (success) {
       // Login successful! Add flash.
       addFlash({
-        message:
-          'Login successful, welcome! Your session will remain active for 1 year, or until you log out.',
+        message: $i18n.t('auth.prose--logged-in'),
         severity: 'success',
         icon: 'fa-circle-check',
       });
@@ -55,7 +55,7 @@
     } else {
       // Login failed
       addFlash({
-        message: 'Login failed. Check your username / password.',
+        message: $i18n.t('auth.error--login-failed'),
         severity: 'error',
         icon: 'fa-circle-exclamation',
       });
@@ -89,7 +89,7 @@
   }}
 >
   <div class="field">
-    <label class="label" for="username">Username</label>
+    <label class="label" for="username">{$i18n.t('auth.title--username')}</label>
     <div class="control has-icons-left">
       <!-- svelte-ignore a11y-autofocus -->
       <input
@@ -107,7 +107,7 @@
     </div>
   </div>
   <div class="field">
-    <label class="label" for="password">Password</label>
+    <label class="label" for="password">{$i18n.t('auth.title--password')}</label>
     <div class="control has-icons-left">
       <input
         class="input"
@@ -130,5 +130,9 @@
     </div>
   </div>
 
-  <p>Don't have an account yet? <a href="/auth/registration/">Register now!</a></p>
+  <p>
+    <SubstitutableText text={$i18n.t('auth.prose--register-now')}>
+      <a slot="1" href="/auth/registration/" let:text>{text}</a>
+    </SubstitutableText>
+  </p>
 </form>

@@ -4,6 +4,7 @@
   import {ensureError} from '$lib/assert';
   import Flashes from '$lib/components/Flashes.svelte';
   import MessageModal from '$lib/components/MessageModal.svelte';
+  import SubstitutableText from '$lib/components/SubstitutableText.svelte';
   import {MIN_PASSWORD_LENGTH} from '$lib/constants';
   import {i18n} from '$lib/i18n';
   import {addFlash, refreshLoginState} from '$lib/stores';
@@ -34,14 +35,15 @@
   function validateUsername(): void {
     fieldErrors = {
       ...fieldErrors,
-      username: username.length < 3 ? 'Username must consist of at least 3 characters' : undefined,
+      username:
+        username.length < 3 ? $i18n.t('auth.error--username-too-short', {count: 3}) : undefined,
     };
   }
   $: reactive(validateUsername, [username]);
   function validateEmail(): void {
     fieldErrors = {
       ...fieldErrors,
-      email: email.length < 1 ? 'Please enter an e-mail address' : undefined,
+      email: email.length < 1 ? $i18n.t('auth.error--missing-email') : undefined,
     };
   }
   $: reactive(validateEmail, [email]);
@@ -50,7 +52,7 @@
       ...fieldErrors,
       password1:
         password1.length < MIN_PASSWORD_LENGTH
-          ? `Password must contain at least ${MIN_PASSWORD_LENGTH} characters`
+          ? $i18n.t('auth.error--password-too-short', {count: MIN_PASSWORD_LENGTH})
           : undefined,
     };
   }
@@ -63,7 +65,7 @@
           ? undefined
           : password2 === password1
             ? undefined
-            : "Paswords don't match",
+            : $i18n.t('auth.error--password-dont-match'),
     };
   }
   $: reactive(validatePassword2, [password1, password2]);
@@ -112,7 +114,7 @@
     if (registrationResult.success) {
       // Registration successful! Add flash.
       addFlash({
-        message: 'Registration successful, welcome!',
+        message: $i18n.t('auth.prose--registration-successful'),
         severity: 'success',
         icon: 'fa-circle-check',
       });
@@ -125,7 +127,9 @@
     } else {
       // Registration failed
       addFlash({
-        message: `Registration failed: ${registrationResult.errorDescription}`,
+        message: $i18n.t('auth.error--registration-failed', {
+          message: registrationResult.errorDescription,
+        }),
         severity: 'error',
         icon: 'fa-circle-exclamation',
       });
@@ -153,9 +157,13 @@
 
 <Flashes bind:this={flashes} />
 
-<h2 class="title is-size-2">Registration</h2>
+<h2 class="title is-size-2">{$i18n.t('auth.title--registration')}</h2>
 
-<p class="content">Already have an account? <a href="/auth/login">Log in now!</a></p>
+<p class="content">
+  <SubstitutableText text={$i18n.t('auth.prose--already-have-an-account')}>
+    <a slot="1" href="/auth/login/" let:text>{text}</a>
+  </SubstitutableText>
+</p>
 
 <form
   method="post"
@@ -165,7 +173,7 @@
   }}
 >
   <div class="field">
-    <label class="label" for="username">Username</label>
+    <label class="label" for="username">{$i18n.t('auth.title--username')}</label>
     <div class="control has-icons-left">
       <!-- svelte-ignore a11y-autofocus -->
       <input
@@ -187,13 +195,13 @@
   {/if}
 
   <div class="field">
-    <label class="label" for="email">E-mail</label>
+    <label class="label" for="email">{$i18n.t('auth.title--email')}</label>
     <div class="control has-icons-left">
       <input
         id="email"
         type="text"
         class="input"
-        class:error={fieldErrors.username !== undefined}
+        class:error={fieldErrors.email !== undefined}
         required
         bind:value={email}
       />
@@ -207,7 +215,7 @@
   {/if}
 
   <div class="field">
-    <label class="label" for="password1">Password</label>
+    <label class="label" for="password1">{$i18n.t('auth.title--password')}</label>
     <div class="control has-icons-left">
       <input
         id="password1"
@@ -215,7 +223,7 @@
         class="input"
         class:error={fieldErrors.password1 !== undefined}
         required
-        placeholder="Choose a password (at least {MIN_PASSWORD_LENGTH} characters)"
+        placeholder={$i18n.t('auth.prose--choose-password', {count: MIN_PASSWORD_LENGTH})}
         bind:value={password1}
       />
       <span class="icon is-small is-left">
@@ -228,7 +236,7 @@
   {/if}
 
   <div class="field">
-    <label class="label" for="password2">Password Confirmation</label>
+    <label class="label" for="password2">{$i18n.t('auth.title--password-repeat')}</label>
     <div class="control has-icons-left">
       <input
         id="password2"
@@ -236,7 +244,7 @@
         class="input"
         class:error={fieldErrors.password2 !== undefined}
         required
-        placeholder="Confirm password"
+        placeholder={$i18n.t('auth.prose--password-repeat')}
         bind:value={password2}
       />
       <span class="icon is-small is-left">
@@ -252,18 +260,21 @@
     <div class="control has-icons-left">
       <label class="checkbox" for="newsletter">
         <input id="newsletter" type="checkbox" bind:checked={newsletter} />
-        I want to receive occasional news about Flugbuech through e-mail
+        {$i18n.t('auth.prose--newsletter')}
       </label>
     </div>
   </div>
 
   <p class="content privacy-policy-hint">
-    By registering, you acknowledge the <a href="/privacy-policy/" target="_blank">privacy policy</a
-    >.
+    <SubstitutableText text={$i18n.t('auth.prose--privacy-policy-acknowledge')}>
+      <a slot="1" href="/privacy-policy/" target="_blank" let:text>{text}</a>
+    </SubstitutableText>
   </p>
   <div class="field">
     <div class="control">
-      <button class="button is-primary" disabled={!submitEnabled} type="submit">Register</button>
+      <button class="button is-primary" disabled={!submitEnabled} type="submit">
+        {$i18n.t('auth.action--register')}
+      </button>
     </div>
   </div>
 </form>

@@ -33,7 +33,7 @@
   function validateCurrent(): void {
     fieldErrors = {
       ...fieldErrors,
-      current: current.length < 1 ? 'Please enter your current password' : undefined,
+      current: current.length < 1 ? $i18n.t('auth.prose--enter-current-password') : undefined,
     };
   }
   $: reactive(validateCurrent, [current]);
@@ -42,7 +42,7 @@
       ...fieldErrors,
       new1:
         new1.length < MIN_PASSWORD_LENGTH
-          ? `Password must contain at least ${MIN_PASSWORD_LENGTH} characters`
+          ? $i18n.t('auth.error--password-too-short', {count: MIN_PASSWORD_LENGTH})
           : undefined,
     };
   }
@@ -50,7 +50,12 @@
   function validateNew2(): void {
     fieldErrors = {
       ...fieldErrors,
-      new2: new2.length === 0 ? undefined : new2 === new1 ? undefined : "Paswords don't match",
+      new2:
+        new2.length === 0
+          ? undefined
+          : new2 === new1
+            ? undefined
+            : $i18n.t('auth.error--password-dont-match'),
     };
   }
   $: reactive(validateNew2, [new1, new2]);
@@ -98,7 +103,7 @@
     if (passwordChangeResult.success) {
       // Password change successful! Add flash.
       addFlash({
-        message: 'Password changed successfully',
+        message: $i18n.t('auth.prose--password-change-success'),
         severity: 'success',
         icon: 'fa-circle-check',
       });
@@ -106,9 +111,11 @@
       // Redirect to home
       goto('/');
     } else {
-      // Passowrd change failed
+      // Password change failed
       addFlash({
-        message: `Password change failed: ${passwordChangeResult.errorDescription}`,
+        message: $i18n.t('auth.prose--password-change-error', {
+          message: passwordChangeResult.errorDescription,
+        }),
         severity: 'error',
         icon: 'fa-circle-exclamation',
       });
@@ -130,7 +137,11 @@
   <ul>
     <li><a href="/">{$i18n.t('navigation.home')}</a></li>
     <li><a href="/profile/">{$i18n.t('navigation.profile')}</a></li>
-    <li class="is-active"><a href="./" aria-current="page">Change Password</a></li>
+    <li class="is-active">
+      <a href="./" aria-current="page">
+        {$i18n.t('auth.title--change-password')}
+      </a>
+    </li>
   </ul>
 </nav>
 
@@ -146,7 +157,7 @@
 
 <Flashes bind:this={flashes} />
 
-<h2 class="title is-size-2">Change Password</h2>
+<h2 class="title is-size-2">{$i18n.t('auth.title--change-password')}</h2>
 
 <form
   method="post"
@@ -157,7 +168,7 @@
 >
   <PasswordFormInputField
     id="current"
-    label="Current Password"
+    label={$i18n.t('auth.title--current-password')}
     icon="fa-key"
     required={true}
     error={fieldErrors.current !== undefined}
@@ -169,7 +180,7 @@
 
   <PasswordFormInputField
     id="new1"
-    label="New Password"
+    label={$i18n.t('auth.title--new-password')}
     icon="fa-asterisk"
     required={true}
     error={fieldErrors.new1 !== undefined}
@@ -181,7 +192,7 @@
 
   <PasswordFormInputField
     id="new2"
-    label="New Password (repeat)"
+    label={$i18n.t('auth.title--new-password-repeat')}
     icon="fa-asterisk"
     required={true}
     error={fieldErrors.new2 !== undefined}
