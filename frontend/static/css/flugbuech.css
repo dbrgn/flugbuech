@@ -48,3 +48,9 @@ footer {
 div.control + label.checkbox {
   margin-top: 8px;
 }
+
+/* Bugfix for Bulma(?) bug: Addon of a field (e.g. "km" suffic for track length entry in flight
+   form) doesn't have full height. */
+.field.has-addons .control a.button {
+  height: 100%;
+}
