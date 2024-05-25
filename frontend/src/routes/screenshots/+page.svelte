@@ -1,4 +1,10 @@
+<script>
+  import {i18n} from '$lib/i18n';
+</script>
+
 <h2 class="title is-size-2">Screenshots</h2>
+
+<p>{$i18n.t('screenshots.language-hint', 'Aktuell nur auf Englisch verfügbar.')}</p>
 
 <div class="content item">
   <h3 class="title">Flight List</h3>

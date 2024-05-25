@@ -3,6 +3,7 @@
 
   import {u8aToBase64} from '$lib/base64';
   import MessageModal from '$lib/components/MessageModal.svelte';
+  import {i18n} from '$lib/i18n';
   import {addFlash} from '$lib/stores';
   import {reactive} from '$lib/svelte';
   import type {XContestTracktype} from '$lib/xcontest';
@@ -78,7 +79,7 @@
       ...fieldErrors,
       number:
         number !== null && number !== flight?.number && existingFlightNumbers.includes(number)
-          ? 'Flight number already taken'
+          ? $i18n.t('flight.error--flight-number-taken')
           : undefined,
     };
   }
@@ -87,7 +88,10 @@
   function validateGlider(): void {
     fieldErrors = {
       ...fieldErrors,
-      glider: glider !== undefined && !gliderIds.includes(glider) ? 'Unknown glider' : undefined,
+      glider:
+        glider !== undefined && !gliderIds.includes(glider)
+          ? $i18n.t('flight.error--unknown-glider')
+          : undefined,
     };
   }
   $: reactive(validateGlider, [glider]);
@@ -96,16 +100,14 @@
     fieldErrors = {
       ...fieldErrors,
       launchDate:
-        launchTime !== '' && launchDate === ''
-          ? 'Date must not be empty if launch time is set'
-          : undefined,
+        launchTime !== '' && launchDate === '' ? $i18n.t('flight.error--date-empty') : undefined,
       launchTime:
         launchDate !== '' && launchTime === ''
-          ? 'Launch time must not be empty if date is set'
+          ? $i18n.t('flight.error--launch-time-empty')
           : undefined,
       landingTime:
         launchDate !== '' && landingTime === ''
-          ? 'Landing time must not be empty if date is set'
+          ? $i18n.t('flight.error--landing-time-empty')
           : undefined,
     };
   }
@@ -117,7 +119,9 @@
     fieldErrors = {
       ...fieldErrors,
       trackDistance:
-        trackDistance === '' || trackDistance.match(distanceRe) ? undefined : 'Invalid distance',
+        trackDistance === '' || trackDistance.match(distanceRe)
+          ? undefined
+          : $i18n.t('flight.error--invalid-distance'),
     };
   }
   $: reactive(validateTrackDistance, [trackDistance]);
@@ -130,7 +134,7 @@
       xcontestDistance:
         xcontestDistance === '' || xcontestDistance.match(distanceRe)
           ? undefined
-          : 'Invalid distance',
+          : $i18n.t('flight.error--invalid-distance'),
     };
   }
   $: reactive(validateXContestDistance, [xcontestDistance]);
@@ -213,8 +217,8 @@
       addFlash({
         message:
           flight === undefined
-            ? 'Flight successfully added'
-            : `Flight ${flight.number ?? ''} successfully updated`,
+            ? $i18n.t('flight.prose--add-success')
+            : $i18n.t('flight.prose--update-success', {numberOrEmpty: flight.number ?? ''}),
         severity: 'success',
         icon: 'fa-circle-check',
       });
@@ -223,7 +227,10 @@
       if (error instanceof SubmitError) {
         submitError = error.data;
       } else {
-        submitError = {type: 'api-error', message: `Unknown API error: ${error}`};
+        submitError = {
+          type: 'api-error',
+          message: `${$i18n.t('common.error--api-error')}: ${error}`,
+        };
       }
     }
     submitEnabled = true;
@@ -252,7 +259,7 @@
 
     // Only process IGC files
     if (!file.name.toLocaleLowerCase().endsWith('.igc')) {
-      alert(`File "${file.name}" does not end with .igc, ignoring`);
+      alert($i18n.t('flight.error--not-igc', {name: file.name}));
       files = undefined;
       return;
     }
@@ -306,7 +313,7 @@
         reader.readAsArrayBuffer(file);
       })
       .catch((e) => {
-        alert(`Could not process IGC file: ${e}`);
+        alert($i18n.t('flight.error--could-not-process-igc', {message: `${e}`}));
       });
   }
   $: reactive(onFileInputChange, [files]);
@@ -359,24 +366,26 @@
 {#if submitError?.type === 'authentication'}
   <MessageModal
     type="warning"
-    title="Authentication Error"
-    message="Your login session has expired. Please log in again."
+    title={$i18n.t('common.error--authentication-error')}
+    message={$i18n.t('common.error--login-session-expired')}
     showClose={false}
   >
     <section slot="buttons">
       <a
         href="/auth/login/?redirect=/flights/{flight == undefined ? '' : `${flight.id}/edit`}"
-        class="button is-warning">Login</a
+        class="button is-warning"
       >
+        {$i18n.t('navigation.login')}
+      </a>
     </section>
   </MessageModal>
 {:else if submitError?.type === 'api-error'}
   <MessageModal
     type="error"
-    title="API Error"
-    message="The location could not be {flight === undefined
-      ? 'added'
-      : 'updated'} due to an error on the server: {submitError.message}"
+    title={$i18n.t('common.error--api-error')}
+    message={flight === undefined
+      ? $i18n.t('flight.error--add-error', {message: submitError.message})
+      : $i18n.t('flight.error--update-error', {message: submitError.message})}
     showClose={true}
     on:closed={() => (submitError = undefined)}
   />
@@ -394,12 +403,16 @@
       void submitForm();
     }}
   >
-    <h3 class="title is-4">Basic Information</h3>
+    <h3 class="title is-4">{$i18n.t('flight.title--basic-information')}</h3>
 
-    <label class="label" for="igcFile">IGC Flight Recording</label>
+    <label class="label" for="igcFile">
+      {$i18n.t('flight.title--igc-flight-recording')}
+    </label>
     {#if flight?.hasIgc}
       <p class="content">
-        <em>IGC file already uploaded. IGC files cannot be changed after the initial upload.</em>
+        <em>
+          {$i18n.t('flight.prose--igc-already-uploaded')}
+        </em>
       </p>
     {:else}
       <div class="field">
@@ -410,15 +423,21 @@
               <span class="file-icon">
                 <i class="fa-solid fa-upload"></i>
               </span>
-              <span class="file-label"> Click to upload IGC file </span>
+              <span class="file-label">
+                {$i18n.t('flight.prose--click-to-upload-igc')}
+              </span>
             </span>
-            <span class="file-name">{files?.[0].name ?? 'No file selected…'}</span>
+            <span class="file-name">
+              {files?.[0].name ?? $i18n.t('flight.prose--no-file-selected')}
+            </span>
           </label>
         </div>
       </div>
     {/if}
 
-    <label class="label" for="number">Flight Number</label>
+    <label class="label" for="number">
+      {$i18n.t('flight.title--flight-number')}
+    </label>
     <div class="field">
       <div class="control has-icons-left">
         <input
@@ -433,15 +452,19 @@
           <i class="fa-solid fa-list-ol"></i>
         </div>
         {#if existingFlightNumbers.length > 0}
-          <p class="formhint">Highest flight number so far: {Math.max(...existingFlightNumbers)}</p>
+          <p class="formhint">
+            {$i18n.t('flight.prose--hint-highest-flight-number', {
+              number: Math.max(...existingFlightNumbers),
+            })}
+          </p>
         {/if}
       </div>
     </div>
     {#if fieldErrors.number !== undefined}
-      <div class="field-error">Error: {fieldErrors.number}</div>
+      <div class="field-error">{$i18n.t('common.error', {message: fieldErrors.number})}</div>
     {/if}
 
-    <label class="label" for="glider">Glider</label>
+    <label class="label" for="glider">{$i18n.t('flight.title--glider')}</label>
     <div class="field">
       <div class="control is-expanded has-icons-left">
         <div class="select is-fullwidth">
@@ -461,14 +484,16 @@
       </div>
     </div>
     {#if fieldErrors.glider !== undefined}
-      <div class="field-error">Error: {fieldErrors.glider}</div>
+      <div class="field-error">{$i18n.t('common.error', {message: fieldErrors.glider})}</div>
     {/if}
 
-    <h3 class="title is-4">Launch &amp; Landing</h3>
+    <h3 class="title is-4">{$i18n.t('flight.title--launch-landing')}</h3>
 
     <div class="columns">
       <div class="column">
-        <label class="label" for="launchSite">Launch Site</label>
+        <label class="label" for="launchSite">
+          {$i18n.t('flight.title--launch-site')}
+        </label>
         <div class="control is-expanded has-icons-left">
           <div class="select is-fullwidth">
             <select id="launchSite" bind:value={launchAt}>
@@ -491,7 +516,7 @@
       </div>
 
       <div class="column">
-        <label class="label" for="landingSite">Landing Site</label>
+        <label class="label" for="landingSite">{$i18n.t('flight.title--landing-site')}</label>
         <div class="control is-expanded has-icons-left">
           <div class="select is-fullwidth">
             <select id="landingSite" bind:value={landingAt}>
@@ -512,7 +537,9 @@
 
     <div class="columns">
       <div class="column">
-        <label class="label" for="launchDate">Launch Date</label>
+        <label class="label" for="launchDate">
+          {$i18n.t('flight.title--launch-date')}
+        </label>
         <div class="field">
           <div class="control has-icons-left">
             <input
@@ -528,11 +555,15 @@
           </div>
         </div>
         {#if fieldErrors.launchDate !== undefined}
-          <div class="field-error">Error: {fieldErrors.launchDate}</div>
+          <div class="field-error">
+            {$i18n.t('common.error', {message: fieldErrors.launchDate})}
+          </div>
         {/if}
       </div>
       <div class="column">
-        <label class="label" for="launchTime">Launch Time (UTC)</label>
+        <label class="label" for="launchTime">
+          {$i18n.t('flight.title--launch-time')} (UTC)
+        </label>
         <div class="field">
           <div class="control has-icons-left">
             <input
@@ -549,12 +580,16 @@
           </div>
         </div>
         {#if fieldErrors.launchTime !== undefined}
-          <div class="field-error">Error: {fieldErrors.launchTime}</div>
+          <div class="field-error">
+            {$i18n.t('common.error', {message: fieldErrors.launchTime})}
+          </div>
         {/if}
       </div>
 
       <div class="column">
-        <label class="label" for="landingTime">Landing Time (UTC)</label>
+        <label class="label" for="landingTime">
+          {$i18n.t('flight.title--landing-time')} (UTC)
+        </label>
         <div class="field has-addons">
           <div class="control is-expanded has-icons-left">
             <input id="landingTime" type="time" class="input" step="60" bind:value={landingTime} />
@@ -567,14 +602,20 @@
           </p>
         </div>
         {#if fieldErrors.landingTime !== undefined}
-          <div class="field-error">Error: {fieldErrors.landingTime}</div>
+          <div class="field-error">
+            {$i18n.t('common.error', {message: fieldErrors.landingTime})}
+          </div>
         {/if}
       </div>
     </div>
 
-    <h3 class="title is-4">GPS Track</h3>
+    <h3 class="title is-4">
+      {$i18n.t('flight.title--gps-track')}
+    </h3>
 
-    <label class="label" for="trackDistance">GPS Track Distance</label>
+    <label class="label" for="trackDistance">
+      {$i18n.t('flight.title--gps-track-distance')}
+    </label>
     <div class="field has-addons">
       <div class="control is-expanded has-icons-left">
         <input
@@ -593,22 +634,30 @@
       </p>
     </div>
     {#if fieldErrors.trackDistance !== undefined}
-      <div class="field-error">Error: {fieldErrors.trackDistance}</div>
+      <div class="field-error">{$i18n.t('common.error', {message: fieldErrors.trackDistance})}</div>
     {/if}
 
-    <h3 class="title is-4">XContest</h3>
+    <h3 class="title is-4">{$i18n.t('flight.title--xcontest')}</h3>
 
     <div class="columns">
       <div class="column">
-        <label class="label" for="xcontestTracktype">XContest Track Type</label>
+        <label class="label" for="xcontestTracktype">
+          {$i18n.t('flight.title--xcontest-track-type')}
+        </label>
         <div class="field">
           <div class="control is-expanded has-icons-left">
             <div class="select is-fullwidth">
               <select id="xcontestTracktype" bind:value={xcontestTracktype}>
                 <option value={undefined}></option>
-                <option value="free_flight">Free Flight</option>
-                <option value="flat_triangle">Flat Triangle</option>
-                <option value="fai_triangle">FAI Triangle</option>
+                <option value="free_flight">
+                  {$i18n.t('common.xcontest--free-flight')}
+                </option>
+                <option value="flat_triangle">
+                  {$i18n.t('common.xcontest--flat-triangle')}
+                </option>
+                <option value="fai_triangle">
+                  {$i18n.t('common.xcontest--fai-triangle')}
+                </option>
               </select>
               <div class="icon is-small is-left">
                 <i class="fa-solid fa-globe-americas"></i>
@@ -619,7 +668,9 @@
       </div>
 
       <div class="column">
-        <label class="label" for="xcontestDistance">XContest Scored Distance</label>
+        <label class="label" for="xcontestDistance">
+          {$i18n.t('flight.title--xcontest-scored-distance')}
+        </label>
         <div class="field has-addons">
           <div class="control is-expanded has-icons-left">
             <input
@@ -638,12 +689,16 @@
           </p>
         </div>
         {#if fieldErrors.xcontestDistance !== undefined}
-          <div class="field-error">Error: {fieldErrors.xcontestDistance}</div>
+          <div class="field-error">
+            {$i18n.t('common.error', {message: fieldErrors.xcontestDistance})}
+          </div>
         {/if}
       </div>
     </div>
 
-    <label class="label" for="xcontestUrl">XContest URL</label>
+    <label class="label" for="xcontestUrl">
+      {$i18n.t('flight.title--xcontest-url')}
+    </label>
     <div class="field">
       <div class="control has-icons-left">
         <input
@@ -660,21 +715,27 @@
       </div>
     </div>
 
-    <h3 class="title is-4">Other</h3>
+    <h3 class="title is-4">
+      {$i18n.t('flight.title--other')}
+    </h3>
 
-    <label class="label" for="comment">Comment</label>
+    <label class="label" for="comment">
+      {$i18n.t('flight.title--comment')}
+    </label>
     <div class="field">
       <div class="control">
         <textarea
           class="textarea"
           id="comment"
-          placeholder="Describe your flight"
+          placeholder={$i18n.t('flight.prose--describe-flight')}
           bind:value={comment}
         ></textarea>
       </div>
     </div>
 
-    <label class="label" for="videoUrl">Video URL</label>
+    <label class="label" for="videoUrl">
+      {$i18n.t('flight.title--video-url')}
+    </label>
     <div class="field">
       <div class="control has-icons-left">
         <input
@@ -692,13 +753,15 @@
     </div>
 
     <div class="content control submitcontrols">
-      <button class="button is-primary" disabled={!submitEnabled} type="submit">Submit</button>
+      <button class="button is-primary" disabled={!submitEnabled} type="submit">
+        {$i18n.t('common.action--submit')}
+      </button>
     </div>
   </form>
 </div>
 
 <div class="drag-file-overlay" class:is-hidden={!dragFileOverlayVisible}>
-  <div>Drop file to process</div>
+  <div>{$i18n.t('flight.prose--drop-file-to-process')}</div>
 </div>
 
 <style>

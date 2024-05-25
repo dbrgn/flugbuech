@@ -2,6 +2,7 @@
   import CountryFlag from '$lib/components/CountryFlag.svelte';
   import Flashes from '$lib/components/Flashes.svelte';
   import {formatDuration} from '$lib/formatters';
+  import {i18n} from '$lib/i18n';
 
   import type {Data} from './+page';
 
@@ -14,29 +15,29 @@
 
 <nav class="breadcrumb" aria-label="breadcrumbs">
   <ul>
-    <li><a href="/">Home</a></li>
-    <li class="is-active"><a href="./" aria-current="page">Stats</a></li>
+    <li><a href="/">{$i18n.t('navigation.home')}</a></li>
+    <li class="is-active"><a href="./" aria-current="page">{$i18n.t('navigation.stats')}</a></li>
   </ul>
 </nav>
 
 <Flashes />
 
-<h2 class="title is-2">Stats</h2>
+<h2 class="title is-2">{$i18n.t('stats.title--stats')}</h2>
 
 <section>
   <div class="columns">
     <div class="column is-half">
-      <h3 class="title is-4">Yearly Stats</h3>
+      <h3 class="title is-4">{$i18n.t('stats.title--yearly-stats')}</h3>
 
       <table class="table is-fullwidth is-striped is-hoverable is-narrow">
         <thead>
           <tr>
-            <th>Year</th>
-            <th>Flights</th>
+            <th>{$i18n.t('stats.column--year')}</th>
+            <th>{$i18n.t('stats.column--flights')}</th>
             <th title="Hike &amp; Fly">H&amp;F</th>
-            <th>Hours</th>
-            <th>Track Distance</th>
-            <th>Scored Distance</th>
+            <th>{$i18n.t('stats.column--hours')}</th>
+            <th>{$i18n.t('stats.column--track-distance')}</th>
+            <th>{$i18n.t('stats.column--scored-distance')}</th>
           </tr>
         </thead>
         <tbody>
@@ -62,7 +63,9 @@
           {/each}
           <tr class="has-text-weight-medium">
             <td>
-              Total{#if data.flightsWithoutLaunchTime > 0}<sup>1</sup>{/if}
+              {$i18n.t('stats.column--total', 'Total')}{#if data.flightsWithoutLaunchTime > 0}<sup
+                  >1</sup
+                >{/if}
             </td>
             <td>{data.flightCountTotal}</td>
             <td>{data.hikeandflyCountTotal}</td>
@@ -76,27 +79,29 @@
       {#if data.flightsWithoutLaunchTime > 0}
         <p>
           <small>
-            <sup>1</sup> Warning: There are {data.flightsWithoutLaunchTime} flights without launch date/time
-            in your flight book, these will not contribute towards the yearly stats.
+            <sup>1</sup>
+            {$i18n.t('stats.prose--warning-flights-without-time', {
+              count: data.flightsWithoutLaunchTime,
+            })}
           </small>
         </p>
       {/if}
 
       <p>
         <small>
-          <sup>{data.flightsWithoutLaunchTime > 0 ? 2 : 1}</sup> Data is incomplete (some flights don't
-          contain this information)
+          <sup>{data.flightsWithoutLaunchTime > 0 ? 2 : 1}</sup>
+          {$i18n.t('stats.prose--warning-data-incomplete')}
         </small>
       </p>
     </div>
 
     <div class="column">
-      <h3 class="title is-4">Top Launch Sites</h3>
+      <h3 class="title is-4">{$i18n.t('stats.title--top-launch-sites')}</h3>
       <table class="table is-fullwidth is-striped is-hoverable is-narrow">
         <thead>
           <tr>
-            <th>Location</th>
-            <th>Launches</th>
+            <th>{$i18n.t('stats.column--location')}</th>
+            <th>{$i18n.t('stats.column--launches')}</th>
           </tr>
         </thead>
         <tbody>
@@ -114,12 +119,12 @@
     </div>
 
     <div class="column">
-      <h3 class="title is-4">Top Landing Sites</h3>
+      <h3 class="title is-4">{$i18n.t('stats.title--top-landing-sites')}</h3>
       <table class="table is-fullwidth is-striped is-hoverable is-narrow">
         <thead>
           <tr>
-            <th>Location</th>
-            <th>Landings</th>
+            <th>{$i18n.t('stats.column--location')}</th>
+            <th>{$i18n.t('stats.column--landings')}</th>
           </tr>
         </thead>
         <tbody>

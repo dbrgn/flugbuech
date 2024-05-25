@@ -3,6 +3,7 @@
 
   import {apiPost, extractResponseError} from '$lib/api';
   import MessageModal from '$lib/components/MessageModal.svelte';
+  import {i18n} from '$lib/i18n';
   import {addFlash} from '$lib/stores';
   import {reactive} from '$lib/svelte';
 
@@ -36,14 +37,15 @@
   function validateManufacturer(): void {
     fieldErrors = {
       ...fieldErrors,
-      manufacturer: manufacturer.length < 1 ? 'Manufacturer must not be empty' : undefined,
+      manufacturer:
+        manufacturer.length < 1 ? $i18n.t('glider.warning--manufacturer-empty') : undefined,
     };
   }
   $: reactive(validateManufacturer, [manufacturer]);
   function validateModel(): void {
     fieldErrors = {
       ...fieldErrors,
-      model: model.length < 1 ? 'Model must not be empty' : undefined,
+      model: model.length < 1 ? $i18n.t('glider.warning--model-empty') : undefined,
     };
   }
   $: reactive(validateModel, [model]);
@@ -52,7 +54,7 @@
       ...fieldErrors,
       until:
         since !== null && until !== null && new Date(since) > new Date(until)
-          ? '"Until" must not be earlier than "Since"'
+          ? $i18n.t('glider.warning--until-earlier-than-since')
           : undefined,
     };
   }
@@ -60,7 +62,7 @@
   function validateCost(): void {
     fieldErrors = {
       ...fieldErrors,
-      cost: cost !== null && cost < 0 ? 'Cost must not be negative' : undefined,
+      cost: cost !== null && cost < 0 ? $i18n.t('glider.warning--cost-negative') : undefined,
     };
   }
   $: reactive(validateCost, [cost]);
@@ -100,9 +102,10 @@
         case 204:
           // Success
           addFlash({
-            message: `Glider "${manufacturer} ${model}" successfully ${
-              glider === undefined ? 'added' : 'updated'
-            }`,
+            message:
+              glider === undefined
+                ? $i18n.t('glider.prose--add-success', {manufacturer, model})
+                : $i18n.t('glider.prose--update-success', {manufacturer, model}),
             severity: 'success',
             icon: 'fa-circle-check',
           });
@@ -135,24 +138,26 @@
 {#if submitError?.type === 'authentication'}
   <MessageModal
     type="warning"
-    title="Authentication Error"
-    message="Your login session has expired. Please log in again."
+    title={$i18n.t('common.error--authentication-error')}
+    message={$i18n.t('common.error--login-session-expired')}
     showClose={false}
   >
     <section slot="buttons">
       <a
         href="/auth/login/?redirect=/gliders/{glider == undefined ? '' : `${glider.id}/edit`}"
-        class="button is-warning">Login</a
+        class="button is-warning"
       >
+        {$i18n.t('navigation.login')}
+      </a>
     </section>
   </MessageModal>
 {:else if submitError?.type === 'api-error'}
   <MessageModal
     type="error"
-    title="API Error"
-    message="The glider could not be {glider === undefined
-      ? 'added'
-      : 'updated'} due to an error on the server: {submitError.message}"
+    title={$i18n.t('common.error--api-error')}
+    message={glider === undefined
+      ? $i18n.t('glider.error--add-error', {message: submitError.message})
+      : $i18n.t('glider.error--update-error', {message: submitError.message})}
     showClose={true}
     on:closed={() => (submitError = undefined)}
   />
@@ -168,7 +173,9 @@
       void submitForm();
     }}
   >
-    <label class="label" for="manufacturer">Manufacturer *</label>
+    <label class="label" for="manufacturer">
+      {$i18n.t('glider.title--manufacturer')} *
+    </label>
     <div class="field">
       <div class="control has-icons-left">
         <input
@@ -183,14 +190,18 @@
         <div class="icon is-small is-left">
           <i class="fa-solid fa-industry"></i>
         </div>
-        <p class="formhint">The glider manufacturer, e.g. "Advance"</p>
+        <p class="formhint">
+          {$i18n.t('glider.hint--manufacturer')}
+        </p>
       </div>
     </div>
     {#if fieldErrors.manufacturer !== undefined}
-      <div class="field-error">Error: {fieldErrors.manufacturer}</div>
+      <div class="field-error">{$i18n.t('common.error', {message: fieldErrors.manufacturer})}</div>
     {/if}
 
-    <label class="label" for="model">Model *</label>
+    <label class="label" for="model">
+      {$i18n.t('glider.title--model')} *
+    </label>
     <div class="field">
       <div class="control has-icons-left">
         <input
@@ -205,16 +216,18 @@
         <div class="icon is-small is-left">
           <i class="fa-solid fa-parachute-box"></i>
         </div>
-        <p class="formhint">The glider model, e.g. "Epsilon 8"</p>
+        <p class="formhint">
+          {$i18n.t('glider.hint--model')}
+        </p>
       </div>
     </div>
     {#if fieldErrors.model !== undefined}
-      <div class="field-error">Error: {fieldErrors.model}</div>
+      <div class="field-error">{$i18n.t('common.error', {message: fieldErrors.model})}</div>
     {/if}
 
     <div class="columns">
       <div class="column">
-        <label class="label" for="since">Since</label>
+        <label class="label" for="since">{$i18n.t('glider.title--since')}</label>
         <div class="field">
           <div class="control has-icons-left">
             <input
@@ -228,16 +241,20 @@
             <div class="icon is-small is-left">
               <i class="fa-solid fa-calendar-alt"></i>
             </div>
-            <p class="formhint">When did you acquire this glider?</p>
+            <p class="formhint">
+              {$i18n.t('glider.hint--since')}
+            </p>
           </div>
         </div>
         {#if fieldErrors.since !== undefined}
-          <div class="field-error in-column">Error: {fieldErrors.since}</div>
+          <div class="field-error in-column">
+            {$i18n.t('common.error', {message: fieldErrors.since})}
+          </div>
         {/if}
       </div>
 
       <div class="column">
-        <label class="label" for="until">Until</label>
+        <label class="label" for="until">{$i18n.t('glider.title--until')}</label>
         <div class="field">
           <div class="control has-icons-left">
             <input
@@ -252,35 +269,41 @@
               <i class="fa-solid fa-calendar-alt"></i>
             </div>
             <p class="formhint">
-              Until when did you own this glider? (Leave empty if you still have it)
+              {$i18n.t('glider.hint--until')}
             </p>
           </div>
         </div>
         {#if fieldErrors.until !== undefined}
-          <div class="field-error in-column">Error: {fieldErrors.until}</div>
+          <div class="field-error in-column">
+            {$i18n.t('common.error', {message: fieldErrors.until})}
+          </div>
         {/if}
       </div>
     </div>
 
     <div class="columns">
       <div class="column">
-        <label class="label" for="source">Source</label>
+        <label class="label" for="source">{$i18n.t('glider.title--source')}</label>
         <div class="field">
           <div class="control has-icons-left">
             <input class="input" type="text" id="source" name="source" bind:value={source} />
             <div class="icon is-small is-left">
               <i class="fa-solid fa-shopping-cart"></i>
             </div>
-            <p class="formhint">Where did you get this glider from? (e.g. "Flybubble Shop")</p>
+            <p class="formhint">
+              {$i18n.t('glider.hint--source')}
+            </p>
           </div>
         </div>
         {#if fieldErrors.source !== undefined}
-          <div class="field-error in-column">Error: {fieldErrors.source}</div>
+          <div class="field-error in-column">
+            {$i18n.t('common.error', {message: fieldErrors.source})}
+          </div>
         {/if}
       </div>
 
       <div class="column">
-        <label class="label" for="cost">Cost</label>
+        <label class="label" for="cost">{$i18n.t('glider.title--cost')}</label>
         <div class="field">
           <div class="control has-icons-left">
             <input
@@ -295,30 +318,36 @@
             <div class="icon is-small is-left">
               <i class="fa-solid fa-euro-sign"></i>
             </div>
-            <p class="formhint">How much did you pay for this glider, in your own currency?</p>
+            <p class="formhint">
+              {$i18n.t('glider.hint--cost')}
+            </p>
           </div>
         </div>
         {#if fieldErrors.cost !== undefined}
-          <div class="field-error in-column">Error: {fieldErrors.cost}</div>
+          <div class="field-error in-column">
+            {$i18n.t('common.error', {message: fieldErrors.cost})}
+          </div>
         {/if}
       </div>
     </div>
 
-    <label class="label" for="comment">Comment</label>
+    <label class="label" for="comment">{$i18n.t('glider.title--comment')}</label>
     <div class="field">
       <div class="control">
         <textarea class="textarea" id="comment" name="comment" bind:value={comment} />
       </div>
     </div>
     {#if fieldErrors.comment !== undefined}
-      <div class="field-error">Error: {fieldErrors.comment}</div>
+      <div class="field-error">{$i18n.t('common.error', {message: fieldErrors.comment})}</div>
     {/if}
 
     <div class="content control submitcontrols">
-      <button class="button is-primary" disabled={!submitEnabled} type="submit">Submit</button>
+      <button class="button is-primary" disabled={!submitEnabled} type="submit">
+        {$i18n.t('common.action--submit')}
+      </button>
     </div>
 
-    <p class="content"><small><em>* Required fields</em></small></p>
+    <p class="content"><small><em>* {$i18n.t('common.hint--required-fields')}</em></small></p>
   </form>
 </div>
 

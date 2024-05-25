@@ -47,6 +47,28 @@ jobs:
         run: cd frontend && npm ci
       - run: cd frontend && npm run lint:prettier
 
+  i18n_translations_in_sync:
+    name: Check i18n translations
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install npm dependencies
+        run: cd frontend && npm ci
+      - run: cd frontend && npm run i18n:parse
+      - name: Ensure that there are no local changes
+        run: |
+          DIFF="$(git diff frontend/src/translations/)"
+          if [[ -n "$DIFF" ]]; then
+            echo -e "\e[31mFound local changes after running 'npm run i18n:parse'. Translations out of sync?\e[0m"
+            echo -e "\n$ git diff:\n$DIFF"
+            exit 1
+          else
+            echo -e "\e[32mNo changes detected after running 'npm run i18n:parse'\e[0m"
+          fi
+
   test_unit:
     name: Run unit tests
     runs-on: ubuntu-latest

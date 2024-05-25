@@ -6,6 +6,7 @@
   import Flashes from '$lib/components/Flashes.svelte';
   import MessageModal from '$lib/components/MessageModal.svelte';
   import {MIN_PASSWORD_LENGTH} from '$lib/constants';
+  import {i18n} from '$lib/i18n';
   import {addFlash, loginState} from '$lib/stores';
   import {reactive} from '$lib/svelte';
 
@@ -127,8 +128,8 @@
 
 <nav class="breadcrumb" aria-label="breadcrumbs">
   <ul>
-    <li><a href="/">Home</a></li>
-    <li><a href="/profile/">Profile</a></li>
+    <li><a href="/">{$i18n.t('navigation.home')}</a></li>
+    <li><a href="/profile/">{$i18n.t('navigation.profile')}</a></li>
     <li class="is-active"><a href="./" aria-current="page">Change Password</a></li>
   </ul>
 </nav>
@@ -136,7 +137,7 @@
 {#if submitError?.type === 'api-error'}
   <MessageModal
     type="error"
-    title="API Error"
+    title={$i18n.t('common.error--api-error')}
     message={submitError.message}
     showClose={true}
     on:closed={() => (submitError = undefined)}
@@ -163,7 +164,7 @@
     bind:value={current}
   />
   {#if fieldErrors.current !== undefined}
-    <div class="field-error">Error: {fieldErrors.current}</div>
+    <div class="field-error">{$i18n.t('common.error', {message: fieldErrors.current})}</div>
   {/if}
 
   <PasswordFormInputField
@@ -175,7 +176,7 @@
     bind:value={new1}
   />
   {#if fieldErrors.new1 !== undefined}
-    <div class="field-error">Error: {fieldErrors.new1}</div>
+    <div class="field-error">{$i18n.t('common.error', {message: fieldErrors.new1})}</div>
   {/if}
 
   <PasswordFormInputField
@@ -187,12 +188,14 @@
     bind:value={new2}
   />
   {#if fieldErrors.new2 !== undefined}
-    <div class="field-error">Error: {fieldErrors.new2}</div>
+    <div class="field-error">{$i18n.t('common.error', {message: fieldErrors.new2})}</div>
   {/if}
 
   <div class="field">
     <div class="control">
-      <button class="button is-primary" disabled={!submitEnabled} type="submit">Submit</button>
+      <button class="button is-primary" disabled={!submitEnabled} type="submit">
+        {$i18n.t('common.action--submit')}
+      </button>
     </div>
   </div>
 </form>

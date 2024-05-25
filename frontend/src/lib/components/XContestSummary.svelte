@@ -3,6 +3,7 @@ Render a XContest flight summary, with icon, distance and link.
 -->
 <script lang="ts">
   import {formatDistance} from '$lib/formatters';
+  import {i18n} from '$lib/i18n';
   import {tracktypeName, type XContestTracktype} from '$lib/xcontest';
 
   import XContestTracktypeIcon from './XContestTracktypeIcon.svelte';
@@ -40,7 +41,7 @@ Render a XContest flight summary, with icon, distance and link.
     {:else if tracktype}
       {tracktypeName(tracktype)}
     {:else}
-      Flight
+      {$i18n.t('common.flight')}
     {/if}
   </a>
 {:else}
@@ -52,6 +53,6 @@ Render a XContest flight summary, with icon, distance and link.
   {:else if tracktype}
     {tracktypeName(tracktype)}
   {:else}
-    Flight
+    {$i18n.t('common.flight')}
   {/if}
 {/if}

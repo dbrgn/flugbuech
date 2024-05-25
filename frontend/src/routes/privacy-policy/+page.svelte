@@ -1,4 +1,8 @@
-<h2 class="title is-size-2">Privacy Policy</h2>
+<script>
+  import {i18n} from '$lib/i18n';
+</script>
+
+<h2 class="title is-size-2">{$i18n.t('privacy-policy.title--privacy-policy', 'Privacy Policy')}</h2>
 
 <h3 class="title is-size-3">Who is responsible for this website?</h3>
 
