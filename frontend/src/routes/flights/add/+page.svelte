@@ -13,8 +13,8 @@
 
   export let data: Data;
 
-  onMount(() => {
-    requireLogin($loginState, '/flights/add/');
+  onMount(async () => {
+    await requireLogin($loginState, '/flights/add/');
   });
 </script>
 

@@ -109,7 +109,7 @@
       });
 
       // Redirect to home
-      goto('/');
+      await goto('/');
     } else {
       // Password change failed
       addFlash({
@@ -125,8 +125,8 @@
     submitEnabled = true;
   }
 
-  onMount(() => {
-    requireLogin($loginState, `/auth/password/change/`);
+  onMount(async () => {
+    await requireLogin($loginState, `/auth/password/change/`);
 
     // Reset field errors, so user is not greeted with errors on page load
     resetErrors();

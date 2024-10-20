@@ -222,7 +222,7 @@
         severity: 'success',
         icon: 'fa-circle-check',
       });
-      goto('/flights/');
+      await goto('/flights/');
     } catch (error) {
       if (error instanceof SubmitError) {
         submitError = error.data;

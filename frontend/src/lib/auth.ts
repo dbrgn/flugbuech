@@ -8,9 +8,12 @@ export function getLoginUrl(redirectUrl?: string): string {
         : `/auth/login`;
 }
 
-export function requireLogin(loginState: LoginState | undefined, redirectUrl: string): void {
+export async function requireLogin(
+    loginState: LoginState | undefined,
+    redirectUrl: string,
+): Promise<void> {
     if (loginState?.username === undefined) {
         // Not logged in
-        goto(getLoginUrl(redirectUrl));
+        await goto(getLoginUrl(redirectUrl));
     }
 }

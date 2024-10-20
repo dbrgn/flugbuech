@@ -37,7 +37,7 @@
             severity: 'success',
             icon: 'fa-trash-can',
           });
-          goto('/gliders/');
+          await goto('/gliders/');
           break;
         case 401:
           deleteError = {type: 'authentication'};
@@ -59,7 +59,7 @@
       deleting = false;
 
       // Reload data
-      invalidateAll();
+      await invalidateAll();
     }
   }
 </script>

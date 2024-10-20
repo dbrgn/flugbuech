@@ -8,8 +8,8 @@
 
   import GliderForm from '../GliderForm.svelte';
 
-  onMount(() => {
-    requireLogin($loginState, '/gliders/add/');
+  onMount(async () => {
+    await requireLogin($loginState, '/gliders/add/');
   });
 </script>
 

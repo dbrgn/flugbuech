@@ -38,8 +38,8 @@ export class ResolvablePromise<V, E extends Error = Error>
         // We have to do this little dance here since `this` cannot be used
         // prior to having called `super`.
         const inner: PromiseFn<V, E> = {
-            resolve: ResolvablePromise._fail,
-            reject: ResolvablePromise._fail,
+            resolve: () => ResolvablePromise._fail(),
+            reject: () => ResolvablePromise._fail(),
         };
         const outer: PromiseFn<V, E> = {
             resolve: (value) => this.resolve(value),
@@ -69,7 +69,6 @@ export class ResolvablePromise<V, E extends Error = Error>
      */
     public static override resolve<E extends Error = Error>(): ResolvablePromise<void, E>;
     public static override resolve<V, E extends Error = Error>(value: V): ResolvablePromise<V, E>;
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public static override resolve<V, E extends Error = Error>(value?: V): ResolvablePromise<V, E> {
         const promise = new ResolvablePromise<V, E>();
         promise.resolve(value as V);
@@ -79,7 +78,6 @@ export class ResolvablePromise<V, E extends Error = Error>
     /**
      * Wraps a normal promise with a resolvable promise.
      */
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public static wrap<V>(inner: Promise<V>): ResolvablePromise<V> {
         const promise = new ResolvablePromise<V>();
         inner

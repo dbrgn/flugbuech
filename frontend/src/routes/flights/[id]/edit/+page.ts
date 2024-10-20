@@ -3,6 +3,7 @@ import {z} from 'zod';
 import {loadApiGliders, type Glider} from '../../../gliders/api';
 import {loadApiLocations} from '../../../locations/api';
 import {loadApiFlights, type FlightLocation, loadApiFlight, type Flight} from '../../api';
+import {type PageLoadEvent} from './$types';
 
 // Dynamic URL, don't prerender
 export const prerender = false;
@@ -26,7 +27,7 @@ export interface Data {
     readonly locations: FlightLocation[];
 }
 
-export async function load({fetch, params}): Promise<Data> {
+export async function load({fetch, params}: PageLoadEvent): Promise<Data> {
     // Load flight to be edited
     const id = z.coerce.number().parse(params.id);
     const flight = await loadApiFlight(fetch, id);

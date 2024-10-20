@@ -2,6 +2,7 @@ import {error} from '@sveltejs/kit';
 import {z} from 'zod';
 
 import {loadApiGliders, type Glider} from '../../api';
+import {type PageLoadEvent} from './$types';
 
 // Dynamic URL, don't prerender
 export const prerender = false;
@@ -10,7 +11,7 @@ export interface Data {
     readonly glider: Glider;
 }
 
-export async function load({fetch, params}): Promise<Data> {
+export async function load({fetch, params}: PageLoadEvent): Promise<Data> {
     const id = z.coerce.number().parse(params.id);
     // TODO: Add endpoint to fetch glider by ID
     const info = await loadApiGliders(fetch);

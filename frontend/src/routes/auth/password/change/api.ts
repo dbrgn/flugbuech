@@ -25,7 +25,7 @@ export async function apiChangePassword(
                     errorReason: apiError.error.reason,
                     errorDescription: apiError.error.description,
                 };
-            } catch (e) {
+            } catch {
                 throw error(
                     ensureClientOrServerErrorCode(res.status),
                     `Could not change password: Unknown error response`,

@@ -57,7 +57,7 @@ export async function apiUpdateProfile(changes: ProfileUpdate): Promise<ApiSucce
                     errorReason: apiError.error.reason,
                     errorDescription: apiError.error.description,
                 };
-            } catch (e) {
+            } catch {
                 throw error(
                     ensureClientOrServerErrorCode(res.status),
                     `Could not update profile: Unknown error response`,

@@ -50,7 +50,7 @@
             severity: 'success',
             icon: 'fa-trash-can',
           });
-          goto('/flights/');
+          await goto('/flights/');
           break;
         case 401:
           deleteError = {type: 'authentication'};
@@ -72,7 +72,7 @@
       deleting = false;
 
       // Reload data
-      invalidateAll();
+      await invalidateAll();
     }
   }
 </script>

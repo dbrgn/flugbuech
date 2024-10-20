@@ -8,8 +8,8 @@
 
   import LocationForm from '../LocationForm.svelte';
 
-  onMount(() => {
-    requireLogin($loginState, '/locations/add/');
+  onMount(async () => {
+    await requireLogin($loginState, '/locations/add/');
   });
 </script>
 
