@@ -39,7 +39,7 @@ export async function apiRegister(
                     errorReason: apiError.error.reason,
                     errorDescription: apiError.error.description,
                 };
-            } catch (e) {
+            } catch {
                 throw error(
                     ensureClientOrServerErrorCode(res.status),
                     `Could not register: Unknown error response`,

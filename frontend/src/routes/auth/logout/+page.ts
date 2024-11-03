@@ -4,8 +4,9 @@ import {addFlash, refreshLoginState} from '$lib/stores';
 import {goto} from '$app/navigation';
 
 import {apiLogout} from './api';
+import {type PageLoadEvent} from './$types';
 
-export async function load({fetch}): Promise<void> {
+export async function load({fetch}: PageLoadEvent): Promise<void> {
     await apiLogout(fetch);
 
     const {i18n} = initializeI18n();

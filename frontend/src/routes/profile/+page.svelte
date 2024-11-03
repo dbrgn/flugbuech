@@ -18,9 +18,9 @@
 
   function updateNewsOptIn(optIn: boolean): void {
     apiUpdateProfile({newsOptIn: optIn})
-      .then((result) => {
+      .then(async (result) => {
         if (result.success) {
-          invalidateAll();
+          await invalidateAll();
         } else {
           errorModal = {
             type: 'api-error',

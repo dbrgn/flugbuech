@@ -88,8 +88,8 @@
   $: hasFile = (files?.length ?? 0) > 0;
   $: fileName = files?.[0].name ?? 'No file selected…';
 
-  onMount(() => {
-    requireLogin($loginState, '/flights/import/csv/');
+  onMount(async () => {
+    await requireLogin($loginState, '/flights/import/csv/');
   });
 </script>
 

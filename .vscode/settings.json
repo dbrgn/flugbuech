@@ -15,5 +15,18 @@
   },
   "rewrap.wrappingColumn": 100,
   "rust-analyzer.cargo.features": "all",
-  "typescript.tsdk": "frontend/node_modules/typescript/lib"
+  "typescript.tsdk": "frontend/node_modules/typescript/lib",
+  "eslint.options": {
+    "flags": ["unstable_ts_config"]
+  },
+  "eslint.workingDirectories": [
+    "frontend"
+  ],
+  "eslint.useFlatConfig": true,
+  "eslint.validate": [
+    "javascript",
+    "typescript",
+    "svelte"
+  ],
+  "svelte.enable-ts-plugin": true
 }

@@ -123,7 +123,7 @@
       refreshLoginState();
 
       // Redirect to home
-      goto('/');
+      await goto('/');
     } else {
       // Registration failed
       addFlash({

@@ -131,7 +131,7 @@
             severity: 'success',
             icon: 'fa-circle-check',
           });
-          goto('/locations/');
+          await goto('/locations/');
           break;
         case 401:
           submitError = {type: 'authentication'};

@@ -63,7 +63,9 @@
    */
   function toggleMapSize() {
     mapMode = mapMode === 'small' ? 'large' : 'small';
-    tick().then(() => map?.resize());
+    tick()
+      .then(() => map?.resize())
+      .catch((error) => console.error(`Toggling map size failed: ${error}`));
   }
 
   /**

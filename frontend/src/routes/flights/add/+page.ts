@@ -1,6 +1,7 @@
 import {loadApiGliders, type Glider} from '../../gliders/api';
 import {loadApiLocations} from '../../locations/api';
 import {loadApiFlights, type FlightLocation} from '../api';
+import {type PageLoadEvent} from './$types';
 
 export interface Data {
     /**
@@ -21,7 +22,7 @@ export interface Data {
     readonly locations: FlightLocation[];
 }
 
-export async function load({fetch}): Promise<Data> {
+export async function load({fetch}: PageLoadEvent): Promise<Data> {
     // TODO: Dedicated endpoint for the values we need
     const flights = await loadApiFlights(fetch);
     const gliders = await loadApiGliders(fetch);

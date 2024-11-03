@@ -51,7 +51,7 @@
       refreshLoginState();
 
       // Redirect to home or to requested page
-      goto(sanitizeRedirectPath($page.url.searchParams.get('redirect'), '/'));
+      await goto(sanitizeRedirectPath($page.url.searchParams.get('redirect'), '/'));
     } else {
       // Login failed
       addFlash({

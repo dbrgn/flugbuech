@@ -94,7 +94,7 @@
             warnMissingSlot(groups.tag);
             return {
               type: 'plain',
-              text: import.meta.env.DEBUG ? matchedText : tagText,
+              text: import.meta.env.DEV ? matchedText : tagText,
             };
           }
 
@@ -108,7 +108,7 @@
             warnMissingSlot(groups.selfClosingTag);
             return {
               type: 'plain',
-              text: import.meta.env.DEBUG ? matchedText : '',
+              text: import.meta.env.DEV ? matchedText : '',
             };
           }
 

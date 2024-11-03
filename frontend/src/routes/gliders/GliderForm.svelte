@@ -109,7 +109,7 @@
             severity: 'success',
             icon: 'fa-circle-check',
           });
-          goto('/gliders/');
+          await goto('/gliders/');
           break;
         case 401:
           submitError = {type: 'authentication'};

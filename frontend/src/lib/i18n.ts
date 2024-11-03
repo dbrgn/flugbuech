@@ -47,7 +47,7 @@ export const LOCALE_NAMES: {[Locale in keyof typeof resources]: string} = {
 
 export type Locale = (typeof LOCALES)[number];
 
-const FALLBACK_LOCALE: Locale = 'en' as const;
+const FALLBACK_LOCALE: Locale = 'en';
 
 /**
  * Determine the browser's most preferred locale that we support, or fall back to the default locale
@@ -90,7 +90,7 @@ function getClosestAvailableLocale(locale: string): Locale | undefined {
         if (isLocale(minimizedLocale)) {
             return minimizedLocale;
         }
-    } catch (error) {
+    } catch {
         // Unable to create an Intl.Locale object from locale.
         // Ignoring error.
     }
@@ -133,7 +133,7 @@ async function initialize(localeStore: Readable<Locale>): Promise<void> {
             lng: get(localeStore),
             resources,
             fallbackLng: FALLBACK_LOCALE,
-            debug: import.meta.env.DEBUG,
+            debug: import.meta.env.DEV,
             returnNull: false,
         });
 
@@ -182,7 +182,7 @@ export function initializeI18n(): {locale: Readable<Locale>; i18n: I18nextType} 
 
     // Instantiate i18n and return store
     localeStore = writable<Locale>(initialLanguage);
-    initialize(localeStore);
+    initialize(localeStore).catch((error) => console.error(`i18n initialization failed: ${error}`));
     return {locale: localeStore, i18n: get(i18n)};
 }
 
