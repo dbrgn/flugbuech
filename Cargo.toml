@@ -14,7 +14,7 @@ csv = "1.3.0"
 diesel = { version = "2.1.4", features = ["postgres", "chrono"] }
 diesel-geography = { version = "0.2", features = ["serde"], git = "https://github.com/66np/diesel-geography", rev = "059c553" }
 diesel_migrations = { version = "2", features = ["postgres"] }
-dotenv = "0.15"
+dotenvy = "0.15.7"
 flat_projection = "0.4"
 igc = "0.2"
 log = "0.4"
