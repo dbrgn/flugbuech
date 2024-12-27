@@ -71,7 +71,7 @@ fn service_not_available(_req: &Request) -> &'static str {
 #[rocket::main]
 async fn main() -> Result<()> {
     // Load env
-    let _ = dotenv::dotenv();
+    let _ = dotenvy::dotenv();
 
     // Parse args
     let args = Command::new(NAME)

@@ -7,7 +7,6 @@ use std::{
 use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use diesel::{connection::SimpleConnection, pg::PgConnection, prelude::*};
 use diesel_migrations::MigrationHarness;
-use dotenv;
 use lazy_static::lazy_static;
 use log::debug;
 use rocket::{config::Config, figment::Figment, http::Cookie};
@@ -43,7 +42,7 @@ pub struct DbTestContext<'a> {
 impl<'a> DbTestContext<'a> {
     pub fn new() -> Self {
         // Load env
-        let _ = dotenv::dotenv();
+        let _ = dotenvy::dotenv();
 
         // Lock mutex
         //
@@ -120,7 +119,7 @@ impl<'a> DbTestContext<'a> {
 
 pub fn make_test_config() -> rocket::figment::Figment {
     // Load env
-    let _ = dotenv::dotenv();
+    let _ = dotenvy::dotenv();
 
     // Database config
     let database_url = env::var("TEST_DATABASE_URL").expect("TEST_DATABASE_URL must be set");
