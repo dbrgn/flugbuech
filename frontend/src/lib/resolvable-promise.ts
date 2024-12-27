@@ -1,3 +1,7 @@
+// Licensing: This file is originally based on `src/common/utils/resolvable-promise.ts` as part of
+// Threema Desktop (https://github.com/threema-ch/threema-desktop/), which is released under the
+// AGPLv3 license.
+
 import {ensureError} from './assert';
 
 export interface PromiseFn<V, E extends Error = Error> {

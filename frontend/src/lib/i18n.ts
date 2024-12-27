@@ -1,3 +1,6 @@
+// Licensing: This file is originally based on `src/app/ui/i18n.ts` as part of Threema Desktop
+// (https://github.com/threema-ch/threema-desktop/), which is released under the AGPLv3 license.
+
 import i18next, {type i18n as I18nextType} from 'i18next';
 import ICU from 'i18next-icu';
 import {derived, get, writable, type Readable, type Writable} from 'svelte/store';
