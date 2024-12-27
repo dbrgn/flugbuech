@@ -53,7 +53,7 @@ pub struct PasswordChange {
 #[derive(Debug)]
 pub struct AuthUser(User);
 
-fn make_cookie(name: &'static str, value: String) -> Cookie {
+fn make_cookie(name: &'static str, value: String) -> Cookie<'static> {
     // Cookie expiration: 1 year
     let mut expiration = OffsetDateTime::now_utc();
     expiration += Duration::weeks(52);
