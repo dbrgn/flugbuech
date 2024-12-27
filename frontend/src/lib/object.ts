@@ -1,3 +1,7 @@
+// Licensing: This file is originally based on `src/common/utils/object.ts` as part of Threema
+// Desktop (https://github.com/threema-ch/threema-desktop/), which is released under the AGPLv3
+// license.
+
 /**
  * Returns all keys in the provided object.
  *

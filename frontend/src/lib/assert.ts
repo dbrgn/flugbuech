@@ -1,3 +1,7 @@
+// Licensing: This file is originally based on `src/common/utils/assert.ts` as part of Threema
+// Desktop (https://github.com/threema-ch/threema-desktop/), which is released under the AGPLv3
+// license.
+
 /**
  * Assert a condition.
  *

@@ -12,6 +12,10 @@
         <SubstitutableText text="Hello <1>World</1>">
             <a slot="1" href="https://example.com/" target="_blank" let:text>{text}</a>
         </SubstitutableText>
+
+    Licensing: This component is originally based on `src/app/ui/SubstitutableText.svelte` as part
+    of Threema Desktop (https://github.com/threema-ch/threema-desktop/), which is released under the
+    AGPLv3 license.
 -->
 <script lang="ts">
   import {assertUnreachable, unreachable, unwrap} from '$lib/assert';
