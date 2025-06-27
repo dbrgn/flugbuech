@@ -333,6 +333,7 @@
       <SingleMap
         bind:latitude
         bind:longitude
+        bind:elevation
         editable={true}
         center={location?.coordinates}
         zoom={location?.coordinates !== undefined ? 13 : undefined}

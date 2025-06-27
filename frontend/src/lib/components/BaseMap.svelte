@@ -31,6 +31,7 @@
   export let zoom: number = 6;
   export let latitude: number | null = null;
   export let longitude: number | null = null;
+  export let elevation: number | null = null;
   export let editable: boolean = false;
 
   // Props only used for mode 'multi'
@@ -93,13 +94,22 @@
           };
 
           // Update coordinates on marker drag
-          marker.on('dragend', updateCoordinatesFromMarker);
+          marker.on('dragend', () => {
+            updateCoordinatesFromMarker();
+
+            // Query elevation for the new position
+            const lngLat = marker.getLngLat();
+            queryElevation(lngLat.lng, lngLat.lat);
+          });
 
           // Update marker and coordinates on double click
           initializedMap.on('dblclick', (e) => {
             marker.setLngLat(e.lngLat);
             ensureSingleMarkerVisible();
             updateCoordinatesFromMarker();
+
+            // Query elevation for the new position
+            queryElevation(e.lngLat.lng, e.lngLat.lat);
           });
         }
 
@@ -259,8 +269,49 @@
       mapMarker.setLngLat(pos);
       ensureSingleMarkerVisible();
       map?.flyTo({center: pos});
+
+      // Query elevation when coordinates are updated programmatically
+      if (longitude !== null && latitude !== null) {
+        queryElevation(longitude, latitude);
+      }
     }
   }, [latitude, longitude]);
+
+  /**
+   * Query Mapbox API for elevation data at given coordinates
+   */
+  async function queryElevation(lon: number, lat: number) {
+    if (!MAPBOX_ACCESS_TOKEN) {
+      console.warn('No Mapbox access token available for elevation query');
+      return;
+    }
+
+    elevation = null;
+
+    try {
+      const response = await fetch(
+        `https://api.mapbox.com/v4/mapbox.mapbox-terrain-v2/tilequery/${lon},${lat}.json?access_token=${MAPBOX_ACCESS_TOKEN}`,
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.features && data.features.length > 0) {
+        // Look through all features to find the one with elevation data
+        for (const feature of data.features) {
+          if (feature.properties && typeof feature.properties.ele === 'number') {
+            elevation = Math.round(feature.properties.ele);
+            return;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching elevation data:', error);
+    }
+  }
 
   onMount(() => {
     // Create map
