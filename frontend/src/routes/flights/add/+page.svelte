@@ -53,7 +53,7 @@
     {#if data.locations.length === 0}
       <article class="message is-warning">
         <div class="message-body">
-          <i class="fa-solid fa-warning" />&ensp;<SubstitutableText
+          <i class="fa-solid fa-warning"></i>&ensp;<SubstitutableText
             text={$i18n.t('flight.prose--note-missing-location')}
           >
             <strong slot="1" let:text>{text}</strong>
@@ -66,7 +66,7 @@
     {#if data.gliders.length === 0}
       <article class="message is-warning">
         <div class="message-body">
-          <i class="fa-solid fa-warning" />&ensp;<SubstitutableText
+          <i class="fa-solid fa-warning"></i>&ensp;<SubstitutableText
             text={$i18n.t('flight.prose--note-missing-gliders')}
           >
             <strong slot="1" let:text>{text}</strong>

@@ -28,7 +28,7 @@
         class:is-danger={flash.severity === 'error'}
       >
         <div class="message-body">
-          {#if flash.icon}<i class="fa-solid {flash.icon}" />&nbsp;{/if}
+          {#if flash.icon}<i class="fa-solid {flash.icon}"></i>&nbsp;{/if}
           {flash.message}
         </div>
       </article>

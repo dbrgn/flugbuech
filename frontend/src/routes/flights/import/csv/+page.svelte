@@ -132,7 +132,7 @@
 
 <article class="message is-warning">
   <div class="message-body">
-    <i class="fa-solid fa-warning" />&ensp;<strong>Warning:</strong> This import is still
+    <i class="fa-solid fa-warning"></i>&ensp;<strong>Warning:</strong> This import is still
     experimental. If you experience any problems, please contact me at
     <a href="mailto:flugbuech@bargen.dev">flugbuech@bargen.dev</a>!
   </div>
@@ -317,7 +317,7 @@
   {#if state.result.errors.length > 0}
     <article class="message is-danger">
       <div class="message-body">
-        <i class="fa-solid fa-danger" />&ensp;<strong>Errors:</strong>
+        <i class="fa-solid fa-danger"></i>&ensp;<strong>Errors:</strong>
         <ul>
           {#each state.result.errors as error}<li>
               {#if error.csvRow !== undefined}Row {error.csvRow}:
@@ -330,7 +330,7 @@
   {#if state.result.warnings.length > 0}
     <article class="message is-warning">
       <div class="message-body content">
-        <i class="fa-solid fa-warning" />&ensp;<strong>Warnings:</strong>
+        <i class="fa-solid fa-warning"></i>&ensp;<strong>Warnings:</strong>
         <ul>
           {#each state.result.warnings as warning}<li>
               {#if warning.csvRow !== undefined}Row {warning.csvRow}:
@@ -409,9 +409,9 @@
             >
               {#if flight.number === undefined}
                 {#if numberMessages.errors.length > 0}
-                  <i class="fa-solid fa-danger" />
+                  <i class="fa-solid fa-danger"></i>
                 {:else if numberMessages.warnings.length > 0}
-                  <i class="fa-solid fa-warning" />
+                  <i class="fa-solid fa-warning"></i>
                 {:else}
                   -
                 {/if}
@@ -428,9 +428,9 @@
             >
               {#if flight.gliderId === undefined}
                 {#if gliderIdMessages.errors.length > 0}
-                  <i class="fa-solid fa-danger" />
+                  <i class="fa-solid fa-danger"></i>
                 {:else if gliderIdMessages.warnings.length > 0}
-                  <i class="fa-solid fa-warning" />
+                  <i class="fa-solid fa-warning"></i>
                 {:else}
                   -
                 {/if}
@@ -449,9 +449,9 @@
             >
               {#if flight.launchTime === undefined}
                 {#if launchTimeMessages.errors.length > 0}
-                  <i class="fa-solid fa-danger" />
+                  <i class="fa-solid fa-danger"></i>
                 {:else if launchTimeMessages.warnings.length > 0}
-                  <i class="fa-solid fa-warning" />
+                  <i class="fa-solid fa-warning"></i>
                 {:else}
                   -
                 {/if}
@@ -468,9 +468,9 @@
             >
               {#if flight.launchAt === undefined}
                 {#if launchAtMessages.errors.length > 0}
-                  <i class="fa-solid fa-danger" />
+                  <i class="fa-solid fa-danger"></i>
                 {:else if launchAtMessages.warnings.length > 0}
-                  <i class="fa-solid fa-warning" />
+                  <i class="fa-solid fa-warning"></i>
                 {:else}
                   -
                 {/if}
@@ -489,9 +489,9 @@
             >
               {#if flight.landingTime === undefined}
                 {#if landingTimeMessages.errors.length > 0}
-                  <i class="fa-solid fa-danger" />
+                  <i class="fa-solid fa-danger"></i>
                 {:else if landingTimeMessages.warnings.length > 0}
-                  <i class="fa-solid fa-warning" />
+                  <i class="fa-solid fa-warning"></i>
                 {:else}
                   -
                 {/if}
@@ -508,9 +508,9 @@
             >
               {#if flight.landingAt === undefined}
                 {#if landingAtMessages.errors.length > 0}
-                  <i class="fa-solid fa-danger" />
+                  <i class="fa-solid fa-danger"></i>
                 {:else if landingAtMessages.warnings.length > 0}
-                  <i class="fa-solid fa-warning" />
+                  <i class="fa-solid fa-warning"></i>
                 {:else}
                   -
                 {/if}
@@ -538,9 +538,9 @@
               <em>Tracktype:</em>
               {#if flight.xcontestTracktype === undefined}
                 {#if xcontestTracktypeMessages.errors.length > 0}
-                  <i class="fa-solid fa-danger" />
+                  <i class="fa-solid fa-danger"></i>
                 {:else if xcontestTracktypeMessages.warnings.length > 0}
-                  <i class="fa-solid fa-warning" />
+                  <i class="fa-solid fa-warning"></i>
                 {:else}
                   -
                 {/if}
@@ -553,9 +553,9 @@
               <em>URL:</em>
               {#if flight.xcontestUrl === undefined}
                 {#if xcontestUrlMessages.errors.length > 0}
-                  <i class="fa-solid fa-danger" />
+                  <i class="fa-solid fa-danger"></i>
                 {:else if xcontestUrlMessages.warnings.length > 0}
-                  <i class="fa-solid fa-warning" />
+                  <i class="fa-solid fa-warning"></i>
                 {:else}
                   -
                 {/if}
@@ -593,7 +593,7 @@
   >
     <div class="message-body">
       {#if state.result.success}
-        <i class="fa-solid fa-circle-check" />&nbsp;Successfully imported flights from CSV! Go to
+        <i class="fa-solid fa-circle-check"></i>&nbsp;Successfully imported flights from CSV! Go to
         your <a href="/flights/">flight list</a> to see them.
       {:else}
         <strong>Error: </strong>Failed to import flights from CSV.
