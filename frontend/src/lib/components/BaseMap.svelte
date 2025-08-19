@@ -3,6 +3,7 @@
   import {onMount, tick} from 'svelte';
 
   import {unreachable} from '$lib/assert';
+  import {MapDoubleClickDetector} from '$lib/map-helpers';
   import {reactive} from '$lib/svelte';
 
   import {
@@ -102,44 +103,12 @@
           // Update coordinates on marker drag
           marker.on('dragend', updateCoordinatesFromMarker);
 
-          // Update marker and coordinates on double click (desktop)
-          initializedMap.on('dblclick', (e) => {
-            updateMarkerPosition(e.lngLat);
-          });
-
-          // Mobile-friendly double-tap detection
-          let lastClickTime = 0;
-          let lastClickCoords: {lng: number; lat: number} | null = null;
-          const DOUBLE_TAP_DELAY = 400; // milliseconds
-          const DOUBLE_TAP_DISTANCE = 20; // pixels
-
-          initializedMap.on('click', (e) => {
-            const currentTime = Date.now();
-            const timeDiff = currentTime - lastClickTime;
-
-            // Check if this could be a double-tap
-            if (timeDiff < DOUBLE_TAP_DELAY && lastClickCoords) {
-              const currentPixel = initializedMap.project(e.lngLat);
-              const lastPixel = initializedMap.project(lastClickCoords);
-
-              const distance = Math.sqrt(
-                Math.pow(currentPixel.x - lastPixel.x, 2) +
-                  Math.pow(currentPixel.y - lastPixel.y, 2),
-              );
-
-              if (distance < DOUBLE_TAP_DISTANCE) {
-                updateMarkerPosition(e.lngLat);
-                // Reset to prevent triple-tap from triggering
-                lastClickTime = 0;
-                lastClickCoords = null;
-                return;
-              }
-            }
-
-            // Store this click for potential double-tap detection
-            lastClickTime = currentTime;
-            lastClickCoords = {lng: e.lngLat.lng, lat: e.lngLat.lat};
-          });
+          // Set up double click detection, update marker and coordinates on double click (desktop)
+          // or double tap (mobile)
+          const doubleClickDetector = new MapDoubleClickDetector(initializedMap, (lngLat) =>
+            updateMarkerPosition(lngLat),
+          );
+          doubleClickDetector.registerEvents();
         }
 
         // Update reference
