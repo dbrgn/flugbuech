@@ -174,34 +174,36 @@
 
 <h3 class="title is-size-3">Stats</h3>
 <table class="table is-bordered is-hoverable">
-  <tr>
-    <th>Registered Users</th>
-    <td>
-      {#await stats}
-        Loading...
-      {:then result}
-        {result.userCount}
-      {/await}
-    </td>
-  </tr>
-  <tr>
-    <th>Registered Gliders</th>
-    <td>
-      {#await stats}
-        Loading...
-      {:then result}
-        {result.gliderCount}
-      {/await}
-    </td>
-  </tr>
-  <tr>
-    <th>Total Flights</th>
-    <td>
-      {#await stats}
-        Loading...
-      {:then result}
-        {result.flightCount}
-      {/await}
-    </td>
-  </tr>
+  <tbody>
+    <tr>
+      <th>Registered Users</th>
+      <td>
+        {#await stats}
+          Loading...
+        {:then result}
+          {result.userCount}
+        {/await}
+      </td>
+    </tr>
+    <tr>
+      <th>Registered Gliders</th>
+      <td>
+        {#await stats}
+          Loading...
+        {:then result}
+          {result.gliderCount}
+        {/await}
+      </td>
+    </tr>
+    <tr>
+      <th>Total Flights</th>
+      <td>
+        {#await stats}
+          Loading...
+        {:then result}
+          {result.flightCount}
+        {/await}
+      </td>
+    </tr>
+  </tbody>
 </table>

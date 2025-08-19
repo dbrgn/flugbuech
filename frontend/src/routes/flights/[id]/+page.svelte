@@ -53,108 +53,108 @@
 
 <section>
   <table class="table is-fullwidth is-striped is-hoverable">
-    <tr>
-      <th>
-        <span class="icon is-small"><i class="fa-solid fa-list-ol"></i></span>&nbsp;&nbsp;{$i18n.t(
-          'flight.title--flight-number',
-        )}
-      </th>
-      <td>{flight.number || '-'}</td>
-    </tr>
-    <tr>
-      <th>
-        <span class="icon is-small"><i class="fa-solid fa-parachute-box"></i></span>
-        &nbsp;{$i18n.t('flight.title--glider')}
-      </th>
-      <td>{flight.gliderName || '-'}</td>
-    </tr>
-    <tr>
-      <th>
-        <span class="icon is-small"><i class="fa-solid fa-calendar-alt"></i></span
-        >&nbsp;&nbsp;{$i18n.t('flight.title--date')}
-      </th>
-      <td>{flight.launchTime ? formatDate(flight.launchTime) : '-'}</td>
-    </tr>
-    <tr>
-      <th>
-        <span class="icon is-small"><i class="fa-solid fa-plane-departure"></i></span>
-        &nbsp;{$i18n.t('flight.title--launch-site')}
-      </th>
-      <td>
-        {#if launchAt}
-          <CountryFlag countryCode={launchAt.countryCode} />
-          <a href="/locations/{launchAt.id}/">{launchAt.name}</a>,
-          {launchAt.elevation} mASL{:else}{$i18n.t(
-            'flight.prose--unknown-site',
-          )}{/if}{#if flight.launchTime}, {formatTime(flight.launchTime)} UTC{/if}
-        {#if flight.hikeandfly}
-          <i class="fa-solid fa-hiking" title="Hike &amp; Fly"></i>{/if}
-      </td>
-    </tr>
-    <tr>
-      <th
-        ><span class="icon is-small"><i class="fa-solid fa-plane-arrival"></i></span
-        >&nbsp;&nbsp;{$i18n.t('flight.title--landing-site')}</th
-      >
-      <td>
-        {#if landingAt}
-          <CountryFlag countryCode={landingAt.countryCode} />
-          <a href="/locations/{landingAt.id}/">{landingAt.name}</a>,
-          {landingAt.elevation} mASL{:else}{$i18n.t(
-            'flight.prose--unknown-site',
-          )}{/if}{#if flight.landingTime}, {formatTime(flight.landingTime)} UTC{/if}
-      </td>
-    </tr>
-    <tr>
-      <th>
-        <span class="icon is-small"><i class="fa-solid fa-clock"></i></span>
-        &nbsp;{$i18n.t('flight.title--duration')}
-      </th>
-      <td>
-        {flight.durationSeconds ? formatDuration(flight.durationSeconds) : '-'}
-      </td>
-    </tr>
-    <tr>
-      <th>
-        <span class="icon is-small"><i class="fa-solid fa-ruler"></i></span>&nbsp;&nbsp;{$i18n.t(
-          'flight.title--gps-track-distance',
-        )}
-      </th>
-      <td> {flight.trackDistance ? formatDistance(flight.trackDistance) : '-'}</td>
-    </tr>
-    <tr>
-      <th>
-        <span class="icon is-small"><i class="fa-solid fa-globe-americas"></i></span
-        >&nbsp;&nbsp;{$i18n.t('flight.title--xcontest')}
-      </th>
-      <td>
-        <XContestSummary
-          tracktype={flight.xcontestTracktype}
-          distance={flight.xcontestDistance}
-          url={flight.xcontestUrl}
-        />
-      </td>
-    </tr>
-    <tr>
-      <th>
-        <span class="icon is-small"><i class="fa-solid fa-comment"></i></span>&nbsp;&nbsp;{$i18n.t(
-          'flight.title--comment',
-        )}
-      </th>
-      <td class="preserve-newlines">
-        {flight.comment || '-'}
-      </td>
-    </tr>
-    <tr>
-      <th>
-        <span class="icon is-small"><i class="fa-solid fa-film"></i></span>&nbsp;&nbsp;{$i18n.t(
-          'flight.title--video-url',
-        )}
-      </th>
-      <td>
-        {#if flight.videoUrl}<a href={flight.videoUrl}>{flight.videoUrl}</a>{:else}-{/if}
-      </td>
-    </tr>
+    <tbody>
+      <tr>
+        <th>
+          <span class="icon is-small"><i class="fa-solid fa-list-ol"></i></span
+          >&nbsp;&nbsp;{$i18n.t('flight.title--flight-number')}
+        </th>
+        <td>{flight.number || '-'}</td>
+      </tr>
+      <tr>
+        <th>
+          <span class="icon is-small"><i class="fa-solid fa-parachute-box"></i></span>
+          &nbsp;{$i18n.t('flight.title--glider')}
+        </th>
+        <td>{flight.gliderName || '-'}</td>
+      </tr>
+      <tr>
+        <th>
+          <span class="icon is-small"><i class="fa-solid fa-calendar-alt"></i></span
+          >&nbsp;&nbsp;{$i18n.t('flight.title--date')}
+        </th>
+        <td>{flight.launchTime ? formatDate(flight.launchTime) : '-'}</td>
+      </tr>
+      <tr>
+        <th>
+          <span class="icon is-small"><i class="fa-solid fa-plane-departure"></i></span>
+          &nbsp;{$i18n.t('flight.title--launch-site')}
+        </th>
+        <td>
+          {#if launchAt}
+            <CountryFlag countryCode={launchAt.countryCode} />
+            <a href="/locations/{launchAt.id}/">{launchAt.name}</a>,
+            {launchAt.elevation} mASL{:else}{$i18n.t(
+              'flight.prose--unknown-site',
+            )}{/if}{#if flight.launchTime}, {formatTime(flight.launchTime)} UTC{/if}
+          {#if flight.hikeandfly}
+            <i class="fa-solid fa-hiking" title="Hike &amp; Fly"></i>{/if}
+        </td>
+      </tr>
+      <tr>
+        <th
+          ><span class="icon is-small"><i class="fa-solid fa-plane-arrival"></i></span
+          >&nbsp;&nbsp;{$i18n.t('flight.title--landing-site')}</th
+        >
+        <td>
+          {#if landingAt}
+            <CountryFlag countryCode={landingAt.countryCode} />
+            <a href="/locations/{landingAt.id}/">{landingAt.name}</a>,
+            {landingAt.elevation} mASL{:else}{$i18n.t(
+              'flight.prose--unknown-site',
+            )}{/if}{#if flight.landingTime}, {formatTime(flight.landingTime)} UTC{/if}
+        </td>
+      </tr>
+      <tr>
+        <th>
+          <span class="icon is-small"><i class="fa-solid fa-clock"></i></span>
+          &nbsp;{$i18n.t('flight.title--duration')}
+        </th>
+        <td>
+          {flight.durationSeconds ? formatDuration(flight.durationSeconds) : '-'}
+        </td>
+      </tr>
+      <tr>
+        <th>
+          <span class="icon is-small"><i class="fa-solid fa-ruler"></i></span>&nbsp;&nbsp;{$i18n.t(
+            'flight.title--gps-track-distance',
+          )}
+        </th>
+        <td> {flight.trackDistance ? formatDistance(flight.trackDistance) : '-'}</td>
+      </tr>
+      <tr>
+        <th>
+          <span class="icon is-small"><i class="fa-solid fa-globe-americas"></i></span
+          >&nbsp;&nbsp;{$i18n.t('flight.title--xcontest')}
+        </th>
+        <td>
+          <XContestSummary
+            tracktype={flight.xcontestTracktype}
+            distance={flight.xcontestDistance}
+            url={flight.xcontestUrl}
+          />
+        </td>
+      </tr>
+      <tr>
+        <th>
+          <span class="icon is-small"><i class="fa-solid fa-comment"></i></span
+          >&nbsp;&nbsp;{$i18n.t('flight.title--comment')}
+        </th>
+        <td class="preserve-newlines">
+          {flight.comment || '-'}
+        </td>
+      </tr>
+      <tr>
+        <th>
+          <span class="icon is-small"><i class="fa-solid fa-film"></i></span>&nbsp;&nbsp;{$i18n.t(
+            'flight.title--video-url',
+          )}
+        </th>
+        <td>
+          {#if flight.videoUrl}<a href={flight.videoUrl}>{flight.videoUrl}</a>{:else}-{/if}
+        </td>
+      </tr>
+    </tbody>
   </table>
 </section>
 
