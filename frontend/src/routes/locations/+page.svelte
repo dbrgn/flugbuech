@@ -163,6 +163,7 @@
             <a
               class="icon"
               title={$i18n.t('locations.action--view-location')}
+              aria-label={$i18n.t('locations.action--view-location')}
               href="/locations/{location.id}/"
             >
               <i class="fa-solid fa-eye"></i>
@@ -170,6 +171,7 @@
             <a
               class="icon"
               title={$i18n.t('locations.action--edit-location')}
+              aria-label={$i18n.t('locations.action--edit-location')}
               href="/locations/{location.id}/edit/"
               data-sveltekit-preload-data="tap"
             >
@@ -179,6 +181,7 @@
               <button
                 class="icon has-text-danger"
                 title={$i18n.t('locations.action--delete-location')}
+                aria-label={$i18n.t('locations.action--delete-location')}
                 on:click={() => (locationToDelete = location)}
               >
                 <i class="fa-solid fa-trash-alt"></i>
@@ -191,6 +194,7 @@
                 class="icon"
                 href="https://www.google.com/maps/place/{lat},{lon}/"
                 title={$i18n.t('locations.action--view-google-maps')}
+                aria-label={$i18n.t('locations.action--view-google-maps')}
                 target="_blank"
               >
                 <i class="fa-solid fa-map-marker-alt"></i>
@@ -199,6 +203,7 @@
                 class="icon"
                 href="https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=16/{lat}/{lon}"
                 title={$i18n.t('locations.action--view-osm')}
+                aria-label={$i18n.t('locations.action--view-osm')}
                 target="_blank"
               >
                 <i class="fa-solid fa-map-pin"></i>

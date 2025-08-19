@@ -162,6 +162,7 @@
             <a
               class="icon"
               title={$i18n.t('gliders.action--edit-glider')}
+              aria-label={$i18n.t('gliders.action--edit-glider')}
               href="/gliders/{glider.id}/edit/"
               data-sveltekit-preload-data="tap"
             >
@@ -171,6 +172,7 @@
               <button
                 class="icon has-text-danger"
                 title={$i18n.t('gliders.action--delete-glider')}
+                aria-label={$i18n.t('gliders.action--delete-glider')}
                 on:click={() => (gliderToDelete = glider)}
               >
                 <i class="fa-solid fa-trash-alt"></i>
