@@ -3,6 +3,7 @@
   import {onMount, tick} from 'svelte';
 
   import {unreachable} from '$lib/assert';
+  import {MapDoubleClickDetector} from '$lib/map-helpers';
   import {reactive} from '$lib/svelte';
 
   import {
@@ -92,15 +93,22 @@
             longitude = Number(lngLat.lng.toFixed(5));
           };
 
+          // Function to update marker position and coordinates
+          const updateMarkerPosition = (lngLat: LngLatLike) => {
+            marker.setLngLat(lngLat);
+            ensureSingleMarkerVisible();
+            updateCoordinatesFromMarker();
+          };
+
           // Update coordinates on marker drag
           marker.on('dragend', updateCoordinatesFromMarker);
 
-          // Update marker and coordinates on double click
-          initializedMap.on('dblclick', (e) => {
-            marker.setLngLat(e.lngLat);
-            ensureSingleMarkerVisible();
-            updateCoordinatesFromMarker();
-          });
+          // Set up double click detection, update marker and coordinates on double click (desktop)
+          // or double tap (mobile)
+          const doubleClickDetector = new MapDoubleClickDetector(initializedMap, (lngLat) =>
+            updateMarkerPosition(lngLat),
+          );
+          doubleClickDetector.registerEvents();
         }
 
         // Update reference

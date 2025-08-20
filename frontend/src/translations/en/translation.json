@@ -218,7 +218,7 @@
     "error--name-empty": "Name must not be empty",
     "error--update-error": "The location could not be updated due to an error on the server: {message}",
     "prose--add-success": "Location successfully added",
-    "prose--hint-double-click": "Note: Double-click on the map to update the location coordinates.",
+    "prose--hint-double-click": "Note: Double-click or double-tap on the map to update the location coordinates.",
     "prose--update-success": "Location “{name}” successfully updated",
     "title--associated-flights": "Associated Flights",
     "title--coordinates": "Coordinates",
