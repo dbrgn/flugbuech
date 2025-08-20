@@ -117,7 +117,8 @@
 <section>
   <article class="message is-info">
     <div class="message-body">
-      <i class="fa-solid fa-circle-info"></i>&ensp;{$i18n.t('locations.prose--hint-nonglobal')}
+      <i class="fa-solid fa-circle-info"></i>&ensp;
+      {$i18n.t('locations.prose--hint-nonglobal')}
     </div>
   </article>
 
