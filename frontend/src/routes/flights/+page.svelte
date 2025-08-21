@@ -200,6 +200,7 @@
             <a
               class="icon"
               title={$i18n.t('flights.action--view-flight')}
+              aria-label={$i18n.t('flights.action--view-flight')}
               href="/flights/{flight.id}/"
             >
               <i class="fa-solid fa-eye"></i>
@@ -207,6 +208,7 @@
             <a
               class="icon"
               title={$i18n.t('flights.action--edit-flight')}
+              aria-label={$i18n.t('flights.action--edit-flight')}
               href="/flights/{flight.id}/edit/"
               data-sveltekit-preload-data="tap"
             >
@@ -215,6 +217,7 @@
             <button
               class="icon has-text-danger"
               title={$i18n.t('flights.action--delete-flight')}
+              aria-label={$i18n.t('flights.action--delete-flight')}
               on:click={() => (flightToDelete = flight)}
             >
               <i class="fa-solid fa-trash-alt"></i>
@@ -223,6 +226,7 @@
               <a
                 class="icon"
                 title={$i18n.t('flights.action--download-igc')}
+                aria-label={$i18n.t('flights.action--download-igc')}
                 href="/api/v1/flights/{flight.id}/igc/"
                 data-sveltekit-reload
               >

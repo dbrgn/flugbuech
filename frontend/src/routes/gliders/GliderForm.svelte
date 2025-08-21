@@ -334,7 +334,7 @@
     <label class="label" for="comment">{$i18n.t('glider.title--comment')}</label>
     <div class="field">
       <div class="control">
-        <textarea class="textarea" id="comment" name="comment" bind:value={comment} />
+        <textarea class="textarea" id="comment" name="comment" bind:value={comment}></textarea>
       </div>
     </div>
     {#if fieldErrors.comment !== undefined}
