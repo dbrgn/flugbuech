@@ -3,7 +3,11 @@
   import {onMount, tick} from 'svelte';
 
   import {unreachable} from '$lib/assert';
-  import {MapDoubleClickDetector} from '$lib/map-helpers';
+  import {
+    MapDoubleClickDetector,
+    queryCountryAtPoint,
+    queryElevationAtPoint,
+  } from '$lib/map-helpers';
   import {reactive} from '$lib/svelte';
 
   import {
@@ -33,6 +37,14 @@
   export let latitude: number | null = null;
   export let longitude: number | null = null;
   export let editable: boolean = false;
+  export let onMarkerChange:
+    | ((info: {
+        lng: number;
+        lat: number;
+        countryCode: string | null;
+        elevation: number | null;
+      }) => void)
+    | undefined = undefined;
 
   // Props only used for mode 'multi'
   export let markers: NamedCoordinates[] = [];
@@ -92,6 +104,19 @@
             const lngLat = marker.getLngLat();
             latitude = Number(lngLat.lat.toFixed(5));
             longitude = Number(lngLat.lng.toFixed(5));
+
+            // Query country and elevation at new position and call marker change callback
+            if (map && onMarkerChange) {
+              const elevation = queryElevationAtPoint(map, lngLat.lng, lngLat.lat);
+              const countryCode = queryCountryAtPoint(map, lngLat.lng, lngLat.lat);
+
+              onMarkerChange({
+                lng: lngLat.lng,
+                lat: lngLat.lat,
+                countryCode,
+                elevation,
+              });
+            }
           };
 
           // Function to update marker position and coordinates
@@ -215,12 +240,15 @@
         'mapbox-light-base-layer',
         'swisstopo-layer',
         'swissimage-layer',
+        'countries-layer',
       ];
       const sourcesToRemove = [
         'mapbox-raster',
         'mapbox-light-base',
         'swisstopo-source',
         'swissimage-source',
+        'countries-source',
+        'terrain-rgb-source',
       ];
 
       layersToRemove.forEach((layerId) => {
@@ -315,6 +343,50 @@
           break;
       }
 
+      // Always add the countries source for country code detection (but hidden)
+      if (onMarkerChange && !initializedMap.getSource('countries-source')) {
+        initializedMap.addSource('countries-source', {
+          type: 'vector',
+          tiles: [
+            `https://api.mapbox.com/v4/mapbox.country-boundaries-v1/{z}/{x}/{y}.vector.pbf?access_token=${MAPBOX_ACCESS_TOKEN}`,
+          ],
+          minzoom: 0,
+          maxzoom: 8,
+        });
+
+        initializedMap.addLayer({
+          'id': 'countries-layer',
+          'type': 'fill',
+          'source': 'countries-source',
+          'source-layer': 'country_boundaries',
+          'paint': {
+            'fill-opacity': 0, // Make it invisible
+          },
+          'filter': [
+            'all',
+            ['==', ['get', 'disputed'], 'false'],
+            ['any', ['==', 'all', ['get', 'worldview']], ['in', 'US', ['get', 'worldview']]],
+          ],
+        });
+      }
+
+      if (onMarkerChange && !initializedMap.getSource('terrain-rgb-source')) {
+        initializedMap.addSource('terrain-rgb-source', {
+          type: 'raster-dem',
+          tiles: [
+            `https://api.mapbox.com/v4/mapbox.terrain-rgb/{z}/{x}/{y}.pngraw?access_token=${MAPBOX_ACCESS_TOKEN}`,
+          ],
+          tileSize: 256,
+          maxzoom: 15,
+          encoding: 'mapbox',
+        });
+
+        initializedMap.setTerrain({
+          source: 'terrain-rgb-source',
+          exaggeration: 1,
+        });
+      }
+
       prevMapType = newMapType;
     } catch (error) {
       console.error('Error updating map type:', error);
@@ -336,6 +408,20 @@
       mapMarker.setLngLat(pos);
       ensureSingleMarkerVisible();
       map?.flyTo({center: pos});
+
+      // Query country and elevation at new position
+      if (map && onMarkerChange) {
+        // Query both synchronously
+        const elevation = queryElevationAtPoint(map, pos.lng, pos.lat);
+        const countryCode = queryCountryAtPoint(map, pos.lng, pos.lat);
+
+        onMarkerChange({
+          lng: pos.lng,
+          lat: pos.lat,
+          countryCode,
+          elevation,
+        });
+      }
     }
   }, [latitude, longitude]);
 

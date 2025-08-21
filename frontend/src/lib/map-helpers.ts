@@ -1,5 +1,58 @@
 import type {LngLatLike, Map, MapMouseEvent} from 'maplibre-gl';
 
+/**
+ * Query the country at a specific coordinate and return the result.
+ *
+ * @param map The MapLibre GL map instance
+ * @param lng Longitude coordinate
+ * @param lat Latitude coordinate
+ * @returns The detected country code or null if not found
+ */
+export function queryCountryAtPoint(map: Map, lng: number, lat: number): string | null {
+    // Convert coordinates to screen point for querying
+    const point = map.project([lng, lat]);
+
+    // Query the countries layer at the point
+    const features = map.queryRenderedFeatures(point, {
+        layers: ['countries-layer'],
+    });
+
+    if (features.length > 0) {
+        const countryCode = features[0].properties?.iso_3166_1;
+        if (countryCode && typeof countryCode === 'string') {
+            return countryCode;
+        }
+    }
+    return null;
+}
+
+/**
+ * Query the terrain elevation at a specific coordinate using MapLibre's built-in queryTerrainElevation.
+ *
+ * @param map The MapLibre GL map instance
+ * @param lng Longitude coordinate
+ * @param lat Latitude coordinate
+ * @returns The elevation in meters or null if not available
+ */
+export function queryElevationAtPoint(map: Map, lng: number, lat: number): number | null {
+    try {
+        // Check if terrain source exists
+        if (!map.getSource('terrain-rgb-source')) {
+            return null;
+        }
+
+        const elevation = map.queryTerrainElevation([lng, lat]);
+
+        if (elevation !== null && elevation !== undefined) {
+            return Math.round(elevation);
+        } else {
+            return null;
+        }
+    } catch (error) {
+        return null;
+    }
+}
+
 export interface DoubleClickDetectorOptions {
     /** Max delay for a double click/tap to be detected. */
     maxDoubleTapDelayMs: number;
