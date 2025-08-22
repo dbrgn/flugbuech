@@ -148,7 +148,7 @@
 <!-- Footer -->
 <footer class="section">
   <div class="container">
-    &copy; 2019&ndash;2024 Danilo Bargen | <a href="https://github.com/dbrgn/flugbuech">
+    &copy; 2019&ndash;2025 Danilo Bargen | <a href="https://github.com/dbrgn/flugbuech">
       {$i18n.t('layout.sourcecode', 'Source Code')}
     </a>
     |
