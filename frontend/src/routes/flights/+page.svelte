@@ -159,11 +159,11 @@
         {@const launchAt = flight.launchAt ? data.locations[flight.launchAt] : undefined}
         {@const landingAt = flight.landingAt ? data.locations[flight.landingAt] : undefined}
         <tr>
-          <td>{flight.number ?? '-'}</td>
-          <td>
+          <td class="no-wrap">{flight.number ?? '-'}</td>
+          <td class="no-wrap">
             {#if flight.launchTime !== undefined}{formatDate(flight.launchTime)}{:else}-{/if}
           </td>
-          <td>{flight.gliderName ?? '-'}</td>
+          <td class="no-wrap">{flight.gliderName ?? '-'}</td>
           <td title={launchAt !== undefined ? `${launchAt.elevation} mASL` : ''}>
             {#if launchAt}
               <CountryFlag countryCode={launchAt.countryCode} />
@@ -182,13 +182,13 @@
               -
             {/if}
           </td>
-          <td>
+          <td class="no-wrap">
             {#if flight.durationSeconds}{formatDuration(flight.durationSeconds)}{:else}-{/if}
           </td>
-          <td>
+          <td class="no-wrap">
             {#if flight.trackDistance}{formatDistance(flight.trackDistance)}{:else}-{/if}
           </td>
-          <td>
+          <td class="no-wrap">
             <XContestSummary
               tracktype={flight.xcontestTracktype}
               distance={flight.xcontestDistance}
@@ -196,7 +196,7 @@
               subtleLink={true}
             />
           </td>
-          <td>
+          <td class="no-wrap">
             <a
               class="icon"
               title={$i18n.t('flights.action--view-flight')}
@@ -249,5 +249,10 @@
 
   table button:hover i {
     color: #c41e1e;
+  }
+
+  /* Prevent line breaks in critical columns */
+  .no-wrap {
+    white-space: nowrap;
   }
 </style>
