@@ -143,78 +143,80 @@
       />
     </section>
   {/if}
-  <table class="table is-fullwidth is-striped is-hoverable">
-    <thead>
-      <tr>
-        <th>{$i18n.t('locations.column--name')}</th>
-        <th>{$i18n.t('locations.column--country')}</th>
-        <th>{$i18n.t('locations.column--elevation')}</th>
-        <th>{$i18n.t('locations.column--flights')}</th>
-        <th>{$i18n.t('locations.column--actions')}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each data.locations as location (location.id)}
+  <div class="table-container">
+    <table class="table is-fullwidth is-striped is-hoverable">
+      <thead>
         <tr>
-          <td>{location.name}</td>
-          <td><CountryFlag countryCode={location.countryCode} /> {location.countryCode}</td>
-          <td>{location.elevation} {$i18n.t('common.unit--m-asl')}</td>
-          <td>{location.flightCount}</td>
-          <td>
-            <a
-              class="icon"
-              title={$i18n.t('locations.action--view-location')}
-              aria-label={$i18n.t('locations.action--view-location')}
-              href="/locations/{location.id}/"
-            >
-              <i class="fa-solid fa-eye"></i>
-            </a>
-            <a
-              class="icon"
-              title={$i18n.t('locations.action--edit-location')}
-              aria-label={$i18n.t('locations.action--edit-location')}
-              href="/locations/{location.id}/edit/"
-              data-sveltekit-preload-data="tap"
-            >
-              <i class="fa-solid fa-pen-square"></i>
-            </a>
-            {#if location.flightCount === 0}
-              <button
-                class="icon has-text-danger"
-                title={$i18n.t('locations.action--delete-location')}
-                aria-label={$i18n.t('locations.action--delete-location')}
-                on:click={() => (locationToDelete = location)}
-              >
-                <i class="fa-solid fa-trash-alt"></i>
-              </button>
-            {/if}
-            {#if location.coordinates !== undefined}
-              {@const lon = location.coordinates.lon}
-              {@const lat = location.coordinates.lat}
-              <a
-                class="icon"
-                href="https://www.google.com/maps/place/{lat},{lon}/"
-                title={$i18n.t('locations.action--view-google-maps')}
-                aria-label={$i18n.t('locations.action--view-google-maps')}
-                target="_blank"
-              >
-                <i class="fa-solid fa-map-marker-alt"></i>
-              </a>
-              <a
-                class="icon"
-                href="https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=16/{lat}/{lon}"
-                title={$i18n.t('locations.action--view-osm')}
-                aria-label={$i18n.t('locations.action--view-osm')}
-                target="_blank"
-              >
-                <i class="fa-solid fa-map-pin"></i>
-              </a>
-            {/if}
-          </td>
+          <th>{$i18n.t('locations.column--name')}</th>
+          <th>{$i18n.t('locations.column--country')}</th>
+          <th>{$i18n.t('locations.column--elevation')}</th>
+          <th>{$i18n.t('locations.column--flights')}</th>
+          <th>{$i18n.t('locations.column--actions')}</th>
         </tr>
-      {/each}
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        {#each data.locations as location (location.id)}
+          <tr>
+            <td>{location.name}</td>
+            <td><CountryFlag countryCode={location.countryCode} /> {location.countryCode}</td>
+            <td>{location.elevation} {$i18n.t('common.unit--m-asl')}</td>
+            <td>{location.flightCount}</td>
+            <td>
+              <a
+                class="icon"
+                title={$i18n.t('locations.action--view-location')}
+                aria-label={$i18n.t('locations.action--view-location')}
+                href="/locations/{location.id}/"
+              >
+                <i class="fa-solid fa-eye"></i>
+              </a>
+              <a
+                class="icon"
+                title={$i18n.t('locations.action--edit-location')}
+                aria-label={$i18n.t('locations.action--edit-location')}
+                href="/locations/{location.id}/edit/"
+                data-sveltekit-preload-data="tap"
+              >
+                <i class="fa-solid fa-pen-square"></i>
+              </a>
+              {#if location.flightCount === 0}
+                <button
+                  class="icon has-text-danger"
+                  title={$i18n.t('locations.action--delete-location')}
+                  aria-label={$i18n.t('locations.action--delete-location')}
+                  on:click={() => (locationToDelete = location)}
+                >
+                  <i class="fa-solid fa-trash-alt"></i>
+                </button>
+              {/if}
+              {#if location.coordinates !== undefined}
+                {@const lon = location.coordinates.lon}
+                {@const lat = location.coordinates.lat}
+                <a
+                  class="icon"
+                  href="https://www.google.com/maps/place/{lat},{lon}/"
+                  title={$i18n.t('locations.action--view-google-maps')}
+                  aria-label={$i18n.t('locations.action--view-google-maps')}
+                  target="_blank"
+                >
+                  <i class="fa-solid fa-map-marker-alt"></i>
+                </a>
+                <a
+                  class="icon"
+                  href="https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=16/{lat}/{lon}"
+                  title={$i18n.t('locations.action--view-osm')}
+                  aria-label={$i18n.t('locations.action--view-osm')}
+                  target="_blank"
+                >
+                  <i class="fa-solid fa-map-pin"></i>
+                </a>
+              {/if}
+            </td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
+  </div>
 </section>
 
 <style>

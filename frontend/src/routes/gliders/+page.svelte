@@ -127,62 +127,64 @@
       {$i18n.t('gliders.action--add-glider')}
     </a>
   </p>
-  <table class="table is-fullwidth is-striped is-hoverable">
-    <thead>
-      <tr>
-        <th>{$i18n.t('gliders.column--manufacturer')}</th>
-        <th>{$i18n.t('gliders.column--model')}</th>
-        <th>{$i18n.t('gliders.column--since')}</th>
-        <th>{$i18n.t('gliders.column--until')}</th>
-        <th>{$i18n.t('gliders.column--flights')}</th>
-        <th>{$i18n.t('gliders.column--hours')}</th>
-        <th>{$i18n.t('gliders.column--actions')}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each data.gliders as glider (glider.id)}
+  <div class="table-container">
+    <table class="table is-fullwidth is-striped is-hoverable">
+      <thead>
         <tr>
-          <td>{glider.manufacturer}</td>
-          <td>{glider.model}</td>
-          <td>
-            {#if glider.since !== undefined}{glider.since}{:else}-{/if}
-          </td>
-          <td>
-            {#if glider.until !== undefined}{glider.until}{:else}-{/if}
-          </td>
-          <td>
-            {#if glider.stats.flights > 0}{glider.stats.flights}{:else}-{/if}
-          </td>
-          <td>
-            {#if glider.stats.seconds > 0}{formatDuration(
-                glider.stats.seconds,
-              )}{:else}-{/if}{#if !glider.stats.secondsComplete}&nbsp;<sup>1</sup>{/if}
-          </td>
-          <td>
-            <a
-              class="icon"
-              title={$i18n.t('gliders.action--edit-glider')}
-              aria-label={$i18n.t('gliders.action--edit-glider')}
-              href="/gliders/{glider.id}/edit/"
-              data-sveltekit-preload-data="tap"
-            >
-              <i class="fas fa-pen-square"></i>
-            </a>
-            {#if glider.stats.flights === 0}
-              <button
-                class="icon has-text-danger"
-                title={$i18n.t('gliders.action--delete-glider')}
-                aria-label={$i18n.t('gliders.action--delete-glider')}
-                on:click={() => (gliderToDelete = glider)}
-              >
-                <i class="fa-solid fa-trash-alt"></i>
-              </button>
-            {/if}
-          </td>
+          <th>{$i18n.t('gliders.column--manufacturer')}</th>
+          <th>{$i18n.t('gliders.column--model')}</th>
+          <th>{$i18n.t('gliders.column--since')}</th>
+          <th>{$i18n.t('gliders.column--until')}</th>
+          <th>{$i18n.t('gliders.column--flights')}</th>
+          <th>{$i18n.t('gliders.column--hours')}</th>
+          <th>{$i18n.t('gliders.column--actions')}</th>
         </tr>
-      {/each}
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        {#each data.gliders as glider (glider.id)}
+          <tr>
+            <td>{glider.manufacturer}</td>
+            <td>{glider.model}</td>
+            <td>
+              {#if glider.since !== undefined}{glider.since}{:else}-{/if}
+            </td>
+            <td>
+              {#if glider.until !== undefined}{glider.until}{:else}-{/if}
+            </td>
+            <td>
+              {#if glider.stats.flights > 0}{glider.stats.flights}{:else}-{/if}
+            </td>
+            <td>
+              {#if glider.stats.seconds > 0}{formatDuration(
+                  glider.stats.seconds,
+                )}{:else}-{/if}{#if !glider.stats.secondsComplete}&nbsp;<sup>1</sup>{/if}
+            </td>
+            <td>
+              <a
+                class="icon"
+                title={$i18n.t('gliders.action--edit-glider')}
+                aria-label={$i18n.t('gliders.action--edit-glider')}
+                href="/gliders/{glider.id}/edit/"
+                data-sveltekit-preload-data="tap"
+              >
+                <i class="fas fa-pen-square"></i>
+              </a>
+              {#if glider.stats.flights === 0}
+                <button
+                  class="icon has-text-danger"
+                  title={$i18n.t('gliders.action--delete-glider')}
+                  aria-label={$i18n.t('gliders.action--delete-glider')}
+                  on:click={() => (gliderToDelete = glider)}
+                >
+                  <i class="fa-solid fa-trash-alt"></i>
+                </button>
+              {/if}
+            </td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
+  </div>
 </section>
 
 {#if data.gliders.some((glider) => !glider.stats.secondsComplete)}
