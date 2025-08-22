@@ -126,8 +126,8 @@
           addFlash({
             message:
               location === undefined
-                ? $i18n.t('location.prose--add-success')
-                : $i18n.t('location.prose--update-success'),
+                ? $i18n.t('location.prose--add-success', {name})
+                : $i18n.t('location.prose--update-success', {name}),
             severity: 'success',
             icon: 'fa-circle-check',
           });

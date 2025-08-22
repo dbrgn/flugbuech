@@ -217,7 +217,7 @@
     "error--longitude-empty": "If latitude is set, longitude must not be empty",
     "error--name-empty": "Name must not be empty",
     "error--update-error": "The location could not be updated due to an error on the server: {message}",
-    "prose--add-success": "Location successfully added",
+    "prose--add-success": "Location “{name}” successfully added",
     "prose--hint-double-click": "Note: Double-click or double-tap on the map to update the location coordinates.",
     "prose--update-success": "Location “{name}” successfully updated",
     "title--associated-flights": "Associated Flights",
