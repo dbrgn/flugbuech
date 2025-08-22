@@ -158,10 +158,13 @@
         {#each data.locations as location (location.id)}
           <tr>
             <td>{location.name}</td>
-            <td><CountryFlag countryCode={location.countryCode} /> {location.countryCode}</td>
-            <td>{location.elevation} {$i18n.t('common.unit--m-asl')}</td>
-            <td>{location.flightCount}</td>
-            <td>
+            <td class="no-wrap">
+              <CountryFlag countryCode={location.countryCode} />
+              {location.countryCode}
+            </td>
+            <td class="no-wrap">{location.elevation} {$i18n.t('common.unit--m-asl')}</td>
+            <td class="no-wrap">{location.flightCount}</td>
+            <td class="no-wrap">
               <a
                 class="icon"
                 title={$i18n.t('locations.action--view-location')}

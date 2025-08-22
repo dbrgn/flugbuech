@@ -252,9 +252,4 @@
   table button:hover i {
     color: #c41e1e;
   }
-
-  /* Prevent line breaks in critical columns */
-  .no-wrap {
-    white-space: nowrap;
-  }
 </style>
