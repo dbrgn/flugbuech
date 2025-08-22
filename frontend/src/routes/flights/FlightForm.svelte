@@ -598,7 +598,7 @@
             </div>
           </div>
           <p class="control" class:is-hidden={flightDuration === undefined}>
-            <a class="button is-static" href=".">{flightDuration}</a>
+            <a class="button is-static" href="." tabindex="-1">{flightDuration}</a>
           </p>
         </div>
         {#if fieldErrors.landingTime !== undefined}
@@ -630,7 +630,7 @@
         </div>
       </div>
       <p class="control">
-        <a class="button is-static" href=".">km</a>
+        <a class="button is-static" href="." tabindex="-1">km</a>
       </p>
     </div>
     {#if fieldErrors.trackDistance !== undefined}
@@ -685,7 +685,7 @@
             </div>
           </div>
           <p class="control">
-            <a class="button is-static" href=".">km</a>
+            <a class="button is-static" href="." tabindex="-1">km</a>
           </p>
         </div>
         {#if fieldErrors.xcontestDistance !== undefined}
