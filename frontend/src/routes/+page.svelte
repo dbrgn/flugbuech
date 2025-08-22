@@ -121,6 +121,15 @@
 </p>
 
 <h3 class="title is-size-3">{$i18n.t('home.title--news')}</h3>
+
+<h4 class="title is-size-5">2025</h4>
+<ul class="content">
+  <li>
+    <strong>23.8.</strong>
+    {$i18n.t('home.news.2025-08-23')}
+  </li>
+</ul>
+
 <h4 class="title is-size-5">2024</h4>
 <ul class="content">
   <li>
@@ -152,6 +161,7 @@
     </SubstitutableText>
   </li>
 </ul>
+
 <h4 class="title is-size-5">2019­–2023</h4>
 <ul class="content">
   <li>
