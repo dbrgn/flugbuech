@@ -140,104 +140,106 @@
     >
   </p>
 
-  <table class="table is-fullwidth is-striped is-hoverable">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>{$i18n.t('flights.column--date')}</th>
-        <th>{$i18n.t('flights.column--glider')}</th>
-        <th>{$i18n.t('flights.column--launch')}</th>
-        <th>{$i18n.t('flights.column--landing')}</th>
-        <th>{$i18n.t('flights.column--duration')}</th>
-        <th>{$i18n.t('flights.column--track-distance')}</th>
-        <th>{$i18n.t('flights.column--xcontest')}</th>
-        <th>{$i18n.t('flights.column--actions')}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each data.flights as flight (flight.id)}
-        {@const launchAt = flight.launchAt ? data.locations[flight.launchAt] : undefined}
-        {@const landingAt = flight.landingAt ? data.locations[flight.landingAt] : undefined}
+  <div class="table-container">
+    <table class="table is-fullwidth is-striped is-hoverable">
+      <thead>
         <tr>
-          <td class="no-wrap">{flight.number ?? '-'}</td>
-          <td class="no-wrap">
-            {#if flight.launchTime !== undefined}{formatDate(flight.launchTime)}{:else}-{/if}
-          </td>
-          <td class="no-wrap">{flight.gliderName ?? '-'}</td>
-          <td title={launchAt !== undefined ? `${launchAt.elevation} mASL` : ''}>
-            {#if launchAt}
-              <CountryFlag countryCode={launchAt.countryCode} />
-              <a class="subtle-link" href="/locations/{launchAt.id}">{launchAt.name}</a
-              >{#if flight.hikeandfly}&nbsp;<i class="fa-solid fa-hiking" title="Hike &amp; Fly"
-                ></i>{/if}
-            {:else}
-              -
-            {/if}
-          </td>
-          <td title={landingAt !== undefined ? `${landingAt.elevation} mASL` : ''}>
-            {#if landingAt}
-              <CountryFlag countryCode={landingAt.countryCode} />
-              <a class="subtle-link" href="/locations/{landingAt.id}">{landingAt.name}</a>
-            {:else}
-              -
-            {/if}
-          </td>
-          <td class="no-wrap">
-            {#if flight.durationSeconds}{formatDuration(flight.durationSeconds)}{:else}-{/if}
-          </td>
-          <td class="no-wrap">
-            {#if flight.trackDistance}{formatDistance(flight.trackDistance)}{:else}-{/if}
-          </td>
-          <td class="no-wrap">
-            <XContestSummary
-              tracktype={flight.xcontestTracktype}
-              distance={flight.xcontestDistance}
-              url={flight.xcontestUrl}
-              subtleLink={true}
-            />
-          </td>
-          <td class="no-wrap">
-            <a
-              class="icon"
-              title={$i18n.t('flights.action--view-flight')}
-              aria-label={$i18n.t('flights.action--view-flight')}
-              href="/flights/{flight.id}/"
-            >
-              <i class="fa-solid fa-eye"></i>
-            </a>
-            <a
-              class="icon"
-              title={$i18n.t('flights.action--edit-flight')}
-              aria-label={$i18n.t('flights.action--edit-flight')}
-              href="/flights/{flight.id}/edit/"
-              data-sveltekit-preload-data="tap"
-            >
-              <i class="fa-solid fa-pen-square"></i>
-            </a>
-            <button
-              class="icon has-text-danger"
-              title={$i18n.t('flights.action--delete-flight')}
-              aria-label={$i18n.t('flights.action--delete-flight')}
-              on:click={() => (flightToDelete = flight)}
-            >
-              <i class="fa-solid fa-trash-alt"></i>
-            </button>
-            {#if flight.hasIgc}
+          <th>#</th>
+          <th>{$i18n.t('flights.column--date')}</th>
+          <th>{$i18n.t('flights.column--glider')}</th>
+          <th>{$i18n.t('flights.column--launch')}</th>
+          <th>{$i18n.t('flights.column--landing')}</th>
+          <th>{$i18n.t('flights.column--duration')}</th>
+          <th>{$i18n.t('flights.column--track-distance')}</th>
+          <th>{$i18n.t('flights.column--xcontest')}</th>
+          <th>{$i18n.t('flights.column--actions')}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {#each data.flights as flight (flight.id)}
+          {@const launchAt = flight.launchAt ? data.locations[flight.launchAt] : undefined}
+          {@const landingAt = flight.landingAt ? data.locations[flight.landingAt] : undefined}
+          <tr>
+            <td class="no-wrap">{flight.number ?? '-'}</td>
+            <td class="no-wrap">
+              {#if flight.launchTime !== undefined}{formatDate(flight.launchTime)}{:else}-{/if}
+            </td>
+            <td class="no-wrap">{flight.gliderName ?? '-'}</td>
+            <td title={launchAt !== undefined ? `${launchAt.elevation} mASL` : ''}>
+              {#if launchAt}
+                <CountryFlag countryCode={launchAt.countryCode} />
+                <a class="subtle-link" href="/locations/{launchAt.id}">{launchAt.name}</a
+                >{#if flight.hikeandfly}&nbsp;<i class="fa-solid fa-hiking" title="Hike &amp; Fly"
+                  ></i>{/if}
+              {:else}
+                -
+              {/if}
+            </td>
+            <td title={landingAt !== undefined ? `${landingAt.elevation} mASL` : ''}>
+              {#if landingAt}
+                <CountryFlag countryCode={landingAt.countryCode} />
+                <a class="subtle-link" href="/locations/{landingAt.id}">{landingAt.name}</a>
+              {:else}
+                -
+              {/if}
+            </td>
+            <td class="no-wrap">
+              {#if flight.durationSeconds}{formatDuration(flight.durationSeconds)}{:else}-{/if}
+            </td>
+            <td class="no-wrap">
+              {#if flight.trackDistance}{formatDistance(flight.trackDistance)}{:else}-{/if}
+            </td>
+            <td class="no-wrap">
+              <XContestSummary
+                tracktype={flight.xcontestTracktype}
+                distance={flight.xcontestDistance}
+                url={flight.xcontestUrl}
+                subtleLink={true}
+              />
+            </td>
+            <td class="no-wrap">
               <a
                 class="icon"
-                title={$i18n.t('flights.action--download-igc')}
-                aria-label={$i18n.t('flights.action--download-igc')}
-                href="/api/v1/flights/{flight.id}/igc/"
-                data-sveltekit-reload
+                title={$i18n.t('flights.action--view-flight')}
+                aria-label={$i18n.t('flights.action--view-flight')}
+                href="/flights/{flight.id}/"
               >
-                <i class="fa-solid fa-download"></i>
+                <i class="fa-solid fa-eye"></i>
               </a>
-            {/if}
-          </td>
-        </tr>
-      {/each}
-    </tbody>
-  </table>
+              <a
+                class="icon"
+                title={$i18n.t('flights.action--edit-flight')}
+                aria-label={$i18n.t('flights.action--edit-flight')}
+                href="/flights/{flight.id}/edit/"
+                data-sveltekit-preload-data="tap"
+              >
+                <i class="fa-solid fa-pen-square"></i>
+              </a>
+              <button
+                class="icon has-text-danger"
+                title={$i18n.t('flights.action--delete-flight')}
+                aria-label={$i18n.t('flights.action--delete-flight')}
+                on:click={() => (flightToDelete = flight)}
+              >
+                <i class="fa-solid fa-trash-alt"></i>
+              </button>
+              {#if flight.hasIgc}
+                <a
+                  class="icon"
+                  title={$i18n.t('flights.action--download-igc')}
+                  aria-label={$i18n.t('flights.action--download-igc')}
+                  href="/api/v1/flights/{flight.id}/igc/"
+                  data-sveltekit-reload
+                >
+                  <i class="fa-solid fa-download"></i>
+                </a>
+              {/if}
+            </td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
+  </div>
 </section>
 
 <style>
@@ -249,10 +251,5 @@
 
   table button:hover i {
     color: #c41e1e;
-  }
-
-  /* Prevent line breaks in critical columns */
-  .no-wrap {
-    white-space: nowrap;
   }
 </style>

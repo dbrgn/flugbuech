@@ -13,6 +13,12 @@ a.subtle-link:hover {
   color: #777;
 }
 
+/* Prevent line breaks in critical columns */
+
+.no-wrap {
+  white-space: nowrap;
+}
+
 /* Old */
 
 .navbar-brand .navbar-item {
