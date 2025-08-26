@@ -20,7 +20,7 @@ RUN cd /build/flugbuech && cargo build --release
 
 ###### RUNTIME ######
 
-FROM debian:11-slim
+FROM debian:13-slim
 
 # Install init process and other dependencies
 RUN apt-get update -q \
