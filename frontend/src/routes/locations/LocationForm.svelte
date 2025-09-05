@@ -31,6 +31,22 @@
   let longitudeInput: HTMLInputElement | null;
   let latitudeInput: HTMLInputElement | null;
 
+  // Marker change callback (includes country code and elevation detection)
+  function handleMarkerChange(info: {
+    lng: number;
+    lat: number;
+    countryCode: string | null;
+    elevation: number | null;
+  }) {
+    // Auto-fill if changes detected
+    if (info.countryCode && info.countryCode !== countryCode) {
+      countryCode = info.countryCode;
+    }
+    if (info.elevation !== null && info.elevation !== elevation) {
+      elevation = info.elevation;
+    }
+  }
+
   // Validation
   const fields = ['name', 'countryCode', 'elevation', 'latitude', 'longitude'] as const;
   let fieldErrors: Record<(typeof fields)[number], string | undefined> = {
@@ -336,6 +352,7 @@
         editable={true}
         center={location?.coordinates}
         zoom={location?.coordinates !== undefined ? 13 : undefined}
+        onMarkerChange={handleMarkerChange}
       />
     </div>
 
