@@ -20,7 +20,7 @@ RUN cd /build/flugbuech && cargo build --release
 
 ###### RUNTIME ######
 
-FROM debian:11-slim
+FROM debian:13-slim
 
 # Install init process and other dependencies
 RUN apt-get update -q \
@@ -28,8 +28,8 @@ RUN apt-get update -q \
  && rm -rf /var/lib/apt/lists/*
 
 # Create users and directories
-RUN addgroup --gid 1000 flugbuech \
- && adduser --disabled-password --gecos "" --uid 1000 --gid 1000 flugbuech
+RUN groupadd -g 1000 flugbuech \
+ && useradd -m -u 1000 -g 1000 -s /bin/bash flugbuech
 RUN mkdir /flugbuech \
  && chown flugbuech:flugbuech /flugbuech/ \
  && chmod 0700 /flugbuech/
