@@ -126,10 +126,6 @@ Flugbuech. The image is also available [on Docker
 Hub](https://hub.docker.com/r/dbrgn/flugbuech/), images are re-built at least
 weekly.
 
-Note that while the default server is able to serve static files, it's probably
-a good idea to put an Nginx instance in front of the `/static` volume inside
-the Docker container.
-
 **IMPORTANT**: Make sure to change the `ROCKET_SECRET_KEY` variable when
 configuring your deployment!
 
