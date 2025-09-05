@@ -52,5 +52,6 @@ USER flugbuech
 VOLUME ["/static"]
 
 ENV RUST_BACKTRACE=1
+ADD entrypoint.sh /flugbuech/entrypoint.sh
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["/bin/bash", "-c", "rm -rf /static/* && cp -Rv /flugbuech/static/* /static/ && exec ./flugbuech-api --migrate"]
+CMD ["/bin/bash", "/flugbuech/entrypoint.sh"]
