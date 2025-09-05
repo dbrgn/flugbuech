@@ -30,6 +30,9 @@ services:
       ROCKET_SECRET_KEY: "2WMWUpOjLnmn39PIAifL4QXxGOsyyf1U17YTpOfoLJ4="
       DATABASE_URL: postgres://flugbuech@db/flugbuech
       ROCKET_DATABASES: '{flugbuech={url="postgres://flugbuech@db/flugbuech"}}'
+      # Optional self-hosted, GDPR compliant, non-privacy-invading visitor stats
+      #PLAUSIBLE_DOMAIN: example.com
+      #PLAUSIBLE_URL: https://example.com/plausible.js
 
   web:
     image: docker.io/nginx:1.29
