@@ -37,6 +37,7 @@ If you have any question, you can contact me at
 - Add/edit/delete gliders/wings
 - Stats about the past flights
 - Import flights from CSV
+- Translation support: English and German
 
 See <https://flugbuech.bargen.dev/screenshots/> for a good overview.
 
