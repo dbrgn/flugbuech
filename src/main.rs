@@ -40,11 +40,6 @@ pub const DESCRIPTION: &str = "Paragliding flight book.";
 
 #[derive(Debug, Deserialize, Clone, Default)]
 pub struct Config {
-    pub static_files_dir: Option<String>,
-
-    pub plausible_domain: Option<String>,
-    pub plausible_url: Option<String>,
-
     /// Allowed CORS origin.
     ///
     /// - Set to `*` to allow CORS requests from all origins
