@@ -1,6 +1,6 @@
 services:
   db:
-    image: mdillon/postgis:11
+    image: postgis/postgis:17-3.5
     restart: always
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "flugbuech"]
@@ -10,6 +10,7 @@ services:
     environment:
       POSTGRES_DB: flugbuech
       POSTGRES_USER: flugbuech
+      POSTGRES_HOST_AUTH_METHOD: trust
 
   api:
     build: .
@@ -18,6 +19,10 @@ services:
       - "8000"
     links:
       - db
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
     volumes:
       - frontend-static:/static
     environment:
