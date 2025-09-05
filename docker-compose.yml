@@ -1,6 +1,4 @@
-version: '3'
 services:
-
   db:
     image: mdillon/postgis:11
     restart: always
@@ -13,15 +11,15 @@ services:
       POSTGRES_DB: flugbuech
       POSTGRES_USER: flugbuech
 
-  web:
+  api:
     build: .
     restart: always
     ports:
-      - "8000:8000"
+      - "8000"
     links:
       - db
     volumes:
-      - "/static"
+      - frontend-static:/static
     environment:
       ROCKET_PROFILE: release
       ROCKET_ADDRESS: "0.0.0.0"
@@ -32,3 +30,16 @@ services:
       ROCKET_SECRET_KEY: "2WMWUpOjLnmn39PIAifL4QXxGOsyyf1U17YTpOfoLJ4="
       DATABASE_URL: postgres://flugbuech@db/flugbuech
       ROCKET_DATABASES: '{flugbuech={url="postgres://flugbuech@db/flugbuech"}}'
+
+  web:
+    image: docker.io/nginx:1.29
+    ports:
+      - "8080:80"
+    links:
+      - "api:api"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - frontend-static:/flugbuech/static:ro
+
+volumes:
+  frontend-static:
