@@ -26,19 +26,24 @@ If you have any question, you can contact me at
 
 ## Status
 
-### What works
+### Features
 
-- [x] User registration / login / authentication
-- [x] Adding flights manually to the database
-- [x] Simple submission of of flights by uploading IGC file (all
-  relevant flight data like launch time/location, landing time/location,
-  duration, distance, etc can be extracted from that file)
-- [x] Manage locations
-- [x] Show stats about the past flights
+- Add flights manually to the database
+- Add flights through IGC file upload (all relevant flight data like launch
+  time/location, landing time/location, duration, distance, etc can be
+  extracted from that file)
+- Add/edit/delete launch/landing locations
+- Map of all locations
+- Add/edit/delete gliders/wings
+- Stats about the past flights
+- Import flights from CSV
+
+See <https://flugbuech.bargen.dev/screenshots/> for a good overview.
 
 ### What's not yet implemented
 
 - [ ] Password recovery
+- [ ] Showing flight track on a map
 - [ ] Map with all your flights
 - [ ] Make it easier to self-host
 - [ ] Import launch / landing locations from a public database
