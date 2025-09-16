@@ -10,6 +10,14 @@
   export let editable: boolean = false;
   export let center: LngLatLike = DEFAULT_MAP_CENTER;
   export let zoom: number = 6;
+  export let onMarkerChange:
+    | ((info: {
+        lng: number;
+        lat: number;
+        countryCode: string | null;
+        elevation: number | null;
+      }) => void)
+    | undefined = undefined;
 </script>
 
-<BaseMap mode="single" bind:latitude bind:longitude {editable} {center} {zoom} />
+<BaseMap mode="single" bind:latitude bind:longitude {editable} {center} {zoom} {onMarkerChange} />
