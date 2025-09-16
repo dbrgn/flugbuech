@@ -1,5 +1,8 @@
 import type {LngLatLike, Map, MapMouseEvent} from 'maplibre-gl';
 
+// Terrain exaggeration factor used for minimal visual impact while keeping elevation data accessible
+const TERRAIN_EXAGGERATION = 0.01;
+
 /**
  * Query the country at a specific coordinate and return the result.
  *
@@ -36,22 +39,28 @@ export function queryCountryAtPoint(map: Map, lng: number, lat: number): string 
  */
 export function queryElevationAtPoint(map: Map, lng: number, lat: number): number | null {
     try {
-        // Check if terrain source exists
-        if (!map.getSource('terrain-rgb-source')) {
+        // Check if terrain is enabled
+        if (!map.getTerrain()) {
             return null;
         }
 
-        const elevation = map.queryTerrainElevation([lng, lat]);
+        const elevationWithExaggeration = map.queryTerrainElevation([lng, lat]);
 
-        if (elevation !== null && elevation !== undefined) {
-            return Math.round(elevation);
-        } else {
+        if (elevationWithExaggeration === null || isNaN(elevationWithExaggeration)) {
             return null;
         }
+
+        //The queryTerrainElevation function is designed for 3D rendering, we need to scale it inversely with the exaggeration factor
+        const actualElevation = elevationWithExaggeration / TERRAIN_EXAGGERATION;
+        return Math.round(actualElevation);
     } catch (error) {
+        console.error('Error querying terrain elevation with native method:', error);
         return null;
     }
 }
+
+// Export the terrain exaggeration constant for use in BaseMap.svelte
+export {TERRAIN_EXAGGERATION};
 
 export interface DoubleClickDetectorOptions {
     /** Max delay for a double click/tap to be detected. */

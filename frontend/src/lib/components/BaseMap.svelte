@@ -7,6 +7,7 @@
     MapDoubleClickDetector,
     queryCountryAtPoint,
     queryElevationAtPoint,
+    TERRAIN_EXAGGERATION,
   } from '$lib/map-helpers';
   import {reactive} from '$lib/svelte';
 
@@ -56,7 +57,6 @@
   // Map variable
   let container: HTMLElement;
   let map: Map | null = null;
-  let mapStyleLoaded = false;
 
   // Markers
   let mapMarker: Marker | undefined;
@@ -228,8 +228,8 @@
       return;
     }
 
-    // Check if style is loaded before proceeding
-    if (!mapStyleLoaded) {
+    // Check if map and style are loaded before proceeding
+    if (!initializedMap.isStyleLoaded()) {
       return;
     }
 
@@ -251,17 +251,17 @@
         'terrain-rgb-source',
       ];
 
-      layersToRemove.forEach((layerId) => {
+      for (const layerId of layersToRemove) {
         if (initializedMap.getLayer(layerId)) {
           initializedMap.removeLayer(layerId);
         }
-      });
+      }
 
-      sourcesToRemove.forEach((sourceId) => {
+      for (const sourceId of sourcesToRemove) {
         if (initializedMap.getSource(sourceId)) {
           initializedMap.removeSource(sourceId);
         }
-      });
+      }
 
       // Add the appropriate map layer
       switch (newMapType) {
@@ -383,7 +383,7 @@
 
         initializedMap.setTerrain({
           source: 'terrain-rgb-source',
-          exaggeration: 1,
+          exaggeration: TERRAIN_EXAGGERATION,
         });
       }
 
@@ -394,7 +394,7 @@
   }
 
   // Handle map type updates
-  $: if (map !== null && mapStyleLoaded) {
+  $: if (map !== null && map.isStyleLoaded()) {
     updateMapType(map, mapType);
   }
 
@@ -437,16 +437,21 @@
       doubleClickZoom: !editable,
       center: center,
       zoom,
+      pitch: 0,
+      maxPitch: 0,
+      dragRotate: false,
+      touchPitch: false,
     });
 
     // Add navigation controls
     map.addControl(new NavigationControl());
 
+    map.dragRotate.disable();
+    map.touchPitch.disable();
+
     // Once the style is loaded, add the initial map layer
     map.on('style.load', () => {
       if (map) {
-        mapStyleLoaded = true;
-
         // Reset to ensure initial update works
         prevMapType = undefined;
         updateMapType(map, mapType);
