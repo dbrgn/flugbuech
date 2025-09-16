@@ -69,7 +69,7 @@
     "prose--note-missing-gliders": "<1>Warning:</1> You haven't added any gliders so far. To be able to link a glider to your flight, <2>add a glider</2> before adding a flight.",
     "prose--note-missing-location": "<1>Warning:</1> You haven't added any locations so far. To be able to link a launch or landing location to your flight, <2>add a location</2> before adding a flight.",
     "prose--unknown-site": "Unknown site",
-    "prose--update-success": "Flight{numberOrEmpty} successfully updated",
+    "prose--update-success": "Flight {numberOrEmpty} successfully updated",
     "snippet--flight-with-id": "Flight with ID {id}",
     "snippet--flight-with-number": "Flight {number}",
     "snippet--from": "from {location}",
