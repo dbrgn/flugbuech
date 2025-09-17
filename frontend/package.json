@@ -29,7 +29,7 @@
     "i18next": "^25.3.6",
     "i18next-icu": "^2.3.0",
     "maplibre-gl": "^1.15.1",
-    "vite": "^5.4.20",
+    "vite": "^7.1.5",
     "zod": "^3.22.4"
   },
   "devDependencies": {
