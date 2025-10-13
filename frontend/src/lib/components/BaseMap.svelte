@@ -228,123 +228,88 @@
       return;
     }
 
-    // Check if map and style are loaded before proceeding
-    if (!initializedMap.isStyleLoaded()) {
-      return;
-    }
-
-    try {
-      // Remove existing layers safely
-      const layersToRemove = [
-        'mapbox-raster-layer',
-        'mapbox-light-base-layer',
-        'swisstopo-layer',
-        'swissimage-layer',
-        'countries-layer',
-      ];
-      const sourcesToRemove = [
-        'mapbox-raster',
-        'mapbox-light-base',
-        'swisstopo-source',
-        'swissimage-source',
-        'countries-source',
-        'terrain-rgb-source',
-      ];
-
-      for (const layerId of layersToRemove) {
-        if (initializedMap.getLayer(layerId)) {
-          initializedMap.removeLayer(layerId);
-        }
-      }
-
-      for (const sourceId of sourcesToRemove) {
-        if (initializedMap.getSource(sourceId)) {
-          initializedMap.removeSource(sourceId);
-        }
-      }
-
-      // Add the appropriate map layer
+    // Prepare additional layers that will be added once the style is loaded
+    initializedMap.once('style.load', () => {
+      // Additional map layers on top of base style
       switch (newMapType) {
         case 'mapbox-outdoors':
-          initializedMap.addSource('mapbox-raster', {
-            type: 'raster',
-            tiles: [
-              `https://api.mapbox.com/styles/v1/mapbox/${MAPBOX_STYLE_DEFAULT}/tiles/{z}/{x}/{y}?access_token=${MAPBOX_ACCESS_TOKEN}`,
-            ],
-            tileSize: 512,
-          });
           initializedMap.addLayer({
-            id: 'mapbox-raster-layer',
+            id: 'mapbox-tiles-layer',
             type: 'raster',
-            source: 'mapbox-raster',
+            source: {
+              type: 'raster',
+              tiles: [
+                `https://api.mapbox.com/styles/v1/mapbox/${MAPBOX_STYLE_DEFAULT}/tiles/{z}/{x}/{y}?access_token=${MAPBOX_ACCESS_TOKEN}`,
+              ],
+              tileSize: 512,
+            },
           });
           break;
         case 'mapbox-satellite':
-          initializedMap.addSource('mapbox-raster', {
-            type: 'raster',
-            tiles: [
-              `https://api.mapbox.com/styles/v1/mapbox/${MAPBOX_STYLE_SATELLITE}/tiles/{z}/{x}/{y}?access_token=${MAPBOX_ACCESS_TOKEN}`,
-            ],
-            tileSize: 512,
-          });
           initializedMap.addLayer({
-            id: 'mapbox-raster-layer',
+            id: 'mapbox-tiles-layer',
             type: 'raster',
-            source: 'mapbox-raster',
+            source: {
+              type: 'raster',
+              tiles: [
+                `https://api.mapbox.com/styles/v1/mapbox/${MAPBOX_STYLE_SATELLITE}/tiles/{z}/{x}/{y}?access_token=${MAPBOX_ACCESS_TOKEN}`,
+              ],
+              tileSize: 512,
+            },
           });
           break;
         case 'swisstopo':
-          initializedMap.addSource('mapbox-light-base', {
-            type: 'raster',
-            tiles: [
-              `https://api.mapbox.com/styles/v1/mapbox/${MAPBOX_STYLE_LIGHT}/tiles/{z}/{x}/{y}?access_token=${MAPBOX_ACCESS_TOKEN}`,
-            ],
-            tileSize: 512,
-          });
+          // Add light base layer
           initializedMap.addLayer({
             id: 'mapbox-light-base-layer',
             type: 'raster',
-            source: 'mapbox-light-base',
+            source: {
+              type: 'raster',
+              tiles: [
+                `https://api.mapbox.com/styles/v1/mapbox/${MAPBOX_STYLE_LIGHT}/tiles/{z}/{x}/{y}?access_token=${MAPBOX_ACCESS_TOKEN}`,
+              ],
+              tileSize: 512,
+            },
           });
-          initializedMap.addSource('swisstopo-source', {
-            type: 'raster',
-            tiles: [SWISSTOPO_WMS_BASE_URL + '&LAYERS=ch.swisstopo.pixelkarte-farbe'],
-            tileSize: 256,
-          });
+          // Add swisstopo overlay
           initializedMap.addLayer({
             id: 'swisstopo-layer',
             type: 'raster',
-            source: 'swisstopo-source',
+            source: {
+              type: 'raster',
+              tiles: [SWISSTOPO_WMS_BASE_URL + '&LAYERS=ch.swisstopo.pixelkarte-farbe'],
+              tileSize: 256,
+            },
           });
           break;
         case 'swissimage':
-          initializedMap.addSource('mapbox-light-base', {
-            type: 'raster',
-            tiles: [
-              `https://api.mapbox.com/styles/v1/mapbox/${MAPBOX_STYLE_LIGHT}/tiles/{z}/{x}/{y}?access_token=${MAPBOX_ACCESS_TOKEN}`,
-            ],
-            tileSize: 512,
-          });
+          // Add light base layer
           initializedMap.addLayer({
             id: 'mapbox-light-base-layer',
             type: 'raster',
-            source: 'mapbox-light-base',
+            source: {
+              type: 'raster',
+              tiles: [
+                `https://api.mapbox.com/styles/v1/mapbox/${MAPBOX_STYLE_LIGHT}/tiles/{z}/{x}/{y}?access_token=${MAPBOX_ACCESS_TOKEN}`,
+              ],
+              tileSize: 512,
+            },
           });
-          initializedMap.addSource('swissimage-source', {
-            type: 'raster',
-            tiles: [SWISSTOPO_WMS_BASE_URL + '&LAYERS=ch.swisstopo.swissimage'],
-            tileSize: 256,
-          });
+          // Add swissimage overlay
           initializedMap.addLayer({
             id: 'swissimage-layer',
             type: 'raster',
-            source: 'swissimage-source',
+            source: {
+              type: 'raster',
+              tiles: [SWISSTOPO_WMS_BASE_URL + '&LAYERS=ch.swisstopo.swissimage'],
+              tileSize: 256,
+            },
           });
           break;
       }
 
-      // Always add the countries source for country code detection (but hidden)
-      if (onMarkerChange && !initializedMap.getSource('countries-source')) {
+      // Add custom layers for country and elevation detection
+      if (onMarkerChange) {
         initializedMap.addSource('countries-source', {
           type: 'vector',
           tiles: [
@@ -359,18 +324,13 @@
           'type': 'fill',
           'source': 'countries-source',
           'source-layer': 'country_boundaries',
+          'filter': ['==', ['get', 'disputed'], 'false'],
           'paint': {
             'fill-opacity': 0, // Make it invisible
           },
-          'filter': [
-            'all',
-            ['==', ['get', 'disputed'], 'false'],
-            ['any', ['==', 'all', ['get', 'worldview']], ['in', 'US', ['get', 'worldview']]],
-          ],
         });
-      }
 
-      if (onMarkerChange && !initializedMap.getSource('terrain-rgb-source')) {
+        // Add terrain source for elevation detection
         initializedMap.addSource('terrain-rgb-source', {
           type: 'raster-dem',
           tiles: [
@@ -387,14 +347,26 @@
         });
       }
 
-      prevMapType = newMapType;
-    } catch (error) {
-      console.error('Error updating map type:', error);
-    }
+      // Map markers and labels
+      addMapMarkersAndLabels(initializedMap);
+    });
+
+    // Force-set style of the MapBox base layer.
+    // This will remove all existing styles and layers.
+    initializedMap.setStyle(
+      {
+        version: 8,
+        sources: {},
+        layers: [],
+      },
+      {diff: false},
+    );
+
+    prevMapType = newMapType;
   }
 
   // Handle map type updates
-  $: if (map !== null && map.isStyleLoaded()) {
+  $: if (map !== null) {
     updateMapType(map, mapType);
   }
 
@@ -411,7 +383,6 @@
 
       // Query country and elevation at new position
       if (map && onMarkerChange) {
-        // Query both synchronously
         const elevation = queryElevationAtPoint(map, pos.lng, pos.lat);
         const countryCode = queryCountryAtPoint(map, pos.lng, pos.lat);
 
@@ -426,7 +397,7 @@
   }, [latitude, longitude]);
 
   onMount(() => {
-    // Create map with a blank base style
+    // Create map
     map = new Map({
       container,
       style: {
@@ -448,18 +419,6 @@
 
     map.dragRotate.disable();
     map.touchPitch.disable();
-
-    // Once the style is loaded, add the initial map layer
-    map.on('style.load', () => {
-      if (map) {
-        // Reset to ensure initial update works
-        prevMapType = undefined;
-        updateMapType(map, mapType);
-
-        // Add markers and labels
-        addMapMarkersAndLabels(map);
-      }
-    });
   });
 </script>
 
