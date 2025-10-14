@@ -3,6 +3,7 @@
 
   import {u8aToBase64} from '$lib/base64';
   import MessageModal from '$lib/components/MessageModal.svelte';
+  import {countryCodeToFlag} from '$lib/formatters';
   import {i18n} from '$lib/i18n';
   import {addFlash} from '$lib/stores';
   import {reactive} from '$lib/svelte';
@@ -46,6 +47,13 @@
   let landingAt: FlightLocation | undefined = locations.find(
     (location) => location.id == flight?.landingAt?.id,
   );
+  // Text input values for location autocomplete
+  let launchAtText: string = launchAt
+    ? `${countryCodeToFlag(launchAt.countryCode)} ${launchAt.name} ${launchAt.elevation} m`
+    : '';
+  let landingAtText: string = landingAt
+    ? `${countryCodeToFlag(landingAt.countryCode)} ${landingAt.name} ${landingAt.elevation} m`
+    : '';
   let hikeandfly: boolean = flight?.hikeandfly ?? false;
   let launchDate: string = flight?.launchTime?.toISOString().slice(0, 10) ?? '';
   let launchTime: string = flight?.launchTime?.toISOString().slice(11, 19) ?? '';
@@ -175,6 +183,17 @@
   }
   $: reactive(recalculateDuration, [launchTime, landingTime]);
 
+  // Location lookup from text input
+  function handleLocationInput(
+    text: string,
+    setLocation: (loc: FlightLocation | undefined) => void,
+  ): void {
+    const match = locations.find(
+      (loc) => `${countryCodeToFlag(loc.countryCode)} ${loc.name} ${loc.elevation} m` === text,
+    );
+    setLocation(match);
+  }
+
   // Error handling
   let submitEnabled = true;
   let submitError: SubmitErrorData | undefined;
@@ -289,10 +308,22 @@
 
         // Determine launch and landing sites
         if (launchAt === undefined && igcMetadata.launch?.locationId !== undefined) {
-          launchAt = locations.find((value) => value.id === igcMetadata.launch?.locationId);
+          const foundLaunch = locations.find(
+            (value) => value.id === igcMetadata.launch?.locationId,
+          );
+          if (foundLaunch !== undefined) {
+            launchAt = foundLaunch;
+            launchAtText = `${countryCodeToFlag(foundLaunch.countryCode)} ${foundLaunch.name} ${foundLaunch.elevation} m`;
+          }
         }
         if (landingAt === undefined && igcMetadata.landing?.locationId !== undefined) {
-          landingAt = locations.find((value) => value.id === igcMetadata.landing?.locationId);
+          const foundLanding = locations.find(
+            (value) => value.id === igcMetadata.landing?.locationId,
+          );
+          if (foundLanding !== undefined) {
+            landingAt = foundLanding;
+            landingAtText = `${countryCodeToFlag(foundLanding.countryCode)} ${foundLanding.name} ${foundLanding.elevation} m`;
+          }
         }
 
         // Determine track distance
@@ -496,16 +527,26 @@
         <label class="label" for="launchSite">
           {$i18n.t('flight.title--launch-site')}
         </label>
-        <div class="control is-expanded has-icons-left">
-          <div class="select is-fullwidth">
-            <select id="launchSite" bind:value={launchAt}>
-              <option value={undefined}></option>
+        <div class="field">
+          <div class="control is-expanded has-icons-left">
+            <input
+              id="launchSite"
+              type="text"
+              class="input"
+              list="launchSiteList"
+              placeholder={$i18n.t('flight.title--launch-site')}
+              bind:value={launchAtText}
+              on:input={() => handleLocationInput(launchAtText, (loc) => (launchAt = loc))}
+            />
+            <datalist id="launchSiteList">
               {#each locations as location}
-                <option value={location}>
-                  {location.name} [{location.countryCode}, {location.elevation} m]
-                </option>
+                <option
+                  value="{countryCodeToFlag(
+                    location.countryCode,
+                  )} {location.name} {location.elevation} m"
+                ></option>
               {/each}
-            </select>
+            </datalist>
             <div class="icon is-small is-left">
               <i class="fa-solid fa-plane-departure"></i>
             </div>
@@ -519,16 +560,26 @@
 
       <div class="column">
         <label class="label" for="landingSite">{$i18n.t('flight.title--landing-site')}</label>
-        <div class="control is-expanded has-icons-left">
-          <div class="select is-fullwidth">
-            <select id="landingSite" bind:value={landingAt}>
-              <option value={undefined}></option>
+        <div class="field">
+          <div class="control is-expanded has-icons-left">
+            <input
+              id="landingSite"
+              type="text"
+              class="input"
+              list="landingSiteList"
+              placeholder={$i18n.t('flight.title--landing-site')}
+              bind:value={landingAtText}
+              on:input={() => handleLocationInput(landingAtText, (loc) => (landingAt = loc))}
+            />
+            <datalist id="landingSiteList">
               {#each locations as location}
-                <option value={location}>
-                  {location.name} [{location.countryCode}, {location.elevation} m]
-                </option>
+                <option
+                  value="{countryCodeToFlag(
+                    location.countryCode,
+                  )} {location.name} {location.elevation} m"
+                ></option>
               {/each}
-            </select>
+            </datalist>
             <div class="icon is-small is-left">
               <i class="fa-solid fa-plane-arrival"></i>
             </div>

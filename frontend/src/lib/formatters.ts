@@ -40,3 +40,23 @@ export function formatDateTime(datetime: Date): string {
 export function formatDistance(km: number): string {
     return `${km.toFixed(2).replace(/\.?0*$/g, '')} km`;
 }
+
+/**
+ * Convert a country code to a flag emoji.
+ *
+ * Example: countryCodeToFlag('CH') === "🇨🇭"
+ *
+ * Returns a pirate flag if the input is not a valid two-letter code.
+ */
+export function countryCodeToFlag(countryCode: string): string {
+    // Check if it's a valid two-letter code
+    if (!/^[a-zA-Z]{2}$/.test(countryCode)) {
+        return '🏴‍☠️';
+    }
+
+    return countryCode
+        .toUpperCase()
+        .split('')
+        .map((char) => String.fromCodePoint(127397 + char.charCodeAt(0)))
+        .join('');
+}
