@@ -47,9 +47,11 @@
     (location) => location.id == flight?.landingAt?.id,
   );
   let hikeandfly: boolean = flight?.hikeandfly ?? false;
-  let launchDate: string = flight?.launchTime?.toISOString().slice(0, 10) ?? '';
-  let launchTime: string = flight?.launchTime?.toISOString().slice(11, 19) ?? '';
-  let landingTime: string = flight?.landingTime?.toISOString().slice(11, 19) ?? '';
+  // Auto-populate date to today and times to 00:00 for new flights
+  let launchDate: string =
+    flight?.launchTime?.toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10);
+  let launchTime: string = flight?.launchTime?.toISOString().slice(11, 16) ?? '00:00';
+  let landingTime: string = flight?.landingTime?.toISOString().slice(11, 16) ?? '00:00';
   let trackDistance: string = flight?.trackDistance?.toFixed(2) ?? '';
   let xcontestTracktype: XContestTracktype | undefined = flight?.xcontestTracktype;
   let xcontestDistance: string = flight?.xcontestDistance?.toFixed(2) ?? '';
@@ -97,6 +99,24 @@
     };
   }
   $: reactive(validateGlider, [glider]);
+
+  // When user changes launch time and landing is earlier, update landing to match launch
+  let previousLaunchTime = launchTime;
+  function adjustLandingTime(): void {
+    if (launchTime !== previousLaunchTime && launchTime !== '' && landingTime !== '') {
+      const [launchHour, launchMinute] = launchTime.split(':').map((v) => parseInt(v));
+      const [landingHour, landingMinute] = landingTime.split(':').map((v) => parseInt(v));
+      const launchMinutes = launchHour * 60 + launchMinute;
+      const landingMinutes = landingHour * 60 + landingMinute;
+
+      if (landingMinutes < launchMinutes) {
+        landingTime = launchTime;
+      }
+    }
+    previousLaunchTime = launchTime;
+  }
+  $: reactive(adjustLandingTime, [launchTime]);
+
   function validateDatesAndTimes(): void {
     // TODO(#74): Allow dates without time
     fieldErrors = {
@@ -269,36 +289,32 @@
     console.log('Submitting IGC data');
     processIgc(file)
       .then((igcMetadata) => {
-        // Determine flight date
+        // Determine flight date - always overwrite when IGC is uploaded
         if (igcMetadata.dateYmd) {
-          if (launchDate === '') {
-            const y = igcMetadata.dateYmd[0].toString();
-            const m = igcMetadata.dateYmd[1].toString().padStart(2, '0');
-            const d = igcMetadata.dateYmd[2].toString().padStart(2, '0');
-            launchDate = `${y}-${m}-${d}`;
-          }
+          const y = igcMetadata.dateYmd[0].toString();
+          const m = igcMetadata.dateYmd[1].toString().padStart(2, '0');
+          const d = igcMetadata.dateYmd[2].toString().padStart(2, '0');
+          launchDate = `${y}-${m}-${d}`;
         }
 
-        // Determine launch and landing time
-        if (launchTime === '' && igcMetadata.launch?.timeHms !== undefined) {
+        // Determine launch and landing time - always overwrite when IGC is uploaded
+        if (igcMetadata.launch?.timeHms !== undefined) {
           launchTime = hmsToTimevalue(igcMetadata.launch.timeHms);
         }
-        if (landingTime === '' && igcMetadata.landing?.timeHms !== undefined) {
+        if (igcMetadata.landing?.timeHms !== undefined) {
           landingTime = hmsToTimevalue(igcMetadata.landing.timeHms);
         }
 
-        // Determine launch and landing sites
-        if (launchAt === undefined && igcMetadata.launch?.locationId !== undefined) {
+        // Determine launch and landing sites - always overwrite when IGC is uploaded
+        if (igcMetadata.launch?.locationId !== undefined) {
           launchAt = locations.find((value) => value.id === igcMetadata.launch?.locationId);
         }
-        if (landingAt === undefined && igcMetadata.landing?.locationId !== undefined) {
+        if (igcMetadata.landing?.locationId !== undefined) {
           landingAt = locations.find((value) => value.id === igcMetadata.landing?.locationId);
         }
 
-        // Determine track distance
-        if (trackDistance === '') {
-          trackDistance = igcMetadata.trackDistance.toFixed(2);
-        }
+        // Determine track distance - always overwrite when IGC is uploaded
+        trackDistance = igcMetadata.trackDistance.toFixed(2);
 
         // Because multipart form submissions suck, we convert the file to base64 and later submit
         // it as text. Not nice either, but at least allows us to use regular form parsing. And
