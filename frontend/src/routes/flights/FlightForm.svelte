@@ -6,6 +6,12 @@
   import {i18n} from '$lib/i18n';
   import {addFlash} from '$lib/stores';
   import {reactive} from '$lib/svelte';
+  import {
+    calculateFlightDuration,
+    hmsToTime,
+    isTimeBefore,
+    ymdToDateString,
+  } from '$lib/time-helpers';
   import type {XContestTracktype} from '$lib/xcontest';
 
   import {goto} from '$app/navigation';
@@ -104,12 +110,7 @@
   let previousLaunchTime = launchTime;
   function adjustLandingTime(): void {
     if (launchTime !== previousLaunchTime && launchTime !== '' && landingTime !== '') {
-      const [launchHour, launchMinute] = launchTime.split(':').map((v) => parseInt(v));
-      const [landingHour, landingMinute] = landingTime.split(':').map((v) => parseInt(v));
-      const launchMinutes = launchHour * 60 + launchMinute;
-      const landingMinutes = landingHour * 60 + landingMinute;
-
-      if (landingMinutes < launchMinutes) {
+      if (isTimeBefore(landingTime, launchTime)) {
         landingTime = launchTime;
       }
     }
@@ -176,22 +177,7 @@
   // Flight duration display
   let flightDuration: string | undefined;
   function recalculateDuration(): void {
-    if (launchTime !== '' && landingTime !== '') {
-      const [launchHour, launchMinute] = launchTime.split(':').map((v) => parseInt(v));
-      const [landingHour, landingMinute] = landingTime.split(':').map((v) => parseInt(v));
-
-      const launch = launchHour * 60 + launchMinute;
-      const landing = landingHour * 60 + landingMinute;
-      let duration = landing - launch;
-      if (duration < 0) {
-        duration += 1440;
-      }
-      const hours = Math.floor(duration / 60);
-      const minutes = (duration % 60).toString().padStart(2, '0');
-      flightDuration = `+${hours}:${minutes}`;
-    } else {
-      flightDuration = undefined;
-    }
+    flightDuration = calculateFlightDuration(launchTime, landingTime);
   }
   $: reactive(recalculateDuration, [launchTime, landingTime]);
 
@@ -258,19 +244,6 @@
     submitEnabled = true;
   }
 
-  // TODO: Unit test
-  function hmsToTimevalue(hms: [number, number, number]) {
-    let hours = hms[0];
-    let minutes = Math.round(hms[1] + hms[2] / 100);
-    if (minutes === 60) {
-      minutes = 0;
-      hours += 1;
-    }
-    const h = hours.toString().padStart(2, '0');
-    const m = minutes.toString().padStart(2, '0');
-    return `${h}:${m}`;
-  }
-
   // Handle file uploads
   function onFileInputChange(): void {
     // Ensure that file is present
@@ -291,18 +264,15 @@
       .then((igcMetadata) => {
         // Determine flight date - always overwrite when IGC is uploaded
         if (igcMetadata.dateYmd) {
-          const y = igcMetadata.dateYmd[0].toString();
-          const m = igcMetadata.dateYmd[1].toString().padStart(2, '0');
-          const d = igcMetadata.dateYmd[2].toString().padStart(2, '0');
-          launchDate = `${y}-${m}-${d}`;
+          launchDate = ymdToDateString(igcMetadata.dateYmd);
         }
 
         // Determine launch and landing time - always overwrite when IGC is uploaded
         if (igcMetadata.launch?.timeHms !== undefined) {
-          launchTime = hmsToTimevalue(igcMetadata.launch.timeHms);
+          launchTime = hmsToTime(igcMetadata.launch.timeHms);
         }
         if (igcMetadata.landing?.timeHms !== undefined) {
-          landingTime = hmsToTimevalue(igcMetadata.landing.timeHms);
+          landingTime = hmsToTime(igcMetadata.landing.timeHms);
         }
 
         // Determine launch and landing sites - always overwrite when IGC is uploaded
