@@ -187,7 +187,8 @@
       "2024-04-01": "Do you have a lot of old flights logged in a spreadsheet application (like Excel or Google Sheets), and don't want to type all this information into Flugbuech by hand? In that case, try the new <1>CSV import</1>!",
       "2024-05-14": "The <1>location list</1> now shows an overview map of all locations you've been to (launch or landing locations).",
       "2024-05-25": "Flugbuech is now available both in English and in German!",
-      "2025-08-23": "Improve flight and location table layout (especially on mobile devices), fix success messages when adding/editing locations, update privacy policy to include map providers."
+      "2025-08-23": "Improve flight and location table layout (especially on mobile devices), fix success messages when adding/editing locations, update privacy policy to include map providers.",
+      "2025-11-14": "Domain moved from flugbuech.bargen.dev to flugbue.ch."
     },
     "prose--intro": "Welcome to <1>Flugbuech</1>! This is a free, open source and ad-free platform for keeping track of your free flights (paragliding or hang gliding).",
     "prose--screenshots": "To see what it looks like, check out <1>the screenshots</1>. You can find the list of features and the current project status <2>on the project GitHub page</2>.",
@@ -200,7 +201,7 @@
     "title--faq": "FAQ",
     "title--news": "News",
     "title--overview": "Overview",
-    "title--update-march-2024": "Update March 2024"
+    "title--update-nov-2025": "Domain change"
   },
   "layout": {
     "contact": "Contact",

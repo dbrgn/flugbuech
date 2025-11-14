@@ -187,7 +187,8 @@
       "2024-04-01": "Hast du viele alte Flüge in einer Excel-Tabelle und möchtest diese Informationen nicht alle von Hand in Flugbuech eingeben? Dann probiere den neuen <1>CSV-Import</1> aus!",
       "2024-05-14": "Die <1>Standortliste</1> zeigt jetzt eine Übersichtskarte aller Orte, die du besucht hast (Start- oder Landeplätze).",
       "2024-05-25": "Flugbuech ist jetzt auch auf Deutsch verfügbar!",
-      "2025-08-23": "Tabllen-Layout für Flüge und Standorte verbessert (v.a. auf Mobilgeräten), Statusnachrichten beim Hinzufügen/Editieren von Standorten gefixt, Datenschutzerklärung mit Kartenprovidern erweitert."
+      "2025-08-23": "Tabellen-Layout für Flüge und Standorte verbessert (v.a. auf Mobilgeräten), Statusnachrichten beim Hinzufügen/Editieren von Standorten gefixt, Datenschutzerklärung mit Kartenprovidern erweitert.",
+      "2025-11-14": "Die Domain dieser Website wurde von flugbuech.bargen.dev auf flugbue.ch geändert."
     },
     "prose--intro": "Willkommen bei <1>Flugbuech</1>! Dies ist eine kostenlose, quelloffene und werbefreie Plattform zur Eintragung deiner Gleitschirm- oder Drachenflüge.",
     "prose--screenshots": "Um unverbindlich einen Blick auf die Benutzeroberfläche zu werfen, schau dir <1>die Screenshots</1> an. Die Liste der Funktionen und den aktuellen Projektstatus findest du <2>auf der GitHub-Seite des Projekts</2>.",
@@ -200,7 +201,7 @@
     "title--faq": "Häufige Fragen",
     "title--news": "News",
     "title--overview": "Übersicht",
-    "title--update-march-2024": "Update März 2024"
+    "title--update-nov-2025": "Domain-Wechsel"
   },
   "layout": {
     "contact": "Kontakt",
