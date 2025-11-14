@@ -139,7 +139,7 @@
   <tbody>
     <tr>
       <td>Page URL</td>
-      <td class="is-italic">https://flugbuech.bargen.dev/stats/</td>
+      <td class="is-italic">https://flugbue.ch/stats/</td>
       <td>
         We track the page URL of each page view on our website, in order to determine how many times
         a specific pages has been viewed.</td

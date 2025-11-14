@@ -20,10 +20,10 @@
 
 <article class="message is-primary">
   <div class="message-header">
-    <p>{$i18n.t('home.title--update-march-2024')}</p>
+    <p>{$i18n.t('home.title--update-nov-2025')}</p>
   </div>
   <div class="message-body">
-    <SubstitutableText text={$i18n.t('home.news.2024-03-13')}>
+    <SubstitutableText text={$i18n.t('home.news.2025-11-14')}>
       <a slot="1" href="mailto:flugbuech@bargen.dev" let:text>{text}</a>
     </SubstitutableText>
   </div>
@@ -124,6 +124,10 @@
 
 <h4 class="title is-size-5">2025</h4>
 <ul class="content">
+  <li>
+    <strong>14.11.</strong>
+    {$i18n.t('home.news.2025-11-14')}
+  </li>
   <li>
     <strong>23.8.</strong>
     {$i18n.t('home.news.2025-08-23')}

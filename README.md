@@ -18,7 +18,7 @@ The IGC file is stored together with the flight data. Every flight can be
 linked to an [XContest](https://www.xcontest.org/) upload.
 
 A free hosted version of the flight book can be found at
-[flugbuech.bargen.dev](https://flugbuech.bargen.dev/). Registration is open!
+[flugbue.ch](https://flugbue.ch/). Registration is open!
 
 If you have any question, you can contact me at
 [flugbuech@bargen.dev](mailto:flugbuech@bargen.dev).
@@ -39,7 +39,7 @@ If you have any question, you can contact me at
 - Import flights from CSV
 - Translation support: English and German
 
-See <https://flugbuech.bargen.dev/screenshots/> for a good overview.
+See <https://flugbue.ch/screenshots/> for a good overview.
 
 ### What's not yet implemented
 
