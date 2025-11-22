@@ -22,7 +22,7 @@ jobs:
         # Needed because the postgres container does not provide a healthcheck
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - run: sudo apt-get install -y libpq-dev
       - uses: dtolnay/rust-toolchain@1.83.0
 
@@ -37,7 +37,7 @@ jobs:
     name: Run clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - run: sudo apt-get install -y libpq-dev
       - uses: dtolnay/rust-toolchain@1.83.0
         with:
@@ -48,7 +48,7 @@ jobs:
     name: Check code formatting
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@1.83.0
         with:
           components: rustfmt
