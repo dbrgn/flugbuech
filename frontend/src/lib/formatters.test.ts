@@ -1,6 +1,6 @@
 import {describe, it, expect} from 'vitest';
 
-import {formatDistance, formatDuration} from './formatters';
+import {countryCodeToFlag, formatDistance, formatDuration} from './formatters';
 
 describe('formatDuration', () => {
     const testCases = [
@@ -33,6 +33,40 @@ describe('formatDistance', () => {
     for (const [km, expected] of testCases) {
         it(`formats ${km} km`, () => {
             expect(formatDistance(km)).to.equal(expected);
+        });
+    }
+});
+
+describe('countryCodeToFlag', () => {
+    const testCases = [
+        ['CH', '🇨🇭'],
+        ['ch', '🇨🇭'],
+        ['US', '🇺🇸'],
+        ['DE', '🇩🇪'],
+        ['FR', '🇫🇷'],
+        ['IT', '🇮🇹'],
+        ['AT', '🇦🇹'],
+        ['GB', '🇬🇧'],
+    ] as const;
+
+    for (const [countryCode, expected] of testCases) {
+        it(`converts ${countryCode} to ${expected}`, () => {
+            expect(countryCodeToFlag(countryCode)).to.equal(expected);
+        });
+    }
+
+    // Test invalid inputs
+    const invalidCases = [
+        ['', 'empty string'],
+        ['C', 'single letter'],
+        ['CHE', 'three letters'],
+        ['12', 'numbers'],
+        ['C1', 'letter and number'],
+    ] as const;
+
+    for (const [countryCode, description] of invalidCases) {
+        it(`returns pirate flag for ${description}: "${countryCode}"`, () => {
+            expect(countryCodeToFlag(countryCode)).to.equal('🏴‍☠️');
         });
     }
 });
