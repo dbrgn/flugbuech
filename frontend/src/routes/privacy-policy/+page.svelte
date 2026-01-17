@@ -295,8 +295,8 @@
     </li>
     <li>
       You have the <strong>right to erasure</strong>: Send an e-mail to
-      <a href="mailto:flugbuech@bargen.dev">flugbuech@bargen.dev</a> requesting the deletion of your
-      account and all your data, and I will comply (after a verification).
+      <a href="mailto:flugbuech@bargen.dev">flugbuech@bargen.dev</a> requesting the deletion of your account
+      and all your data, and I will comply (after a verification).
     </li>
   </ul>
 </div>
