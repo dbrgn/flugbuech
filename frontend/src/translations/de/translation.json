@@ -220,6 +220,7 @@
     "error--name-empty": "Name darf nicht leer sein",
     "error--update-error": "Der Standort konnte aufgrund eines Serverfehlers nicht aktualisiert werden: {message}",
     "prose--add-success": "Standort «{name}» erfolgreich hinzugefügt",
+    "hint--zoom-in-elevation": "Zoome in die Karte, um die Höhe automatisch auszufüllen.",
     "prose--hint-double-click": "Hinweis: Ein Doppelklick oder Doppeltippen auf der Karte aktualisiert die Koordinaten.",
     "prose--update-success": "Standort «{name}» erfolgreich aktualisiert",
     "title--associated-flights": "Flüge an diesem Ort",
