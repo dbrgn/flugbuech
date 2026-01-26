@@ -69,6 +69,8 @@
   const fields = [
     'number',
     'glider',
+    'launchAt',
+    'landingAt',
     'launchDate',
     'launchTime',
     'landingTime',
@@ -78,6 +80,8 @@
   let fieldErrors: Record<(typeof fields)[number], string | undefined> = {
     number: undefined,
     glider: undefined,
+    launchAt: undefined,
+    landingAt: undefined,
     launchDate: undefined,
     launchTime: undefined,
     landingTime: undefined,
@@ -148,9 +152,27 @@
     };
   }
   $: reactive(validateXContestDistance, [xcontestDistance]);
+  function validateLocations(): void {
+    const formatLocation = (loc: FlightLocation): string =>
+      `${countryCodeToFlag(loc.countryCode)} ${loc.name} ${loc.elevation} m`;
+    const launchMatch = locations.find((loc) => formatLocation(loc) === launchAtText);
+    const landingMatch = locations.find((loc) => formatLocation(loc) === landingAtText);
+    fieldErrors = {
+      ...fieldErrors,
+      launchAt:
+        launchAtText === '' || launchMatch !== undefined
+          ? undefined
+          : $i18n.t('flight.error--no-matching-location'),
+      landingAt:
+        landingAtText === '' || landingMatch !== undefined
+          ? undefined
+          : $i18n.t('flight.error--no-matching-location'),
+    };
+  }
   function validateAll(): void {
     validateNumber();
     validateGlider();
+    validateLocations();
     validateDatesAndTimes();
     validateTrackDistance();
     validateXContestDistance();
@@ -187,11 +209,20 @@
   function handleLocationInput(
     text: string,
     setLocation: (loc: FlightLocation | undefined) => void,
+    fieldName: 'launchAt' | 'landingAt',
   ): void {
     const match = locations.find(
       (loc) => `${countryCodeToFlag(loc.countryCode)} ${loc.name} ${loc.elevation} m` === text,
     );
     setLocation(match);
+    // Validate: valid if empty or if a match was found
+    fieldErrors = {
+      ...fieldErrors,
+      [fieldName]:
+        text === '' || match !== undefined
+          ? undefined
+          : $i18n.t('flight.error--no-matching-location'),
+    };
   }
 
   // Error handling
@@ -536,7 +567,9 @@
               list="launchSiteList"
               placeholder={$i18n.t('flight.title--launch-site')}
               bind:value={launchAtText}
-              on:input={() => handleLocationInput(launchAtText, (loc) => (launchAt = loc))}
+              on:input={() =>
+                handleLocationInput(launchAtText, (loc) => (launchAt = loc), 'launchAt')}
+              class:error={fieldErrors.launchAt !== undefined}
             />
             <datalist id="launchSiteList">
               {#each locations as location}
@@ -552,6 +585,9 @@
             </div>
           </div>
         </div>
+        {#if fieldErrors.launchAt !== undefined}
+          <div class="field-error">{$i18n.t('common.error', {message: fieldErrors.launchAt})}</div>
+        {/if}
         <label class="checkbox">
           <input type="checkbox" id="hikeandfly" bind:checked={hikeandfly} />
           Hike &amp; Fly
@@ -569,7 +605,9 @@
               list="landingSiteList"
               placeholder={$i18n.t('flight.title--landing-site')}
               bind:value={landingAtText}
-              on:input={() => handleLocationInput(landingAtText, (loc) => (landingAt = loc))}
+              on:input={() =>
+                handleLocationInput(landingAtText, (loc) => (landingAt = loc), 'landingAt')}
+              class:error={fieldErrors.landingAt !== undefined}
             />
             <datalist id="landingSiteList">
               {#each locations as location}
@@ -585,6 +623,9 @@
             </div>
           </div>
         </div>
+        {#if fieldErrors.landingAt !== undefined}
+          <div class="field-error">{$i18n.t('common.error', {message: fieldErrors.landingAt})}</div>
+        {/if}
       </div>
     </div>
 

@@ -54,6 +54,7 @@
     "error--invalid-distance": "Invalid distance",
     "error--landing-time-empty": "Landing time must not be empty if date is set",
     "error--launch-time-empty": "Launch time must not be empty if date is set",
+    "error--no-matching-location": "No matching location found.",
     "error--not-igc": "File \"{name}\" does not end with .igc, ignoring",
     "error--unknown-glider": "Unknown glider",
     "error--update-error": "The flight could not be updated due to an error on the server: {message}",
