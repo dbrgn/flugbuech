@@ -54,6 +54,7 @@
     "error--invalid-distance": "Ungültige Distanz",
     "error--landing-time-empty": "Die Landezeit darf nicht leer sein, wenn das Datum festgelegt ist",
     "error--launch-time-empty": "Die Startzeit darf nicht leer sein, wenn das Datum festgelegt ist",
+    "error--no-matching-location": "Kein passender Standort gefunden.",
     "error--not-igc": "Datei \"{name}\" endet nicht mit .igc, wird ignoriert",
     "error--unknown-glider": "Unbekanntes Fluggerät",
     "error--update-error": "Der Flug konnte aufgrund eines Serverfehlers nicht aktualisiert werden: {message}",
