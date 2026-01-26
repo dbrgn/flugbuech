@@ -22,6 +22,9 @@
   const MAP_HEIGHT_SMALL = '400px';
   const MAP_HEIGHT_LARGE = 'max(100vh, 800px)';
 
+  // Minimum zoom level for elevation queries (contours available from zoom 9)
+  const MIN_ZOOM_FOR_ELEVATION_QUERY = 9;
+
   export let mode: 'single' | 'multi';
 
   // Common props
@@ -33,6 +36,12 @@
   export let latitude: number | null = null;
   export let longitude: number | null = null;
   export let editable: boolean = false;
+
+  export let onElevationLookup:
+    | ((data: {elevation: number | null; zoomTooLow: boolean}) => void)
+    | undefined = undefined;
+  export let onCountryLookup: ((data: {countryCode: string | null}) => void) | undefined =
+    undefined;
 
   // Props only used for mode 'multi'
   export let markers: NamedCoordinates[] = [];
@@ -57,6 +66,80 @@
       mapMarker.addTo(map);
       markersLoaded = true;
     }
+  }
+
+  /**
+   * Query elevation at a given point using terrain contours.
+   * Returns the elevation in meters, or null if not available.
+   */
+  function queryElevation(
+    initializedMap: Map,
+    lngLat: {lng: number; lat: number},
+  ): {
+    elevation: number | null;
+    zoomTooLow: boolean;
+  } {
+    const currentZoom = initializedMap.getZoom();
+    if (currentZoom < MIN_ZOOM_FOR_ELEVATION_QUERY) {
+      return {elevation: null, zoomTooLow: true};
+    }
+
+    const point = initializedMap.project([lngLat.lng, lngLat.lat]);
+    const features = initializedMap.queryRenderedFeatures(point, {
+      layers: ['terrain-contours-data'],
+    });
+
+    if (features.length === 0) {
+      return {elevation: null, zoomTooLow: false};
+    }
+
+    // Get the highest elevation from overlapping contour polygons
+    const elevations = features
+      .map((f) => f.properties?.ele as number | undefined)
+      .filter((ele): ele is number => ele !== undefined);
+
+    if (elevations.length === 0) {
+      return {elevation: null, zoomTooLow: false};
+    }
+
+    return {elevation: Math.max(...elevations), zoomTooLow: false};
+  }
+
+  /**
+   * Query country code at a given point.
+   * Returns the ISO 3166-1 alpha-2 country code, or null if not available.
+   * Country boundaries are available at all zoom levels.
+   */
+  function queryCountryCode(
+    initializedMap: Map,
+    lngLat: {lng: number; lat: number},
+  ): string | null {
+    const point = initializedMap.project([lngLat.lng, lngLat.lat]);
+    const features = initializedMap.queryRenderedFeatures(point, {
+      layers: ['countries-data'],
+    });
+
+    if (features.length === 0) {
+      return null;
+    }
+
+    // Get the country code from the first feature
+    return (features[0].properties?.iso_3166_1 as string | undefined) ?? null;
+  }
+
+  /**
+   * Perform location data lookup (elevation and country) and dispatch events.
+   */
+  function performLocationDataLookup(initializedMap: Map, lngLat: {lng: number; lat: number}) {
+    if (!editable) {
+      return;
+    }
+
+    const elevationResult = queryElevation(initializedMap, lngLat);
+    const countryCode = queryCountryCode(initializedMap, lngLat);
+
+    onElevationLookup?.(elevationResult);
+    onCountryLookup?.({countryCode});
   }
 
   /**
@@ -93,15 +176,28 @@
             longitude = Number(lngLat.lng.toFixed(5));
           };
 
-          // Function to update marker position and coordinates
+          // Function to update marker position, coordinates, and location lookup data
           const updateMarkerPosition = (lngLat: LngLatLike) => {
             marker.setLngLat(lngLat);
             ensureSingleMarkerVisible();
             updateCoordinatesFromMarker();
+            // Lookup elevation and country code
+            const markerLngLat = marker.getLngLat();
+            performLocationDataLookup(initializedMap, {
+              lng: markerLngLat.lng,
+              lat: markerLngLat.lat,
+            });
           };
 
-          // Update coordinates on marker drag
-          marker.on('dragend', updateCoordinatesFromMarker);
+          // Update coordinates and lookup data on marker drag
+          marker.on('dragend', () => {
+            updateCoordinatesFromMarker();
+            const markerLngLat = marker.getLngLat();
+            performLocationDataLookup(initializedMap, {
+              lng: markerLngLat.lng,
+              lat: markerLngLat.lat,
+            });
+          });
 
           // Set up double click detection, update marker and coordinates on double click (desktop)
           // or double tap (mobile)
@@ -228,6 +324,38 @@
             },
           });
           break;
+      }
+
+      // Add invisible data layers for location lookups (elevation and country code).
+      // Only loaded when adding/editing a location.
+      if (editable) {
+        // Terrain contours for elevation lookup
+        initializedMap.addLayer({
+          'id': 'terrain-contours-data',
+          'type': 'fill',
+          'source': {
+            type: 'vector',
+            url: `https://api.mapbox.com/v4/mapbox.mapbox-terrain-v2.json?access_token=${MAPBOX_ACCESS_TOKEN}`,
+          },
+          'source-layer': 'contour',
+          'paint': {
+            'fill-opacity': 0,
+          },
+        });
+
+        // Country boundaries for country code lookup
+        initializedMap.addLayer({
+          'id': 'countries-data',
+          'type': 'fill',
+          'source': {
+            type: 'vector',
+            url: `https://api.mapbox.com/v4/mapbox.country-boundaries-v1.json?access_token=${MAPBOX_ACCESS_TOKEN}`,
+          },
+          'source-layer': 'country_boundaries',
+          'paint': {
+            'fill-opacity': 0,
+          },
+        });
       }
 
       // Map markers and labels
