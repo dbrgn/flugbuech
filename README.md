@@ -23,7 +23,6 @@ A free hosted version of the flight book can be found at
 If you have any question, you can contact me at
 [flugbuech@bargen.dev](mailto:flugbuech@bargen.dev).
 
-
 ## Status
 
 ### Features
@@ -50,8 +49,17 @@ See <https://flugbue.ch/screenshots/> for a good overview.
 - [ ] Import launch / landing locations from a public database
 - [ ] Direct upload to XContest
 
+## Setup (Devcontainer)
 
-## Setup
+Requirements:
+
+- VSCode with Devcontainer Extension
+
+Build and start the devcontainer. Then, initialize the database role in a terminal:
+
+    createuser -d flugbuech
+
+## Setup (Local)
 
 Requirements:
 
@@ -93,11 +101,9 @@ And to run the development frontend server in a second terminal window:
 
 Then go to <http://localhost:5173/> to view the local application.
 
-
 ## Creating test users
 
 Head to <http://localhost:5173/auth/registration> and sign up regularly.
-
 
 ## Testing
 
@@ -114,7 +120,6 @@ To run frontend tests:
     cd frontend
     npm run test
 
-
 ## Resetting Password
 
 To reset a password directly in the database:
@@ -122,7 +127,6 @@ To reset a password directly in the database:
     UPDATE users
     SET password = crypt('newpassword', gen_salt('bf', 10))
     WHERE username = 'user';
-
 
 ## Deployment
 
@@ -134,7 +138,6 @@ weekly.
 
 **IMPORTANT**: Make sure to change the `ROCKET_SECRET_KEY` variable when
 configuring your deployment!
-
 
 ## License
 

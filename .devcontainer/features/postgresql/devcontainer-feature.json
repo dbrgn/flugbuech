@@ -1,0 +1,48 @@
+{
+  "id": "postgresql",
+  "version": "1.0.0",
+  "name": "PostgreSL",
+  "description": "Installs PostgreSQL for a non-root user, without need for sudo",
+  "options": {
+    "version": {
+      "type": "string",
+      "default": "16",
+      "description": "Major version of PostgreSQL to install (e.g., '16')"
+    }
+  },
+  "installsAfter": ["ghcr.io/devcontainers/features/common-utils"],
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-ossdata.vscode-pgsql"],
+      "settings": {
+        "pgsql.serverGroups": [
+          {
+            "name": "Servers",
+            "id": "A9F059B5-8FB8-4DEF-8908-BADD126586B8",
+            "isDefault": true
+          }
+        ],
+        "workbench.secondarySideBar.defaultVisibility": "hidden",
+        "pgsql.connections": [
+          {
+            "id": "0A50234F-B35D-489A-B1C1-950FEBD2337C",
+            "groupId": "A9F059B5-8FB8-4DEF-8908-BADD126586B8",
+            "authenticationType": "None",
+            "connectTimeout": 15,
+            "applicationName": "vscode-pgsql",
+            "clientEncoding": "utf8",
+            "sslmode": "allow",
+            "server": "localhost",
+            "expiresOn": 0,
+            "emptyPasswordInput": true,
+            "user": "node",
+            "database": "flugbuech",
+            "profileName": "Flugbuech",
+            "password": "",
+            "sshPassword": ""
+          }
+        ]
+      }
+    }
+  }
+}

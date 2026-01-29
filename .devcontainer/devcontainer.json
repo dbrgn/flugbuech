@@ -1,0 +1,104 @@
+{
+  "name": "Flugbuech Devcontainer",
+  "$schema": "https://raw.githubusercontent.com/devcontainers/spec/refs/heads/main/schemas/devContainer.schema.json",
+
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+
+  // Container runtime options
+  "runArgs": [
+    // Basic security: Limited capabilities
+    "--cap-drop=ALL",
+    "--cap-add=CHOWN",
+    "--cap-add=SETGID"
+  ],
+
+  // Run as non-root user
+  "remoteUser": "node",
+
+  // Automatically update container user UID/GID to match host user
+  "updateRemoteUserUID": true,
+
+  // Set working directory (devcontainer mounts workspace here)
+  "workspaceMount": "source=${localWorkspaceFolder},target=/code,type=bind,consistency=cached",
+  "workspaceFolder": "/code",
+
+  // Commands run after creating devcontainer
+  "initializeCommand": {
+    "create-opencode-config-dir": "mkdir -p ${HOME}/.config/opencode",
+    "create-opencode-auth-file": "mkdir -p ${HOME}/.local/share/opencode && touch ${HOME}/.local/share/opencode/auth.json"
+  },
+
+  // Mounts
+  "mounts": [
+    // Persistent config (project-specific named volume for bash history etc.)
+    "source=devcontainer--${localWorkspaceFolderBasename}--config-persistent,target=/home/node/.config-persistent,type=volume",
+    // OpenCode config (shared across projects)
+    "source=${localEnv:HOME}/.config/opencode,target=/home/node/.config/opencode,type=bind,consistency=cached",
+    // OpenCode data storage (project-specific named volume for sessions, messages, etc.)
+    "source=devcontainer--${localWorkspaceFolderBasename}--opencode-data,target=/home/node/.local/share/opencode,type=volume",
+    // OpenCode credentials (shared from host, overlays on top of the volume)
+    "source=${localEnv:HOME}/.local/share/opencode/auth.json,target=/home/node/.local/share/opencode/auth.json,type=bind,consistency=cached",
+    // PostgreSQL data (persisted across container rebuilds)
+    "source=devcontainer--${localWorkspaceFolderBasename}--pgdata,target=/home/node/pgdata,type=volume"
+  ],
+
+  // Container environment variables
+  "containerEnv": {
+    // Bash history
+    "HISTFILE": "/home/node/.config-persistent/.bash_history"
+  },
+
+  // Features to install
+  "features": {
+    "./features/opencode": {
+      "version": "latest",
+      "binaryType": "glibc"
+    },
+    "./features/postgresql": {
+      "version": "16"
+    }
+  },
+
+  // Forward ports
+  "forwardPorts": [5173, 8000],
+  "appPort": [5173, 8000], // Compat with CLI, see https://github.com/devcontainers/cli/issues/22
+
+  // After first start
+  "postStartCommand": "pg-start.sh",
+
+  // Customizations
+  "customizations": {
+    "vscode": {
+      "settings": {
+        // General
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "files.insertFinalNewline": true,
+        "editor.formatOnSave": true,
+        // Extensions
+        "rewrap.wrappingColumn": 110,
+        // JSON
+        "[jsonc]": {
+          "json.format.keepLines": true
+        },
+        // Rust
+        "[rust]": {
+          "editor.defaultFormatter": "rust-lang.rust-analyzer"
+        },
+        "rust-analyzer.check.command": "clippy"
+      },
+      "extensions": [
+        // General
+        "dnut.rewrap-revived",
+        "esbenp.prettier-vscode",
+        // Rust
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml",
+        // JS / Svelte
+        "dbaeumer.vscode-eslint",
+        "svelte.svelte-vscode"
+      ]
+    }
+  }
+}
