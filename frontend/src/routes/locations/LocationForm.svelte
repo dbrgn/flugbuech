@@ -22,6 +22,30 @@
   let latitude: number | null = location?.coordinates?.lat ?? null;
   let longitude: number | null = location?.coordinates?.lon ?? null;
 
+  // Hint for elevation auto-fill (shown when zoom is too low)
+  let showElevationHint = false;
+
+  // Handle elevation lookup from map
+  function handleElevationLookup(data: {elevation: number | null; zoomTooLow: boolean}) {
+    const {elevation: newElevation, zoomTooLow} = data;
+    if (newElevation !== null) {
+      elevation = newElevation;
+      showElevationHint = false;
+    } else {
+      // Clear outdated value when zoomed out
+      elevation = null;
+      showElevationHint = zoomTooLow;
+    }
+  }
+
+  // Handle country code lookup from map
+  function handleCountryLookup(data: {countryCode: string | null}) {
+    const {countryCode: newCountryCode} = data;
+    if (newCountryCode !== null) {
+      countryCode = newCountryCode;
+    }
+  }
+
   // Input transformations
   $: if (countryCode.length > 0) {
     countryCode = countryCode.toLocaleUpperCase();
@@ -270,6 +294,12 @@
         {$i18n.t('common.error', {message: fieldErrors.elevation})}
       </div>
     {/if}
+    {#if showElevationHint}
+      <div class="field-hint">
+        <i class="fa-solid fa-circle-info"></i>
+        {$i18n.t('location.hint--zoom-in-elevation')}
+      </div>
+    {/if}
 
     <label class="label" for="lat">
       {$i18n.t('location.title--latitude')} (WGS 84)
@@ -336,6 +366,8 @@
         editable={true}
         center={location?.coordinates}
         zoom={location?.coordinates !== undefined ? 13 : undefined}
+        onElevationLookup={handleElevationLookup}
+        onCountryLookup={handleCountryLookup}
       />
     </div>
 
@@ -367,5 +399,16 @@
     font-size: 0.8em;
     margin-top: -12px;
     margin-bottom: 12px;
+  }
+
+  .field-hint {
+    color: #3273dc;
+    font-size: 0.8em;
+    margin-top: -12px;
+    margin-bottom: 12px;
+  }
+
+  .field-hint i {
+    margin-right: 4px;
   }
 </style>

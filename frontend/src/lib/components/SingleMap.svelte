@@ -10,6 +10,22 @@
   export let editable: boolean = false;
   export let center: LngLatLike = DEFAULT_MAP_CENTER;
   export let zoom: number = 6;
+
+  // Callback props for location data lookups (forwarded to BaseMap)
+  export let onElevationLookup:
+    | ((data: {elevation: number | null; zoomTooLow: boolean}) => void)
+    | undefined = undefined;
+  export let onCountryLookup: ((data: {countryCode: string | null}) => void) | undefined =
+    undefined;
 </script>
 
-<BaseMap mode="single" bind:latitude bind:longitude {editable} {center} {zoom} />
+<BaseMap
+  mode="single"
+  bind:latitude
+  bind:longitude
+  {editable}
+  {center}
+  {zoom}
+  {onElevationLookup}
+  {onCountryLookup}
+/>
