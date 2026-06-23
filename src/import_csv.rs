@@ -5,12 +5,13 @@ use std::{collections::HashSet, io::Cursor};
 use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use diesel::PgConnection;
 use log::{error, info, warn};
-use rocket::{data::ToByteUnit, post, routes, serde::json::Json, Data, Route};
+use rocket::{data::ToByteUnit, get, http::ContentType, post, routes, serde::json::Json, Data, Route};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     auth, data,
-    models::{NewFlight, User},
+    flights::FileAttachment,
+    models::{Flight, NewFlight, User},
     responders::ApiError,
     xcontest::is_valid_tracktype,
 };
@@ -137,7 +138,7 @@ static VALID_HEADERS: [&'static str; 14] = [
     "video_url",
 ];
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct CsvRecord {
     number: Option<i32>,
     date: Option<String>,
@@ -228,12 +229,97 @@ pub async fn process_csv(
     }
 }
 
+/// Export all of the user's flights as a CSV file.
+///
+/// The format mirrors the one accepted by [`process_csv`], so an exported file
+/// can be re-imported.
+#[get("/flights/export_csv")]
+pub async fn export_csv(user: auth::AuthUser, database: data::Database) -> Result<FileAttachment, ApiError> {
+    let user = user.into_inner();
+
+    let csv_bytes = database
+        .run(move |db| {
+            let flights = data::get_flights_for_user(db, &user);
+            let gliders: Vec<(i32, String)> = data::get_gliders_for_user(db, &user)
+                .into_iter()
+                .map(|glider| (glider.id, format!("{} {}", glider.manufacturer, glider.model)))
+                .collect();
+            let locations: Vec<(i32, String)> = data::get_locations_for_user(db, &user)
+                .into_iter()
+                .map(|location| (location.id, location.name))
+                .collect();
+            flights_to_csv(flights, &gliders, &locations)
+        })
+        .await
+        .map_err(|e| {
+            error!("Failed to serialize flights to CSV: {e}");
+            ApiError::IoError {
+                message: "Failed to generate CSV".to_string(),
+            }
+        })?;
+
+    // Date is safe for use in a filename without escaping (digits and hyphens only)
+    let filename = format!("flights_{}.csv", Utc::now().format("%Y-%m-%d"));
+
+    Ok(FileAttachment::new(
+        csv_bytes,
+        ContentType::new("text", "csv"),
+        filename,
+    ))
+}
+
 /// Return vec of all API routes.
 pub fn api_routes() -> Vec<Route> {
-    routes![process_csv]
+    routes![process_csv, export_csv]
 }
 
 // Helpers
+
+/// Serialize the given flights into CSV bytes matching the import format.
+///
+/// Glider and location IDs are resolved to names via the provided lookup tables
+/// (`(id, name)` pairs), mirroring the matching done during import.
+fn flights_to_csv(
+    flights: Vec<Flight>,
+    gliders: &[(i32, String)],
+    locations: &[(i32, String)],
+) -> csv::Result<Vec<u8>> {
+    let lookup = |table: &[(i32, String)], id: i32| -> Option<String> {
+        table
+            .iter()
+            .find_map(|(entry_id, name)| if *entry_id == id { Some(name.clone()) } else { None })
+    };
+
+    let mut writer = csv::WriterBuilder::new()
+        .has_headers(true)
+        .delimiter(b',')
+        .quote(b'"')
+        .from_writer(Vec::new());
+
+    for flight in flights {
+        let record = CsvRecord {
+            number: flight.number,
+            date: flight.launch_time.map(|dt| dt.format("%Y-%m-%d").to_string()),
+            glider: flight.glider_id.and_then(|id| lookup(gliders, id)),
+            launch_site: flight.launch_at.and_then(|id| lookup(locations, id)),
+            launch_time_utc: flight.launch_time.map(|dt| dt.format("%H:%M:%S").to_string()),
+            landing_site: flight.landing_at.and_then(|id| lookup(locations, id)),
+            landing_time_utc: flight.landing_time.map(|dt| dt.format("%H:%M:%S").to_string()),
+            track_distance: flight.track_distance,
+            hikeandfly: Some(flight.hikeandfly),
+            comment: flight.comment,
+            xcontest_url: flight.xcontest_url,
+            xcontest_tracktype: flight.xcontest_tracktype,
+            xcontest_scored_distance: flight.xcontest_distance,
+            video_url: flight.video_url,
+        };
+        writer.serialize(record)?;
+    }
+
+    writer
+        .into_inner()
+        .map_err(|err| csv::Error::from(err.into_error()))
+}
 
 /// Process, analyze and return (but don't save) flights from CSV
 fn analyze_csv(csv_bytes: Vec<u8>, user: &User, conn: &mut PgConnection) -> CsvAnalyzeResult {
@@ -1036,6 +1122,172 @@ mod tests {
                 csv_row: 3,
                 hikeandfly: false,
                 ..Default::default()
+            }
+        );
+    }
+
+    /// Export a user's flights, then re-import the resulting CSV into a *different*
+    /// account that has the same gliders/locations (the real restore use case).
+    /// The flights must round-trip without warnings or errors.
+    #[test]
+    fn export_csv_round_trip() {
+        let ctx = DbTestContext::new();
+
+        // Source account (testuser1): gliders, locations and flights to export
+        let glider1 = data::create_glider(
+            &mut ctx.force_get_conn(),
+            NewGlider {
+                user_id: ctx.testuser1.user.id,
+                manufacturer: "Advance".into(),
+                model: "Alpha".into(),
+                since: None,
+                until: None,
+                source: None,
+                cost: None,
+                comment: None,
+            },
+        )
+        .unwrap();
+        let züri1 = data::create_location(
+            &mut ctx.force_get_conn(),
+            NewLocation {
+                name: "Züri".into(),
+                country: "CH".into(),
+                elevation: 0,
+                user_id: ctx.testuser1.user.id,
+                geog: None,
+            },
+        );
+        let rappi1 = data::create_location(
+            &mut ctx.force_get_conn(),
+            NewLocation {
+                name: "Rappi".into(),
+                country: "CH".into(),
+                elevation: 0,
+                user_id: ctx.testuser1.user.id,
+                geog: None,
+            },
+        );
+        data::create_flight(
+            &mut ctx.force_get_conn(),
+            &NewFlight {
+                user_id: ctx.testuser1.user.id,
+                number: Some(1),
+                glider_id: Some(glider1.id),
+                launch_at: Some(züri1.id),
+                landing_at: Some(rappi1.id),
+                launch_time: Some(utc_datetime(2020, 1, 1, 10, 0, 0)),
+                landing_time: Some(utc_datetime(2020, 1, 1, 11, 0, 0)),
+                track_distance: Some(44.7),
+                xcontest_tracktype: Some("free_flight".into()),
+                xcontest_distance: Some(27.0),
+                xcontest_url: Some("https://xcontest.org/myflight/".into()),
+                comment: Some("Some flying, some scratching".into()),
+                video_url: Some("https://youtube.com/myvid".into()),
+                hikeandfly: false,
+            },
+            None,
+        );
+        data::create_flight(
+            &mut ctx.force_get_conn(),
+            &NewFlight {
+                user_id: ctx.testuser1.user.id,
+                number: Some(2),
+                glider_id: Some(glider1.id),
+                launch_at: Some(rappi1.id),
+                landing_at: Some(züri1.id),
+                launch_time: Some(utc_datetime(2020, 1, 2, 12, 1, 2)),
+                landing_time: Some(utc_datetime(2020, 1, 2, 14, 50, 50)),
+                track_distance: Some(50.0),
+                comment: Some("Way back".into()),
+                hikeandfly: true,
+                ..Default::default()
+            },
+            None,
+        );
+
+        // Target account (testuser2): same gliders/locations by name, no flights yet
+        let glider2 = data::create_glider(
+            &mut ctx.force_get_conn(),
+            NewGlider {
+                user_id: ctx.testuser2.user.id,
+                manufacturer: "Advance".into(),
+                model: "Alpha".into(),
+                since: None,
+                until: None,
+                source: None,
+                cost: None,
+                comment: None,
+            },
+        )
+        .unwrap();
+        let züri2 = data::create_location(
+            &mut ctx.force_get_conn(),
+            NewLocation {
+                name: "Züri".into(),
+                country: "CH".into(),
+                elevation: 0,
+                user_id: ctx.testuser2.user.id,
+                geog: None,
+            },
+        );
+        let rappi2 = data::create_location(
+            &mut ctx.force_get_conn(),
+            NewLocation {
+                name: "Rappi".into(),
+                country: "CH".into(),
+                elevation: 0,
+                user_id: ctx.testuser2.user.id,
+                geog: None,
+            },
+        );
+
+        // Export testuser1's flights
+        let flights = data::get_flights_for_user(&mut ctx.force_get_conn(), &ctx.testuser1.user);
+        let gliders = vec![(glider1.id, "Advance Alpha".to_string())];
+        let locations = vec![(züri1.id, "Züri".to_string()), (rappi1.id, "Rappi".to_string())];
+        let csv_bytes = flights_to_csv(flights, &gliders, &locations).unwrap();
+
+        // Re-import into testuser2
+        let result = analyze_csv(csv_bytes, &ctx.testuser2.user, &mut ctx.force_get_conn());
+
+        assert_eq!(result.warnings, empty_vec());
+        assert_eq!(result.errors, empty_vec());
+
+        // Flights are ordered by number descending, so #2 comes first
+        assert_eq!(
+            result.flights[0],
+            ApiCsvFlightPreview {
+                csv_row: 1,
+                number: Some(2),
+                glider_id: Some(glider2.id),
+                launch_at: Some(rappi2.id),
+                landing_at: Some(züri2.id),
+                launch_time: Some(utc_datetime(2020, 1, 2, 12, 1, 2)),
+                landing_time: Some(utc_datetime(2020, 1, 2, 14, 50, 50)),
+                track_distance: Some(50.0),
+                comment: Some("Way back".into()),
+                hikeandfly: true,
+                ..Default::default()
+            }
+        );
+        assert_eq!(
+            result.flights[1],
+            ApiCsvFlightPreview {
+                csv_row: 2,
+                number: Some(1),
+                glider_id: Some(glider2.id),
+                launch_at: Some(züri2.id),
+                landing_at: Some(rappi2.id),
+                launch_time: Some(utc_datetime(2020, 1, 1, 10, 0, 0)),
+                landing_time: Some(utc_datetime(2020, 1, 1, 11, 0, 0)),
+                track_distance: Some(44.7),
+                xcontest_tracktype: Some("free_flight".into()),
+                xcontest_distance: Some(27.0),
+                xcontest_url: Some("https://xcontest.org/myflight/".into()),
+                comment: Some("Some flying, some scratching".into()),
+                video_url: Some("https://youtube.com/myvid".into()),
+                hikeandfly: false,
             }
         );
     }

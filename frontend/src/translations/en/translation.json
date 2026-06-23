@@ -104,6 +104,7 @@
     "action--delete-flight": "Delete Flight",
     "action--download-igc": "Download IGC",
     "action--edit-flight": "Edit Flight",
+    "action--export-csv": "Export to CSV",
     "action--import-csv": "Import from CSV",
     "action--view-flight": "View Flight",
     "column--actions": "Actions",

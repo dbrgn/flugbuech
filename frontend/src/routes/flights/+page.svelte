@@ -135,9 +135,14 @@
     <a href="/flights/add/" class="button is-primary">
       {$i18n.t('flights.action--add-flight')}
     </a>
-    <a href="/flights/import/csv/" class="button is-light"
-      >{$i18n.t('flights.action--import-csv')}</a
-    >
+    <span class="buttons">
+      <a href="/flights/import/csv/" class="button is-light"
+        >{$i18n.t('flights.action--import-csv')}</a
+      >
+      <a href="/api/v1/flights/export_csv" class="button is-light" data-sveltekit-reload
+        >{$i18n.t('flights.action--export-csv')}</a
+      >
+    </span>
   </p>
 
   <div class="table-container">
